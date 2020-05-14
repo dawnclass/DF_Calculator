@@ -1,5 +1,5 @@
-now_version="2.4.9"
-ver_time='200509'
+now_version="3.0.0"
+ver_time='200511'
 
 ## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
 ## Copyright ⓒ 2020 Dawnclass(새벽반) dawnclass16@naver.com
@@ -23,7 +23,9 @@ from collections import Counter
 from math import floor
 import webbrowser
 import calc_update
+import calc_list_wep,calc_list_job,calc_fullset
 
+#print(calc_list_wep.DNF_wep_list.keys())
 
 #https://dunfaoff.com/DawnClass.df
 
@@ -97,6 +99,7 @@ for row in db_job.rows:
 del opt_job["empty"]
 del opt_job["직업명"]
 jobs=list(opt_job.keys())
+
     
     
 load_preset0=load_workbook("preset.xlsx", data_only=True)
@@ -118,6 +121,7 @@ try:
         load_preset0.save("preset.xlsx")
         load_preset0.close()
         calc_update.update_preset ## 외부모듈
+        
     
 except PermissionError as error:
     tkinter.messagebox.showerror("에러","업데이트 실패. 엑셀을 닫고 다시 실행해주세요.")
@@ -133,7 +137,7 @@ def calc():
         result_window.destroy()
     except NameError as error:
         pass
-    if select_perfect.get() == '세트필터↓(느림)':
+    if select_perfect.get() == '세트필터↓(느림)' or select_perfect.get() == '풀셋모드(매우빠름)':
         set_perfect=1
     else:
         set_perfect=0
@@ -199,6 +203,10 @@ def calc():
     ele_in=(int(db_preset["B14"].value)+int(db_preset["B15"].value)+int(db_preset["B16"].value)+
             int(ele_skill)-int(db_preset["B18"].value)+int(db_preset["B19"].value)+13)
     cool_eff=float(db_preset["B2"].value)/100
+    if req_cool.get()=='X(순데미지)':
+        cool_on=0
+    else:
+        cool_on=1
 
     betterang=int(db_one["J86"].value)
 
@@ -224,21 +232,28 @@ def calc():
         active_eff_one=21
         active_eff_set=27-3
 
-    if time_select.get() == "60초(각성비중↓)":
-        lvl_shift=6
-    else:
-        lvl_shift=0
-
-    job_lv1=opt_job[jobup_select.get()][11+lvl_shift]
-    job_lv2=opt_job[jobup_select.get()][12+lvl_shift]
-    job_lv3=opt_job[jobup_select.get()][13+lvl_shift]
-    job_lv4=opt_job[jobup_select.get()][14+lvl_shift]
-    job_lv5=opt_job[jobup_select.get()][15+lvl_shift]
-    job_lv6=opt_job[jobup_select.get()][16+lvl_shift]
+    job_lv1=opt_job[jobup_select.get()][11]
+    job_lv2=opt_job[jobup_select.get()][12]
+    job_lv3=opt_job[jobup_select.get()][13]
+    job_lv4=opt_job[jobup_select.get()][14]
+    job_lv5=opt_job[jobup_select.get()][15]
+    job_lv6=opt_job[jobup_select.get()][16]
     job_pas0=opt_job[jobup_select.get()][0]
     job_pas1=opt_job[jobup_select.get()][1]
     job_pas2=opt_job[jobup_select.get()][2]
     job_pas3=opt_job[jobup_select.get()][3]
+
+    for i in range(1,62):
+        if jobup_select.get()==db_job['A'+str(i)].value:
+            for j in range(28,66):
+                if wep_type_select.get()==db_job.cell(63,j).value:
+                    wep_pre_calced=float(db_job.cell(i,j).value)
+                    cool_pre_calced=(1/float(db_job.cell(i,j+38).value)-1)*cool_eff*cool_on+1
+    if wep_pre_calced==0:
+        tkinter.messagebox.showerror('에러',"착용할 수 없는 무기를 선택했습니다.")
+        showsta(text='중지됨')
+        return
+                    
     
     fixed_dam=0 ##딜러
     fixed_cri=0
@@ -407,14 +422,11 @@ def calc():
         inv4_opt="미부여"
         inv4_val=""
         
-    if req_cool.get()=='X(순데미지)':
-        cool_on=0
-    else:
-        cool_on=1
+    
     list11=[];list12=[];list13=[];list14=[];list15=[]
     list21=[];list22=[];list23=[];list31=[];list32=[];list33=[]
     list11_0=[];list11_1=[];list21_0=[];list21_1=[];list33_0=[];list33_1=[]
-    list_setnum=[];list_num=[]
+    list_setnum=[];list_setnum1=[];list_setnum2=[];list_num=[]
     ##에픽
     for i in range(101,199):
         try:
@@ -423,6 +435,7 @@ def calc():
                 list11_0.append('1'+str(i)+'0')
                 list_num.append(str(i)[1:]+'0')
                 list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
         except KeyError as error:
             c=1
     
@@ -432,6 +445,8 @@ def calc():
                 list12.append('1'+str(i)+'0')
                 list_num.append(str(i)[1:]+'0')
                 list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
         except KeyError as error:
             c=1
     for i in range(301,399):
@@ -440,6 +455,8 @@ def calc():
                 list13.append('1'+str(i)+'0')
                 list_num.append(str(i)[1:]+'0')
                 list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
         except KeyError as error:
             c=1
     for i in range(401,499):
@@ -448,6 +465,8 @@ def calc():
                 list14.append('1'+str(i)+'0')
                 list_num.append(str(i)[1:]+'0')
                 list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
         except KeyError as error:
             c=1
     for i in range(501,599):
@@ -456,6 +475,8 @@ def calc():
                 list15.append('1'+str(i)+'0')
                 list_num.append(str(i)[1:]+'0')
                 list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
         except KeyError as error:
             c=1
     for i in range(101,199):
@@ -465,6 +486,7 @@ def calc():
                 list21_0.append('2'+str(i)+'0')
                 list_num.append(str(i)[1:]+'0')
                 list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
         except KeyError as error:
             c=1
     for i in range(201,299):
@@ -473,6 +495,8 @@ def calc():
                 list22.append('2'+str(i)+'0')
                 list_num.append(str(i)[1:]+'0')
                 list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
         except KeyError as error:
             c=1
     for i in range(301,399):
@@ -481,6 +505,8 @@ def calc():
                 list23.append('2'+str(i)+'0')
                 list_num.append(str(i)[1:]+'0')
                 list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
         except KeyError as error:
             c=1
     for i in range(101,199):
@@ -489,6 +515,8 @@ def calc():
                 list31.append('3'+str(i)+'0')
                 list_num.append(str(i)[1:]+'0')
                 list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
         except KeyError as error:
             c=1
     for i in range(201,299):
@@ -497,6 +525,8 @@ def calc():
                 list32.append('3'+str(i)+'0')
                 list_num.append(str(i)[1:]+'0')
                 list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
         except KeyError as error:
             c=1
     for i in range(301,399):
@@ -506,9 +536,10 @@ def calc():
                 list33_0.append('3'+str(i)+'0')
                 list_num.append(str(i)[1:]+'0')
                 list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
         except KeyError as error:
             c=1
-        
+  
     algo_list=['11','12','13','14','15','21','22','23','31','32','33']
     if select_perfect.get() == '단품제외(빠름)':
         for i in list_num:
@@ -521,9 +552,6 @@ def calc():
                         except:
                             c=1
 
-    list_setnum2=list_setnum
-    set_num_dict2=Counter(list_setnum2)
-    
     ##신화                        
     for i in range(101,199):
         try:
@@ -532,6 +560,7 @@ def calc():
                 list11_1.append('1'+str(i)+'1')
                 if list11.count('1'+str(i)+'0')==0:
                     list_setnum.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
         except KeyError as error:
             c=1
     for i in range(101,199):
@@ -541,6 +570,7 @@ def calc():
                 list21_1.append('2'+str(i)+'1')
                 if list21.count('2'+str(i)+'0')==0:
                     list_setnum.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
         except KeyError as error:
             c=1
     for i in range(301,399):
@@ -550,10 +580,14 @@ def calc():
                 list33_1.append('3'+str(i)+'1')
                 if list33.count('3'+str(i)+'0')==0:
                     list_setnum.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
         except KeyError as error:
             c=1
 
-    set_num_dict=Counter(list_setnum)
+    set_num_dict=Counter(list_setnum) ##전부
+    set_num_dict1=Counter(list_setnum1) ##에픽만
+    set_num_dict2=Counter(list_setnum2) ##신화만
+
 
     ##산물
     for know_one in know_list:
@@ -608,866 +642,403 @@ def calc():
             now_div_set=0
         if now_div_set >= max_div_set:
             list40_0.append(i)
-    print(list40_0)
     
     all_list_num=0
     all_list_list_num=0
     all_list_list=[]
 
+##풀셋모드##
+##########################################################################################################################
+    if select_perfect.get() == '풀셋모드(매우빠름)':
+        active_bang5_0=[];active_bang5_1=[]
+        active_bang2_0=[];active_bang3_1_0=[];active_bang3_1_1=[];active_bang3_2=[];active_bang3_3=[] #1:상의(1_1:신화), 2:하의, 3:신발 / 포함 어벨
+        active_acc3_0=[];active_acc3_1=[]
+        active_spe3_0=[];active_spe3_1=[]
+        active_sang3_0=[];active_sang3_1=[];active_sang2=[]
+        active_ha3_0=[];active_ha3_1=[];active_ha2_0=[];active_ha2_1=[]
+        active_sin3_0=[];active_sin3_1=[];active_sin2_0=[];active_sin2_1=[]
+        
+        for i in range(1,36): ##경우의 수 가르기
+            if i < 16:
+                if set_num_dict1.get(str(i+100))==5:
+                    active_bang5_0.append(str(i+100))
+                if set_num_dict2.get(str(i+100))==5:
+                    active_bang5_1.append(str(i+100))
+                if list13.count('1'+str(i+300)+'0')==1:
+                    if list14.count('1'+str(i+400)+'0')==1:
+                        active_bang2_0.append(str(i+100))
+                        if list11_0.count('1'+str(i+100)+'0')==1:
+                            active_bang3_1_0.append(str(i+100))
+                        if list11_1.count('1'+str(i+100)+'1')==1:
+                            active_bang3_1_1.append(str(i+100))
+                        if list12.count('1'+str(i+200)+'0')==1:
+                            active_bang3_2.append(str(i+100))
+                        if list15.count('1'+str(i+500)+'0')==1:
+                            active_bang3_3.append(str(i+100))
+            else:
+                if set_num_dict1.get(str(i+100))==3:
+                    if i < 20:
+                       active_acc3_0.append(str(i+100))
+                    elif i < 24:
+                        active_spe3_0.append(str(i+100))
+                    elif i < 28:
+                        active_ha3_0.append(str(i+100))
+                    elif i < 32:
+                        active_sang3_0.append(str(i+100))
+                    elif i < 36:
+                        active_sin3_0.append(str(i+100))
+                if set_num_dict2.get(str(i+100))==3:
+                    if i < 20:
+                        active_acc3_1.append(str(i+100))
+                    elif i < 24:
+                        active_spe3_1.append(str(i+100))
+                    elif i < 28:
+                        active_ha3_1.append(str(i+100))
+                    elif i < 32:
+                        active_sang3_1.append(str(i+100))
+                    elif i < 36:
+                        active_sin3_1.append(str(i+100))
+        for i in range(24,36):
+            if list32.count('3'+str(i+200)+'0')==1:
+                if list21_0.count('2'+str(i+100)+'0')==1:
+                    active_ha2_0.append(str(i+100))
+                if list21_1.count('2'+str(i+100)+'1')==1:
+                    active_ha2_1.append(str(i+100))
+            elif list23.count('2'+str(i+300)+'0')==1:
+                if list33_0.count('3'+str(i+300)+'0')==1:
+                    active_sin2_0.append(str(i+100))
+                if list33_1.count('3'+str(i+300)+'1')==1:
+                    active_sin2_1.append(str(i+100))
+            elif list22.count('2'+str(i+200)+'0')==1:
+                if list31.count('3'+str(i+100)+'0')==1:
+                    active_sang2.append(str(i+100))
+
+                    
+        all_list_before_inv=[]
+        all_list_god_before_inv=[]
+        ##1. 533 풀셋
+        items533=[active_bang5_0,active_acc3_0,active_spe3_0]
+        items533_1=[active_bang5_1,active_acc3_0,active_spe3_0]
+        items533_2=[active_bang5_0,active_acc3_1,active_spe3_0]
+        items533_3=[active_bang5_0,active_acc3_0,active_spe3_1]
+        if len(active_bang5_0)!=0 and len(active_acc3_0)!=0 and len(active_spe3_0)!=0:
+            case_list=list(itertools.product(*items533))
+            all_list_before_inv=all_list_before_inv+calc_fullset.making_cases(case_list,0,1)
+        if len(active_bang5_1)!=0 and len(active_acc3_0)!=0 and len(active_spe3_0)!=0:
+            case_list=list(itertools.product(*items533_1))
+            all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,1,1)
+        if len(active_bang5_0)!=0 and len(active_acc3_1)!=0 and len(active_spe3_0)!=0:
+            case_list=list(itertools.product(*items533_2))
+            all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,2,1)
+        if len(active_bang5_0)!=0 and len(active_acc3_0)!=0 and len(active_spe3_1)!=0:
+            case_list=list(itertools.product(*items533_3))
+            all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,3,1)
+        
+        
+                
+                    
+                
+        ##2. 표준3332 풀셋
+        temp_list2=[]
+        temp_list_god2=[]
+        items3332=[active_sang3_0,active_ha3_0,active_sin3_0,active_bang2_0]
+        items3332_1=[active_sang3_1,active_ha3_0,active_sin3_0,active_bang2_0]
+        items3332_2=[active_sang3_0,active_ha3_1,active_sin3_0,active_bang2_0]
+        items3332_3=[active_sang3_0,active_ha3_0,active_sin3_1,active_bang2_0]
+        if len(active_sang3_0)!=0 and len(active_ha3_0)!=0 and len(active_sin3_0)!=0 and len(active_bang2_0)!=0:
+            case_list=list(itertools.product(*items3332))
+            all_list_before_inv=all_list_before_inv+calc_fullset.making_cases(case_list,0,2)
+        if len(active_sang3_1)!=0 and len(active_ha3_0)!=0 and len(active_sin3_0)!=0 and len(active_bang2_0)!=0:
+            case_list=list(itertools.product(*items3332_1))
+            all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,1,2)
+        if len(active_sang3_0)!=0 and len(active_ha3_1)!=0 and len(active_sin3_0)!=0 and len(active_bang2_0)!=0:
+            case_list=list(itertools.product(*items3332_2))
+            all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,2,2)
+        if len(active_sang3_0)!=0 and len(active_ha3_0)!=0 and len(active_sin3_1)!=0 and len(active_bang2_0)!=0:
+            case_list=list(itertools.product(*items3332_3))
+            all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,3,2)
+        ##3. 변형3332 풀셋
+        #0번 상의변형
+        temp_list3_0=[]  
+        temp_list_god3_0=[]
+        items2333=[active_sang2,active_ha3_0,active_sin3_0,active_bang3_1_0]
+        items2333_1=[active_sang2,active_ha3_0,active_sin3_0,active_bang3_1_1]
+        items2333_2=[active_sang2,active_ha3_1,active_sin3_0,active_bang3_1_0]
+        items2333_3=[active_sang2,active_ha3_0,active_sin3_1,active_bang3_1_0]
+        if len(active_sang2)!=0 and len(active_ha3_0)!=0 and len(active_sin3_0)!=0 and len(active_bang3_1_0)!=0:
+            case_list=list(itertools.product(*items2333))
+            all_list_before_inv=all_list_before_inv+calc_fullset.making_cases(case_list,0,3)
+        if len(active_sang2)!=0 and len(active_ha3_0)!=0 and len(active_sin3_0)!=0 and len(active_bang3_1_1)!=0:
+            case_list=list(itertools.product(*items2333_1))
+            all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,1,3)
+        if len(active_sang2)!=0 and len(active_ha3_1)!=0 and len(active_sin3_0)!=0 and len(active_bang3_1_0)!=0:
+            case_list=list(itertools.product(*items2333_2))
+            all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,2,3)
+        if len(active_sang2)!=0 and len(active_ha3_0)!=0 and len(active_sin3_1)!=0 and len(active_bang3_1_0)!=0:
+            case_list=list(itertools.product(*items2333_3))
+            all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,3,3)
+        #1번 하의변형
+        temp_list3_1=[]  
+        temp_list_god3_1=[]
+        items3233=[active_sang3_0,active_ha2_0,active_sin3_0,active_bang3_2]
+        items3233_1=[active_sang3_1,active_ha2_0,active_sin3_0,active_bang3_2]
+        items3233_2=[active_sang3_0,active_ha2_1,active_sin3_0,active_bang3_2]
+        items3233_3=[active_sang3_0,active_ha2_0,active_sin3_1,active_bang3_2]
+        if len(active_sang3_0)!=0 and len(active_ha2_0)!=0 and len(active_sin3_0)!=0 and len(active_bang3_2)!=0:
+            case_list=list(itertools.product(*items3233))
+            all_list_before_inv=all_list_before_inv+calc_fullset.making_cases(case_list,0,4)
+        if len(active_sang3_1)!=0 and len(active_ha2_0)!=0 and len(active_sin3_0)!=0 and len(active_bang3_2)!=0:
+            case_list=list(itertools.product(*items3233_1))
+            all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,1,4)
+        if len(active_sang3_0)!=0 and len(active_ha2_1)!=0 and len(active_sin3_0)!=0 and len(active_bang3_2)!=0:
+            case_list=list(itertools.product(*items3233_2))
+            all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,2,4)
+        if len(active_sang3_0)!=0 and len(active_ha2_0)!=0 and len(active_sin3_1)!=0 and len(active_bang3_2)!=0:
+            case_list=list(itertools.product(*items3233_3))
+            all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,3,4)
+        #2번 신발변형
+        temp_list3_2=[]  
+        temp_list_god3_2=[]
+        items3323=[active_sang3_0,active_ha3_0,active_sin2_0,active_bang3_3]
+        items3323_1=[active_sang3_1,active_ha3_0,active_sin2_0,active_bang3_3]
+        items3323_2=[active_sang3_0,active_ha3_1,active_sin2_0,active_bang3_3]
+        items3323_3=[active_sang3_0,active_ha3_0,active_sin2_1,active_bang3_3]
+        if len(active_sang3_0)!=0 and len(active_ha3_0)!=0 and len(active_sin2_0)!=0 and len(active_bang3_3)!=0:
+            case_list=list(itertools.product(*items3323))
+            all_list_before_inv=all_list_before_inv+calc_fullset.making_cases(case_list,0,5)
+        if len(active_sang3_1)!=0 and len(active_ha3_0)!=0 and len(active_sin2_0)!=0 and len(active_bang3_3)!=0:
+            case_list=list(itertools.product(*items3323_1))
+            all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,1,5)
+        if len(active_sang3_0)!=0 and len(active_ha3_1)!=0 and len(active_sin2_0)!=0 and len(active_bang3_3)!=0:
+            case_list=list(itertools.product(*items3323_2))
+            all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,2,5)
+        if len(active_sang3_0)!=0 and len(active_ha3_0)!=0 and len(active_sin2_1)!=0 and len(active_bang3_3)!=0:
+            case_list=list(itertools.product(*items3323_3))
+            all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,3,5)
+
+        all_list=[];all_list_god=[]
+        for i in list40_0:
+            for j in all_list_before_inv:
+                tempx=list(j)
+                tempx.append(i)
+                all_list.append(tuple(tempx))
+            for j in all_list_god_before_inv:
+                tempx=list(j)
+                tempx.append(i)
+                all_list_god.append(tuple(tempx))
+
+        
+        all_list_num=len(all_list_god)+len(all_list)
+        all_list_list.append([all_list,all_list_god,all_list_num])
+                    
+                
+            
+        
+    else:
 ##레전기본값##
 ##########################################################################################################################
-                
-    global default_legend,default_chawon,default_old
-    if default_legend==1:
-        df11='11360';df12='12360';df13='13360';df14='14360';df15='15360'
-        df21='21370';df22='22370';df23='23370';df31='31380';df32='32380';df33='33380'
-    elif default_chawon==1:
-        df11='11440';df12='12440';df13='13440';df14='14440';df15='15440'
-        df21='21450';df22='22450';df23='23450';df31='31460';df32='32460';df33='33460'
-    elif default_old==1:
-        df11='11470';df12='12470';df13='13470';df14='14470';df15='15470'
-        df21='21480';df22='22480';df23='23480';df31='31490';df32='32490';df33='33490'
-
-    if len(list11_0)==0:
-        list11.append(df11);list12.append(df12);list13.append(df13);list14.append(df14);list15.append(df15);list11_0.append(df11)
-    elif len(list12)==0:
-        list11.append(df11);list12.append(df12);list13.append(df13);list14.append(df14);list15.append(df15);list11_0.append(df11)
-    elif len(list13)==0:
-        list11.append(df11);list12.append(df12);list13.append(df13);list14.append(df14);list15.append(df15);list11_0.append(df11)
-    elif len(list14)==0:
-        list11.append(df11);list12.append(df12);list13.append(df13);list14.append(df14);list15.append(df15);list11_0.append(df11)
-    elif len(list15)==0:
-        list11.append(df11);list12.append(df12);list13.append(df13);list14.append(df14);list15.append(df15);list11_0.append(df11)
-        
-    if len(list21_0)==0 and len(list22)==0:
-        list21.append(df21);list22.append(df22);list23.append(df23);list21_0.append(df21)
-    elif len(list22)==0 and len(list23)==0:
-        list21.append(df21);list22.append(df22);list23.append(df23);list21_0.append(df21)
-    elif len(list23)==0 and len(list21_0)==0:
-        list21.append(df21);list22.append(df22);list23.append(df23);list21_0.append(df21)
-        
-    if len(list31)==0 and len(list32)==0:
-        list31.append(df31);list32.append(df32);list33.append(df33);list33_0.append(df33)
-    elif len(list32)==0 and len(list33_0)==0:
-        list31.append(df31);list32.append(df32);list33.append(df33);list33_0.append(df33)
-    elif len(list33_0)==0 and len(list31)==0:
-        list31.append(df31);list32.append(df32);list33.append(df33);list33_0.append(df33)
-
-    if len(list21_0)==0:
-        list21.append(df21);list21_0.append(df21)
-    if len(list22)==0:
-        list22.append(df22)
-    if len(list23)==0:
-        list23.append(df23)
-    if len(list31)==0:
-        list31.append(df31)
-    if len(list32)==0:
-        list32.append(df32)
-    if len(list33_0)==0:
-        list33.append(df33);list33_0.append(df33)
-
-    set_max_list1=[]
-    set_max_list2=[]
-    set_max_list3=[]
-    print(set_num_dict)
-    for i in range(0,24):
-        if set_num_dict.get(str(i+100)) != None:
-            if i < 16:
-                set_max_list1.append(set_num_dict.get(str(i+100)))
-            elif i < 20:
-                set_max_list2.append(set_num_dict.get(str(i+100)))
-            else:
-                set_max_list3.append(set_num_dict.get(str(i+100)))
-        else:
-            if i < 16:
-                set_max_list1.append(0)
-            elif i < 20:
-                set_max_list2.append(0)
-            else:
-                set_max_list3.append(0)
-                
-    if max(set_max_list1) < 2:
-        items0=[[df11],[df12],[df13],[df14],[df15],list21_0,list22,list23,list31,list32,list33_0,list40_0]
-        items1=[]
-        items2=[[df11],[df12],[df13],[df14],[df15],list21_1,list22,list23,list31,list32,list33_0,list40_0]
-        items3=[[df11],[df12],[df13],[df14],[df15],list21_0,list22,list23,list31,list32,list33_1,list40_0]
-        all_list=list(itertools.product(*items0))
-        all_list1=[]
-        if len(list21_1) != 0:
-            all_list2=list(itertools.product(*items2))
-        else:
-            all_list2=[]
-        if len(list33_1) != 0:
-            all_list3=list(itertools.product(*items3))
-        else:
-            all_list3=[]
-        all_list_god=all_list1+all_list2+all_list3
-        del all_list1,all_list2,all_list3
-        all_list_num=len(all_list_god)+len(all_list)
-        all_list_list.append([all_list,all_list_god,all_list_num])
-    if max(set_max_list2) < 2:
-        items0=[list11_0,list12,list13,list14,list15,[df21],[df22],[df23],list31,list32,list33_0,list40_0]
-        items1=[list11_1,list12,list13,list14,list15,[df21],[df22],[df23],list31,list32,list33_0,list40_0]
-        items2=[]
-        items3=[list11_0,list12,list13,list14,list15,[df21],[df22],[df23],list31,list32,list33_1,list40_0]
-        all_list=list(itertools.product(*items0))
-        if len(list11_1) != 0:
-            all_list1=list(itertools.product(*items1))
-        else:
-            all_list1=[]
-        all_list2=[]
-        if len(list33_1) != 0:
-            all_list3=list(itertools.product(*items3))
-        else:
-            all_list3=[]
-        all_list_god=all_list1+all_list2+all_list3
-        del all_list1,all_list2,all_list3
-        all_list_num=len(all_list_god)+len(all_list)
-        all_list_list.append([all_list,all_list_god,all_list_num])
-    if max(set_max_list3) < 2:
-        items0=[list11_0,list12,list13,list14,list15,list21_0,list22,list23,[df31],[df32],[df33],list40_0]
-        items1=[list11_1,list12,list13,list14,list15,list21_0,list22,list23,[df31],[df32],[df33],list40_0]
-        items2=[list11_0,list12,list13,list14,list15,list21_1,list22,list23,[df31],[df32],[df33],list40_0]
-        items3=[]
-        all_list=list(itertools.product(*items0))
-        if len(list11_1) != 0:
-            all_list1=list(itertools.product(*items1))
-        else:
-            all_list1=[]
-        if len(list21_1) != 0:
-            all_list2=list(itertools.product(*items2))
-        else:
-            all_list2=[]
-        all_list3=[]
-        all_list_god=all_list1+all_list2+all_list3
-        del all_list1,all_list2,all_list3
-        all_list_num=len(all_list_god)+len(all_list)
-        all_list_list.append([all_list,all_list_god,all_list_num])
-    if max(set_max_list2) < 2 and max(set_max_list3) < 2:
-        items0=[list11_0,list12,list13,list14,list15,[df21],[df22],[df23],[df31],[df32],[df33],list40_0]
-        items1=[list11_1,list12,list13,list14,list15,[df21],[df22],[df23],[df31],[df32],[df33],list40_0]
-        items2=[]
-        items3=[]
-        all_list=list(itertools.product(*items0))
-        if len(list11_1) != 0:
-            all_list1=list(itertools.product(*items1))
-        else:
-            all_list1=[]
-        all_list2=[]
-        all_list3=[]
-        all_list_god=all_list1+all_list2+all_list3
-        del all_list1,all_list2,all_list3
-        all_list_num=len(all_list_god)+len(all_list)
-        all_list_list.append([all_list,all_list_god,all_list_num])
-
-##메타몽모드##
-##########################################################################################################################
     
+        global default_legend,default_chawon,default_old
+        if default_legend==1:
+            df11='11360';df12='12360';df13='13360';df14='14360';df15='15360'
+            df21='21370';df22='22370';df23='23370';df31='31380';df32='32380';df33='33380'
+        elif default_chawon==1:
+            df11='11440';df12='12440';df13='13440';df14='14440';df15='15440'
+            df21='21450';df22='22450';df23='23450';df31='31460';df32='32460';df33='33460'
+        elif default_old==1:
+            df11='11470';df12='12470';df13='13470';df14='14470';df15='15470'
+            df21='21480';df22='22480';df23='23480';df31='31490';df32='32490';df33='33490'
 
-    if select_perfect.get() == '메타몽모드(느림)' or select_perfect.get() == '메타몽모드(중간)':
-        showsta(text="메타몽 계산중...")
-        metamong=1
-        ask_meta=tkinter.messagebox.askquestion('시작하기 앞서...',"주의: 본 기능은 참고용입니다.\n\n어느정도 세트가 완성될 각이 있어야 정상작동합니다.\n또한 현재 체크된 에픽 중 사용중인or사용했던 메타몽 에픽이 전부 체크 해제되있는지 확인하십시오. 안되있으면 취소를 누르고 다시 진행해주세요.")
-        if ask_meta == 'no':
-            showsta(text='중지됨')
-            return
-        full_list=[]
-        semifull_list=[]
-        semigod_list=[]
-        bang_danpum_list=[];god_danpum_list=[]
-        bang_eset_list=[];god_eset_list=[]
-        bang_samset_list=[];god_samset_list=[]
-        notem_list=[]
-        
-        
-        for i in range(1,16):
-            if set_num_dict[str(i+100)]==5:
-                full_list.append(str(i+100)) #
-        for i in range(16,36):
-            if set_num_dict[str(i+100)]==3:
-                full_list.append(str(i+100)) #
-        for i in range(1,16):
-            if set_num_dict2[str(i+100)]==4:
-                semifull_list.append(str(i+100)) ##
-            elif set_num_dict[str(i+100)]==4:
-                semigod_list.append(str(i+100)) ##
-        for i in range(16,36):
-            if set_num_dict2[str(i+100)]==2:
-                semifull_list.append(str(i+100)) ##
-            elif set_num_dict[str(i+100)]==2:
-                semigod_list.append(str(i+100)) ##
-        for i in range(1,16):
-            if set_num_dict[str(i+100)]==1:
-                bang_danpum_list.append(str(i+100)) ###
-        for i in range(1,16):
-            if set_num_dict[str(i+100)]==2:
-                bang_eset_list.append(str(i+100)) ###
-        for i in range(1,16):
-            if set_num_dict[str(i+100)]==3 or set_num_dict[str(i+100)]==4:
-                bang_samset_list.append(str(i+100)) ###
-        for i in range(1,36):
-            if set_num_dict[str(i+100)]==0:
-                notem_list.append(str(i+100)) ####
-        all_bang_dict={}
-        for i2 in range(1,16):
-            i=str(i2+100)
-            set_array=np.array([0,0,0,0,0])
-            for j in [list11,list12,list13,list14,list15]:
-                if j.count(j[0][0:2]+i[1:3]+'0')+j.count(j[0][0:2]+i[1:3]+'1')!=0:
-                    set_array[int(j[0][1:2])-1]=1
-            all_bang_dict[i]=set_array
-
-        if len(semifull_list) != 0:  ## 경우1: 영고해제
-            for metamong_full in semifull_list:
-                tlist11=list11;tlist12=list12;tlist13=list13;tlist14=list14;tlist15=list15;tlist11_0=list11_0;tlist11_1=list11_1
-                tlist21=list21;tlist22=list22;tlist23=list23;tlist21_0=list21_0;tlist21_1=list21_1
-                tlist31=list31;tlist32=list32;tlist33=list33;tlist33_0=list33_0;tlist33_1=list33_1
-                meta_set_num=metamong_full[1:3]
-                if int(meta_set_num)<15:
-                    tlist11=[];tlist11_0=[]
-                    tlist11.append('11'+meta_set_num+'0')
-                    tlist11_0.append('11'+meta_set_num+'0')
-                    tlist12=[];tlist12.append('12'+meta_set_num+'0')
-                    tlist13=[];tlist13.append('13'+meta_set_num+'0')
-                    tlist14=[];tlist14.append('14'+meta_set_num+'0')
-                    tlist15=[];tlist15.append('15'+meta_set_num+'0')
-                elif 15<int(meta_set_num)<19:
-                    tlist21=[];tlist21_0=[]
-                    tlist21.append('21'+meta_set_num+'0')
-                    tlist21_0.append('21'+meta_set_num+'0')
-                    tlist22=[];tlist22.append('22'+meta_set_num+'0')
-                    tlist23=[];tlist23.append('23'+meta_set_num+'0')
-                elif 19<int(meta_set_num)<23:
-                    tlist31=[];tlist31.append('31'+meta_set_num+'0')
-                    tlist32=[];tlist32.append('32'+meta_set_num+'0')
-                    tlist33=[];tlist33_0=[]
-                    tlist33.append('33'+meta_set_num+'0')
-                    tlist33_0.append('33'+meta_set_num+'0')
-                elif 23<int(meta_set_num)<28:
-                    tlist12=[];tlist12.append('12'+meta_set_num+'0')
-                    tlist21=[];tlist21_0=[]
-                    tlist21.append('21'+meta_set_num+'0')
-                    tlist21_0.append('21'+meta_set_num+'0')
-                    tlist32=[];tlist32.append('32'+meta_set_num+'0')
-                elif 27<int(meta_set_num)<32:
-                    tlist11=[];tlist11_0=[]
-                    tlist11.append('11'+meta_set_num+'0')
-                    tlist11_0.append('11'+meta_set_num+'0')
-                    tlist22=[];tlist22.append('22'+meta_set_num+'0')
-                    tlist31=[];tlist31.append('31'+meta_set_num+'0')
-                elif 31<int(meta_set_num)<36:
-                    tlist15=[];tlist15.append('15'+meta_set_num+'0')
-                    tlist23=[];tlist23.append('23'+meta_set_num+'0')
-                    tlist33=[];tlist33_0=[]
-                    tlist33.append('33'+meta_set_num+'0')
-                    tlist33_0.append('33'+meta_set_num+'0')
-
-                items0=[tlist11_0,tlist12,tlist13,tlist14,tlist15,tlist21_0,tlist22,tlist23,tlist31,tlist32,tlist33_0,list40_0]
-                items1=[tlist11_1,tlist12,tlist13,tlist14,tlist15,tlist21_0,tlist22,tlist23,tlist31,tlist32,tlist33_0,list40_0]
-                items2=[tlist11_0,tlist12,tlist13,tlist14,tlist15,tlist21_1,tlist22,tlist23,tlist31,tlist32,tlist33_0,list40_0]
-                items3=[tlist11_0,tlist12,tlist13,tlist14,tlist15,tlist21_0,tlist22,tlist23,tlist31,tlist32,tlist33_1,list40_0]
-                all_list=list(itertools.product(*items0))
-                if len(list11_1) != 0:
-                    all_list1=list(itertools.product(*items1))
-                else:
-                    all_list1=[]
-                if len(list21_1) != 0:
-                    all_list2=list(itertools.product(*items2))
-                else:
-                    all_list2=[]
-                if len(list33_1) != 0:
-                    all_list3=list(itertools.product(*items3))
-                else:
-                    all_list3=[]
-                all_list_god=all_list1+all_list2+all_list3
-                del all_list1,all_list2,all_list3
-                all_list_num=len(all_list_god)+len(all_list)
-                all_list_list.append([all_list,all_list_god,all_list_num])
-
-        if len(semigod_list) != 0:  ## 경우1-1: 신화영고해제
-            for metamong_full in semigod_list:
-                tlist11=list11;tlist12=list12;tlist13=list13;tlist14=list14;tlist15=list15;tlist11_0=list11_0;tlist11_1=list11_1
-                tlist21=list21;tlist22=list22;tlist23=list23;tlist21_0=list21_0;tlist21_1=list21_1
-                tlist31=list31;tlist32=list32;tlist33=list33;tlist33_0=list33_0;tlist33_1=list33_1
-                meta_set_num=metamong_full[1:3]
-                if int(meta_set_num)<15:
-                    tlist11=[];tlist11_1=[]
-                    tlist11.append('11'+meta_set_num+'1')
-                    tlist11_1.append('11'+meta_set_num+'1')
-                    tlist12=[];tlist12.append('12'+meta_set_num+'0')
-                    tlist13=[];tlist13.append('13'+meta_set_num+'0')
-                    tlist14=[];tlist14.append('14'+meta_set_num+'0')
-                    tlist15=[];tlist15.append('15'+meta_set_num+'0')
-                elif 15<int(meta_set_num)<19:
-                    tlist21=[];tlist21_1=[]
-                    tlist21.append('21'+meta_set_num+'1')
-                    tlist21_1.append('21'+meta_set_num+'1')
-                    tlist22=[];tlist22.append('22'+meta_set_num+'0')
-                    tlist23=[];tlist23.append('23'+meta_set_num+'0')
-                elif 19<int(meta_set_num)<23:
-                    tlist31=[];tlist31.append('31'+meta_set_num+'0')
-                    tlist32=[];tlist32.append('32'+meta_set_num+'0')
-                    tlist33=[];tlist33_1=[]
-                    tlist33.append('33'+meta_set_num+'1')
-                    tlist33_1.append('33'+meta_set_num+'1')
-                elif 23<int(meta_set_num)<28:
-                    tlist12=[];tlist12.append('12'+meta_set_num+'0')
-                    tlist21=[];tlist21_1=[]
-                    tlist21.append('21'+meta_set_num+'1')
-                    tlist21_1.append('21'+meta_set_num+'1')
-                    tlist32=[];tlist32.append('32'+meta_set_num+'0')
-                elif 27<int(meta_set_num)<32:
-                    tlist11=[];tlist11_1=[]
-                    tlist11.append('11'+meta_set_num+'1')
-                    tlist11_1.append('11'+meta_set_num+'1')
-                    tlist22=[];tlist22.append('22'+meta_set_num+'0')
-                    tlist31=[];tlist31.append('31'+meta_set_num+'0')
-                elif 31<int(meta_set_num)<36:
-                    tlist15=[];tlist15.append('15'+meta_set_num+'0')
-                    tlist23=[];tlist23.append('23'+meta_set_num+'0')
-                    tlist33=[];tlist33_1=[]
-                    tlist33.append('33'+meta_set_num+'1')
-                    tlist33_1.append('33'+meta_set_num+'1')
-
-                items0=[tlist11_0,tlist12,tlist13,tlist14,tlist15,tlist21_0,tlist22,tlist23,tlist31,tlist32,tlist33_0,list40_0]
-                items1=[tlist11_1,tlist12,tlist13,tlist14,tlist15,tlist21_0,tlist22,tlist23,tlist31,tlist32,tlist33_0,list40_0]
-                items2=[tlist11_0,tlist12,tlist13,tlist14,tlist15,tlist21_1,tlist22,tlist23,tlist31,tlist32,tlist33_0,list40_0]
-                items3=[tlist11_0,tlist12,tlist13,tlist14,tlist15,tlist21_0,tlist22,tlist23,tlist31,tlist32,tlist33_1,list40_0]
-                all_list=list(itertools.product(*items0))
-                if len(list11_1) != 0:
-                    all_list1=list(itertools.product(*items1))
-                else:
-                    all_list1=[]
-                if len(list21_1) != 0:
-                    all_list2=list(itertools.product(*items2))
-                else:
-                    all_list2=[]
-                if len(list33_1) != 0:
-                    all_list3=list(itertools.product(*items3))
-                else:
-                    all_list3=[]
-                all_list_god=all_list1+all_list2+all_list3
-                del all_list1,all_list2,all_list3
-                all_list_num=len(all_list_god)+len(all_list)
-                all_list_list.append([all_list,all_list_god,all_list_num])
-        
-        if len(bang_danpum_list)!=0  :  ## 경우2: 방어구 단일+3셋
-            for i in bang_danpum_list:
-                tlist11=list11;tlist12=list12;tlist13=list13;tlist14=list14;tlist15=list15;tlist11_0=list11_0;tlist11_1=list11_1
-                array_now=all_bang_dict.get(i)
-                for j in range(101,116):   
-                    if str(j) != i:
-                        array_j=all_bang_dict.get(str(j))
-                        sum_array=array_now+array_j
-                        keep_go=0
-                        if array_j.tolist().count(1)==3 and sum_array.tolist().count(2)==0:
-                            keep_go=1
-                        elif array_j.tolist().count(1)==4 and sum_array.tolist().count(0)==0:
-                            keep_go=2
-                        elif array_j.tolist().count(1)==4 and sum_array.tolist().count(0)!=0:
-                            keep_go=1
-                        elif array_j.tolist().count(1)==5:
-                            keep_go=2
-                            
-                        if keep_go==1:
-                            tlist12=[];tlist13=[];tlist14=[];tlist15=[];tlist11_0=[];tlist11_1=list11_1
-                            if array_now[0]==1:
-                                if list11_0.count('11'+i[1:3]+'0')==1:
-                                    tlist11_0.append('11'+i[1:3]+'0')
-                            if array_now[1]==1:
-                                tlist12.append('12'+i[1:3]+'0')
-                            if array_now[2]==1:
-                                tlist13.append('13'+i[1:3]+'0')
-                            if array_now[3]==1:
-                                tlist14.append('14'+i[1:3]+'0')
-                            if array_now[4]==1:
-                                tlist15.append('15'+i[1:3]+'0') ##
-                            if array_j[0]==1 and array_now[0]==0:
-                                if list11_0.count('11'+str(j)[1:3]+'0')==1:
-                                    tlist11_0.append('11'+str(j)[1:3]+'0')
-                            if array_j[1]==1 and array_now[1]==0:
-                                tlist12.append('12'+str(j)[1:3]+'0')
-                            if array_j[2]==1 and array_now[2]==0:
-                                tlist13.append('13'+str(j)[1:3]+'0')
-                            if array_j[3]==1 and array_now[3]==0:
-                                tlist14.append('14'+str(j)[1:3]+'0')
-                            if array_j[4]==1 and array_now[4]==0:
-                                tlist15.append('15'+str(j)[1:3]+'0') ##
-                            if i!='115':
-                                if sum_array[0]==0:
-                                    tlist11_0.append('11'+i[1:3]+'0')
-                                elif sum_array[1]==0:
-                                    tlist12.append('12'+i[1:3]+'0')
-                                elif sum_array[2]==0:
-                                    tlist13.append('13'+i[1:3]+'0')
-                                elif sum_array[3]==0:
-                                    tlist14.append('14'+i[1:3]+'0')
-                                elif sum_array[4]==0:
-                                    tlist15.append('15'+i[1:3]+'0') ##
-
-                            items0=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_0,list40_0]
-                            items1=[list11_1,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_0,list40_0]
-                            items2=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_1,list22,list23,list31,list32,list33_0,list40_0]
-                            items3=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_1,list40_0]
-                            all_list=list(itertools.product(*items0))
-                            if len(list11_1) != 0:
-                                all_list1=list(itertools.product(*items1))
-                            else:
-                                all_list1=[]
-                            if len(list21_1) != 0:
-                                all_list2=list(itertools.product(*items2))
-                            else:
-                                all_list2=[]
-                            if len(list33_1) != 0:
-                                all_list3=list(itertools.product(*items3))
-                            else:
-                                all_list3=[]
-                            all_list_god=all_list1+all_list2+all_list3
-                            del all_list1,all_list2,all_list3
-                            all_list_num=len(all_list_god)+len(all_list)
-                            all_list_list.append([all_list,all_list_god,all_list_num])
-
-                        if keep_go==2:
-                            for k in range(0,5):
-                                tlist12=[];tlist13=[];tlist14=[];tlist15=[];tlist11_0=[];tlist11_1=list11_1
-                                if array_now[k]==0:
-                                    if array_now[0]==1:
-                                        if list11_0.count('11'+i[1:3]+'0')==1:
-                                            tlist11_0.append('11'+i[1:3]+'0')
-                                    if array_now[1]==1:
-                                        tlist12.append('12'+i[1:3]+'0')
-                                    if array_now[2]==1:
-                                        tlist13.append('13'+i[1:3]+'0')
-                                    if array_now[3]==1:
-                                        tlist14.append('14'+i[1:3]+'0')
-                                    if array_now[4]==1:
-                                        tlist15.append('15'+i[1:3]+'0')
-                                    if i!='115':
-                                        if k==0:
-                                            tlist11_0.append('11'+i[1:3]+'0')
-                                        elif k==1:
-                                            tlist12.append('12'+i[1:3]+'0')
-                                        elif k==2:
-                                            tlist13.append('13'+i[1:3]+'0')
-                                        elif k==3:
-                                            tlist14.append('14'+i[1:3]+'0')
-                                        elif k==4:
-                                            tlist15.append('15'+i[1:3]+'0')
-                                        if len(tlist11_0)==0:
-                                            if list11_0.count('11'+str(j)[1:3]+'0')==1:
-                                                tlist11_0.append('11'+str(j)[1:3]+'0')
-                                        if len(tlist12)==0:
-                                            tlist12.append('12'+str(j)[1:3]+'0')
-                                        if len(tlist13)==0:
-                                            tlist13.append('13'+str(j)[1:3]+'0')
-                                        if len(tlist14)==0:
-                                            tlist14.append('14'+str(j)[1:3]+'0')
-                                        if len(tlist15)==0:
-                                            tlist15.append('15'+str(j)[1:3]+'0')
-                                        
-                                    items0=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_0,list40_0]
-                                    items1=[list11_1,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_0,list40_0]
-                                    items2=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_1,list22,list23,list31,list32,list33_0,list40_0]
-                                    items3=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_1,list40_0]
-                                    all_list=list(itertools.product(*items0))
-                                    if len(list11_1) != 0:
-                                        all_list1=list(itertools.product(*items1))
-                                    else:
-                                        all_list1=[]
-                                    if len(list21_1) != 0:
-                                        all_list2=list(itertools.product(*items2))
-                                    else:
-                                        all_list2=[]
-                                    if len(list33_1) != 0:
-                                        all_list3=list(itertools.product(*items3))
-                                    else:
-                                        all_list3=[]
-                                    all_list_god=all_list1+all_list2+all_list3
-                                    del all_list1,all_list2,all_list3
-                                    all_list_num=len(all_list_god)+len(all_list)
-                                    all_list_list.append([all_list,all_list_god,all_list_num])
-
-        if len(bang_eset_list)!=0 : #경우3: 방어구2셋+2~5개
-            for i in bang_eset_list:
-                array_now=all_bang_dict.get(i)
-                for j in range(101,116):
-                    if str(j) != i:
-                        array_j=all_bang_dict.get(str(j))
-                        array_sum=array_now+array_j
-                        keep_go=0
-                        if array_j.tolist().count(1) >=2:
-                            if array_sum.tolist().count(0)==1:
-                                keep_go=1
-                            if array_sum.tolist().count(0)==0:
-                                keep_go=2
-                        if keep_go==1:
-                            tlist12=[];tlist13=[];tlist14=[];tlist15=[];tlist11_0=[];tlist11_1=list11_1
-                            if array_now[0]==1:
-                                if list11_0.count('11'+i[1:3]+'0')==1:
-                                    tlist11_0.append('11'+i[1:3]+'0')
-                            elif array_j[0]==1:
-                                if list11_0.count('11'+str(j)[1:3]+'0')==1:
-                                    tlist11_0.append('11'+str(j)[1:3]+'0')
-                            elif array_j[0]==0:
-                                if i!='115':
-                                    tlist11_0.append('11'+i[1:3]+'0')
-                                if array_j.tolist().count(1) >=3 and  str(j)!='115':
-                                    tlist11_0.append('11'+str(j)[1:3]+'0')
-                            if array_now[1]==1:
-                                tlist12.append('12'+i[1:3]+'0')
-                            elif array_j[1]==1:
-                                tlist12.append('12'+str(j)[1:3]+'0')
-                            elif array_j[1]==0:
-                                if i!='115':
-                                    tlist12.append('12'+i[1:3]+'0')
-                                if array_j.tolist().count(1) >=3 and  str(j)!='115':
-                                    tlist12.append('12'+str(j)[1:3]+'0')
-                            if array_now[2]==1:
-                                tlist13.append('13'+i[1:3]+'0')
-                            elif array_j[2]==1:
-                                tlist13.append('13'+str(j)[1:3]+'0')
-                            elif array_j[2]==0:
-                                if i!='115':
-                                    tlist13.append('13'+i[1:3]+'0')
-                                if array_j.tolist().count(1) >=3 and  str(j)!='115':
-                                    tlist13.append('13'+str(j)[1:3]+'0')
-                            if array_now[3]==1:
-                                tlist14.append('14'+i[1:3]+'0')
-                            elif array_j[3]==1:
-                                tlist14.append('14'+str(j)[1:3]+'0')
-                            elif array_j[3]==0:
-                                if i!='115':
-                                    tlist14.append('14'+i[1:3]+'0')
-                                if array_j.tolist().count(1) >=3 and  str(j)!='115':
-                                    tlist14.append('14'+str(j)[1:3]+'0')
-                            if array_now[4]==1:
-                                tlist15.append('15'+i[1:3]+'0') ##
-                            elif array_j[4]==1:
-                                tlist15.append('15'+str(j)[1:3]+'0')
-                            elif array_j[4]==0:
-                                if i!='115':
-                                    tlist15.append('15'+i[1:3]+'0')
-                                if array_j.tolist().count(1) >=3 and  str(j)!='115':
-                                    tlist15.append('15'+str(j)[1:3]+'0')
-                                
-                            items0=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_0,list40_0]
-                            items1=[list11_1,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_0,list40_0]
-                            items2=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_1,list22,list23,list31,list32,list33_0,list40_0]
-                            items3=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_1,list40_0]
-                            all_list=list(itertools.product(*items0))
-                            if len(list11_1) != 0:
-                                all_list1=list(itertools.product(*items1))
-                            else:
-                                all_list1=[]
-                            if len(list21_1) != 0:
-                                all_list2=list(itertools.product(*items2))
-                            else:
-                                all_list2=[]
-                            if len(list33_1) != 0:
-                                all_list3=list(itertools.product(*items3))
-                            else:
-                                all_list3=[]
-                            all_list_god=all_list1+all_list2+all_list3
-                            del all_list1,all_list2,all_list3
-                            all_list_num=len(all_list_god)+len(all_list)
-                            all_list_list.append([all_list,all_list_god,all_list_num])
-                            
-                        if keep_go==2:
-                            for k in range(0,5):
-                                tlist12=[];tlist13=[];tlist14=[];tlist15=[];tlist11_0=[];tlist11_1=list11_1
-                                if array_now[k]==0:
-                                    if array_now[0]==1:
-                                        if list11_0.count('11'+i[1:3]+'0')==1:
-                                            tlist11_0.append('11'+i[1:3]+'0')
-                                    if array_now[1]==1:
-                                        tlist12.append('12'+i[1:3]+'0')
-                                    if array_now[2]==1:
-                                        tlist13.append('13'+i[1:3]+'0')
-                                    if array_now[3]==1:
-                                        tlist14.append('14'+i[1:3]+'0')
-                                    if array_now[4]==1:
-                                        tlist15.append('15'+i[1:3]+'0')
-                                    if i!='115':
-                                        if k==0:
-                                            tlist11_0.append('11'+i[1:3]+'0')
-                                        elif k==1:
-                                            tlist12.append('12'+i[1:3]+'0')
-                                        elif k==2:
-                                            tlist13.append('13'+i[1:3]+'0')
-                                        elif k==3:
-                                            tlist14.append('14'+i[1:3]+'0')
-                                        elif k==4:
-                                            tlist15.append('15'+i[1:3]+'0')
-                                        if len(tlist11_0)==0:
-                                            if list11_0.count('11'+str(j)[1:3]+'0')==1:
-                                                tlist11_0.append('11'+str(j)[1:3]+'0')
-                                        if len(tlist12)==0:
-                                            tlist12.append('12'+str(j)[1:3]+'0')
-                                        if len(tlist13)==0:
-                                            tlist13.append('13'+str(j)[1:3]+'0')
-                                        if len(tlist14)==0:
-                                            tlist14.append('14'+str(j)[1:3]+'0')
-                                        if len(tlist15)==0:
-                                            tlist15.append('15'+str(j)[1:3]+'0')
-
-                                    items0=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_0,list40_0]
-                                    items1=[list11_1,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_0,list40_0]
-                                    items2=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_1,list22,list23,list31,list32,list33_0,list40_0]
-                                    items3=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_1,list40_0]
-                                    all_list=list(itertools.product(*items0))
-                                    if len(list11_1) != 0:
-                                        all_list1=list(itertools.product(*items1))
-                                    else:
-                                        all_list1=[]
-                                    if len(list21_1) != 0:
-                                        all_list2=list(itertools.product(*items2))
-                                    else:
-                                        all_list2=[]
-                                    if len(list33_1) != 0:
-                                        all_list3=list(itertools.product(*items3))
-                                    else:
-                                        all_list3=[]
-                                    all_list_god=all_list1+all_list2+all_list3
-                                    del all_list1,all_list2,all_list3
-                                    all_list_num=len(all_list_god)+len(all_list)
-                                    all_list_list.append([all_list,all_list_god,all_list_num])
-
-
-        if len(bang_samset_list)!=0 : #경우4: 방어구3or4셋+3or4~5개
-            for i in bang_samset_list:
-                temp_number=set_num_dict[i]
-                array_now=all_bang_dict.get(i)
-                for j in range(101,116):
-                    if str(j) != i:
-                        array_j=all_bang_dict.get(str(j))
-                        array_sum=array_now+array_j
-                        keep_go=0
-                        if array_j.tolist().count(1) >=temp_number:
-                            if array_sum.tolist().count(0)==1:
-                                keep_go=1
-                            if array_sum.tolist().count(0)==0:
-                                keep_go=2
-                        if keep_go==1:
-                            tlist12=[];tlist13=[];tlist14=[];tlist15=[];tlist11_0=[];tlist11_1=list11_1
-                            if array_now[0]==1:
-                                if list11_0.count('11'+i[1:3]+'0')==1:
-                                    tlist11_0.append('11'+i[1:3]+'0')
-                            if array_now[1]==1:
-                                tlist12.append('12'+i[1:3]+'0')
-                            if array_now[2]==1:
-                                tlist13.append('13'+i[1:3]+'0')
-                            if array_now[3]==1:
-                                tlist14.append('14'+i[1:3]+'0')
-                            if array_now[4]==1:
-                                tlist15.append('15'+i[1:3]+'0')
-                            if array_j[0]==1:
-                                if list11_0.count('11'+str(j)[1:3]+'0')==1:
-                                    tlist11_0.append('11'+str(j)[1:3]+'0')
-                            if array_j[1]==1:
-                                tlist12.append('12'+str(j)[1:3]+'0')
-                            if array_j[2]==1:
-                                tlist13.append('13'+str(j)[1:3]+'0')
-                            if array_j[3]==1:
-                                tlist14.append('14'+str(j)[1:3]+'0')
-                            if array_j[4]==1:
-                                tlist15.append('15'+str(j)[1:3]+'0')
-                            
-                            if i !='115':
-                                if array_sum[0]==0:
-                                    tlist11_0.append('11'+i[1:3]+'0')
-                                elif array_sum[1]==0:
-                                    tlist12.append('12'+i[1:3]+'0')
-                                elif array_sum[2]==0:
-                                    tlist13.append('13'+i[1:3]+'0')
-                                elif array_sum[3]==0:
-                                    tlist14.append('14'+i[1:3]+'0')
-                                elif array_sum[4]==0:
-                                    tlist15.append('15'+i[1:3]+'0') ##
-
-                            items0=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_0,list40_0]
-                            items1=[list11_1,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_0,list40_0]
-                            items2=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_1,list22,list23,list31,list32,list33_0,list40_0]
-                            items3=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_1,list40_0]
-                            all_list=list(itertools.product(*items0))
-                            if len(list11_1) != 0:
-                                all_list1=list(itertools.product(*items1))
-                            else:
-                                all_list1=[]
-                            if len(list21_1) != 0:
-                                all_list2=list(itertools.product(*items2))
-                            else:
-                                all_list2=[]
-                            if len(list33_1) != 0:
-                                all_list3=list(itertools.product(*items3))
-                            else:
-                                all_list3=[]
-                            all_list_god=all_list1+all_list2+all_list3
-                            del all_list1,all_list2,all_list3
-                            all_list_num=len(all_list_god)+len(all_list)
-                            all_list_list.append([all_list,all_list_god,all_list_num])
-                            
-                        if keep_go==2:
-                            for k in range(0,5):
-                                tlist12=[];tlist13=[];tlist14=[];tlist15=[];tlist11_0=[];tlist11_1=list11_1
-                                if array_now[k]==0:
-                                    if array_now[0]==1:
-                                        if list11_0.count('11'+i[1:3]+'0')==1:
-                                            tlist11_0.append('11'+i[1:3]+'0')
-                                    if array_now[1]==1:
-                                        tlist12.append('12'+i[1:3]+'0')
-                                    if array_now[2]==1:
-                                        tlist13.append('13'+i[1:3]+'0')
-                                    if array_now[3]==1:
-                                        tlist14.append('14'+i[1:3]+'0')
-                                    if array_now[4]==1:
-                                        tlist15.append('15'+i[1:3]+'0')
-                                    if array_j[0]==1:
-                                        if list11_0.count('11'+str(j)[1:3]+'0')==1:
-                                            tlist11_0.append('11'+str(j)[1:3]+'0')
-                                    if array_j[1]==1:
-                                        tlist12.append('12'+str(j)[1:3]+'0')
-                                    if array_j[2]==1:
-                                        tlist13.append('13'+str(j)[1:3]+'0')
-                                    if array_j[3]==1:
-                                        tlist14.append('14'+str(j)[1:3]+'0')
-                                    if array_j[4]==1:
-                                        tlist15.append('15'+str(j)[1:3]+'0')
-                                    if i!='115':
-                                        if k==0:
-                                            tlist11_0.append('11'+i[1:3]+'0')
-                                        elif k==1:
-                                            tlist12.append('12'+i[1:3]+'0')
-                                        elif k==2:
-                                            tlist13.append('13'+i[1:3]+'0')
-                                        elif k==3:
-                                            tlist14.append('14'+i[1:3]+'0')
-                                        elif k==4:
-                                            tlist15.append('15'+i[1:3]+'0')
-
-                                    items0=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_0,list40_0]
-                                    items1=[list11_1,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_0,list40_0]
-                                    items2=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_1,list22,list23,list31,list32,list33_0,list40_0]
-                                    items3=[tlist11_0,tlist12,tlist13,tlist14,tlist15,list21_0,list22,list23,list31,list32,list33_1,list40_0]
-                                    all_list=list(itertools.product(*items0))
-                                    if len(list11_1) != 0:
-                                        all_list1=list(itertools.product(*items1))
-                                    else:
-                                        all_list1=[]
-                                    if len(list21_1) != 0:
-                                        all_list2=list(itertools.product(*items2))
-                                    else:
-                                        all_list2=[]
-                                    if len(list33_1) != 0:
-                                        all_list3=list(itertools.product(*items3))
-                                    else:
-                                        all_list3=[]
-                                    all_list_god=all_list1+all_list2+all_list3
-                                    del all_list1,all_list2,all_list3
-                                    all_list_num=len(all_list_god)+len(all_list)
-                                    all_list_list.append([all_list,all_list_god,all_list_num])
-        setnum_ha=[0]
-        setnum_sang=[0]
-        setnum_sin=[0]
-        keep_go_dict={}
-
-        for i in range(24,28):
-            setnum_ha.append(set_num_dict[str(i+100)])
-        for i in range(28,32):
-            setnum_sang.append(set_num_dict[str(i+100)])
-        for i in range(32,36):
-            setnum_sin.append(set_num_dict[str(i+100)])
-        for i in range(101,115):
-            temp_list=all_bang_dict[str(i)].tolist()
-            if temp_list[2]==1 and temp_list[3]==0:
-                keep_go_dict[str(i)]=1  ## 벨트x
-            if temp_list[2]==0 and temp_list[3]==1:
-                keep_go_dict[str(i)]=2  ## 어깨x
-            if temp_list[2]==1 and temp_list[3]==1:
-                keep_go_dict[str(i)]=3  ## 변형3332 (변형부위x)
-
-        tlist11_0=[];tlist12=[];tlist13=[];tlist14=[];tlist15=[];
-        tlist21_0=[];tlist22=[];tlist23=[];
-        tlist31=[];tlist32=[];tlist33_0=[];
-        list_all=[]
-        hapal=0;sanmop=0;sinban=0
-        for i in range(124,136):
-            if set_num_dict[str(i)]==3:
-                if i < 128:
-                    hapal=1
-                elif i < 132:
-                    sanmop=1
-                elif i < 136:
-                    sinban=1
-                
-        if hapal==1:
-            list_all=list_all+[[list12,tlist12],[list21_0,tlist21_0],[list32,tlist32]]
-        if sanmop==1:
-            list_all=list_all+[[list11_0,tlist11_0],[list22,tlist22],[list31,tlist31]]
-        if sinban==1:
-            list_all=list_all+[[list15,tlist15],[list23,tlist23],[list33_0,tlist33_0]]
-        
-        for i in list_all:
-            for j in i[0]:
-                if int(j[2:4])>23:
-                    i[1].append(j)
-        
-                    
-        tlist_all=[[list12,tlist12],[list21_0,tlist21_0],[list32,tlist32],[list11_0,tlist11_0],[list22,tlist22],[list31,tlist31],[list15,tlist15],[list23,tlist23],[list33_0,tlist33_0]]
-
-
-        if len(tlist11_0)==0:
-            tlist11_0=list11_0
-        if len(tlist12)==0:
-            tlist12=list12
-        if len(tlist13)==0:
-            tlist13=list13
-        if len(tlist14)==0:
-            tlist14=list14
-        if len(tlist15)==0:
-            tlist15=list15
-        if len(tlist21_0)==0:
-            tlist21_0=list21_0
-        if len(tlist22)==0:
-            tlist22=list22
-        if len(tlist23)==0:
-            tlist23=list23
-        if len(tlist31)==0:
-            tlist31=list31
-        if len(tlist32)==0:
-            tlist32=list32
-        if len(tlist33_0)==0:
-            tlist33_0=list33_0
-
-        
-        for i in list(keep_go_dict.keys()):
-            plist11_0=tlist11_0;plist12=tlist12;plist15=tlist15
-            plist21_0=tlist21_0;plist22=tlist22;plist23=tlist23
-            plist33_0=tlist33_0;plist31=tlist31;plist32=tlist32
+        if len(list11_0)==0:
+            list11.append(df11);list12.append(df12);list13.append(df13);list14.append(df14);list15.append(df15);list11_0.append(df11)
+        elif len(list12)==0:
+            list11.append(df11);list12.append(df12);list13.append(df13);list14.append(df14);list15.append(df15);list11_0.append(df11)
+        elif len(list13)==0:
+            list11.append(df11);list12.append(df12);list13.append(df13);list14.append(df14);list15.append(df15);list11_0.append(df11)
+        elif len(list14)==0:
+            list11.append(df11);list12.append(df12);list13.append(df13);list14.append(df14);list15.append(df15);list11_0.append(df11)
+        elif len(list15)==0:
+            list11.append(df11);list12.append(df12);list13.append(df13);list14.append(df14);list15.append(df15);list11_0.append(df11)
             
-            if keep_go_dict.get(i)==1 or keep_go_dict.get(i)==2:
-                if list11_0.count('11'+i[1:3]+'0') ==1 and plist11_0.count('11'+i[1:3]+'0') ==0:
-                    plist11_0.append('11'+i[1:3]+'0')
-                if list12.count('12'+i[1:3]+'0') ==1 and plist12.count('12'+i[1:3]+'0') ==0:
-                    plist12.append('12'+i[1:3]+'0')
-                plist13=['13'+i[1:3]+'0']
-                plist14=['14'+i[1:3]+'0']
-                if list15.count('15'+i[1:3]+'0') ==1 and plist15.count('15'+i[1:3]+'0') ==0:
-                    plist15.append('15'+i[1:3]+'0')
-                
-                items0=[plist11_0,plist12,plist13,plist14,plist15,plist21_0,plist22,plist23,plist31,plist32,plist33_0,list40_0]
-                items1=[list11_1,plist12,plist13,plist14,plist15,plist21_0,plist22,plist23,plist31,plist32,plist33_0,list40_0]
-                items2=[plist11_0,plist12,plist13,plist14,plist15,list21_1,plist22,plist23,plist31,plist32,plist33_0,list40_0]
-                items3=[plist11_0,plist12,plist13,plist14,plist15,plist21_0,plist22,plist23,plist31,plist32,list33_1,list40_0]
+        if len(list21_0)==0 and len(list22)==0:
+            list21.append(df21);list22.append(df22);list23.append(df23);list21_0.append(df21)
+        elif len(list22)==0 and len(list23)==0:
+            list21.append(df21);list22.append(df22);list23.append(df23);list21_0.append(df21)
+        elif len(list23)==0 and len(list21_0)==0:
+            list21.append(df21);list22.append(df22);list23.append(df23);list21_0.append(df21)
+            
+        if len(list31)==0 and len(list32)==0:
+            list31.append(df31);list32.append(df32);list33.append(df33);list33_0.append(df33)
+        elif len(list32)==0 and len(list33_0)==0:
+            list31.append(df31);list32.append(df32);list33.append(df33);list33_0.append(df33)
+        elif len(list33_0)==0 and len(list31)==0:
+            list31.append(df31);list32.append(df32);list33.append(df33);list33_0.append(df33)
+
+        if len(list21_0)==0:
+            list21.append(df21);list21_0.append(df21)
+        if len(list22)==0:
+            list22.append(df22)
+        if len(list23)==0:
+            list23.append(df23)
+        if len(list31)==0:
+            list31.append(df31)
+        if len(list32)==0:
+            list32.append(df32)
+        if len(list33_0)==0:
+            list33.append(df33);list33_0.append(df33)
+
+        set_max_list1=[] ##세트 갯수 리스트
+        set_max_list2=[]
+        set_max_list3=[]
+        set_max_list4=[]
+        set_max_list5=[]
+        set_max_list6=[]
+        for i in range(1,36):
+            if set_num_dict.get(str(i+100)) != None:
+                if i < 16:
+                    set_max_list1.append(set_num_dict.get(str(i+100)))
+                elif i < 20:
+                    set_max_list2.append(set_num_dict.get(str(i+100)))
+                elif i < 24:
+                    set_max_list3.append(set_num_dict.get(str(i+100)))
+                elif i < 28:
+                    set_max_list4.append(set_num_dict.get(str(i+100)))
+                elif i < 32:
+                    set_max_list5.append(set_num_dict.get(str(i+100)))
+                elif i < 36:
+                    set_max_list6.append(set_num_dict.get(str(i+100)))
+            else:
+                if i < 16:
+                    set_max_list1.append(0)
+                elif i < 20:
+                    set_max_list2.append(0)
+                elif i < 24:
+                    set_max_list3.append(0)
+                elif i < 28:
+                    set_max_list4.append(0)
+                elif i < 32:
+                    set_max_list5.append(0)
+                elif i < 36:
+                    set_max_list6.append(0)
+                    
+        if max(set_max_list1) < 2:
+            items0=[[df11],[df12],[df13],[df14],[df15],list21_0,list22,list23,list31,list32,list33_0,list40_0]
+            items1=[]
+            items2=[[df11],[df12],[df13],[df14],[df15],list21_1,list22,list23,list31,list32,list33_0,list40_0]
+            items3=[[df11],[df12],[df13],[df14],[df15],list21_0,list22,list23,list31,list32,list33_1,list40_0]
+            all_list=list(itertools.product(*items0))
+            all_list1=[]
+            if len(list21_1) != 0:
+                all_list2=list(itertools.product(*items2))
+            else:
+                all_list2=[]
+            if len(list33_1) != 0:
+                all_list3=list(itertools.product(*items3))
+            else:
+                all_list3=[]
+            all_list_god=all_list1+all_list2+all_list3
+            del all_list1,all_list2,all_list3
+            all_list_num=len(all_list_god)+len(all_list)
+            all_list_list.append([all_list,all_list_god,all_list_num])
+        if max(set_max_list2) < 2:
+            items0=[list11_0,list12,list13,list14,list15,[df21],[df22],[df23],list31,list32,list33_0,list40_0]
+            items1=[list11_1,list12,list13,list14,list15,[df21],[df22],[df23],list31,list32,list33_0,list40_0]
+            items2=[]
+            items3=[list11_0,list12,list13,list14,list15,[df21],[df22],[df23],list31,list32,list33_1,list40_0]
+            all_list=list(itertools.product(*items0))
+            if len(list11_1) != 0:
+                all_list1=list(itertools.product(*items1))
+            else:
+                all_list1=[]
+            all_list2=[]
+            if len(list33_1) != 0:
+                all_list3=list(itertools.product(*items3))
+            else:
+                all_list3=[]
+            all_list_god=all_list1+all_list2+all_list3
+            del all_list1,all_list2,all_list3
+            all_list_num=len(all_list_god)+len(all_list)
+            all_list_list.append([all_list,all_list_god,all_list_num])
+        if max(set_max_list3) < 2:
+            items0=[list11_0,list12,list13,list14,list15,list21_0,list22,list23,[df31],[df32],[df33],list40_0]
+            items1=[list11_1,list12,list13,list14,list15,list21_0,list22,list23,[df31],[df32],[df33],list40_0]
+            items2=[list11_0,list12,list13,list14,list15,list21_1,list22,list23,[df31],[df32],[df33],list40_0]
+            items3=[]
+            all_list=list(itertools.product(*items0))
+            if len(list11_1) != 0:
+                all_list1=list(itertools.product(*items1))
+            else:
+                all_list1=[]
+            if len(list21_1) != 0:
+                all_list2=list(itertools.product(*items2))
+            else:
+                all_list2=[]
+            all_list3=[]
+            all_list_god=all_list1+all_list2+all_list3
+            del all_list1,all_list2,all_list3
+            all_list_num=len(all_list_god)+len(all_list)
+            all_list_list.append([all_list,all_list_god,all_list_num])
+        if max(set_max_list2) < 2 and max(set_max_list3) < 2:
+            items0=[list11_0,list12,list13,list14,list15,[df21],[df22],[df23],[df31],[df32],[df33],list40_0]
+            items1=[list11_1,list12,list13,list14,list15,[df21],[df22],[df23],[df31],[df32],[df33],list40_0]
+            items2=[]
+            items3=[]
+            all_list=list(itertools.product(*items0))
+            if len(list11_1) != 0:
+                all_list1=list(itertools.product(*items1))
+            else:
+                all_list1=[]
+            all_list2=[]
+            all_list3=[]
+            all_list_god=all_list1+all_list2+all_list3
+            del all_list1,all_list2,all_list3
+            all_list_num=len(all_list_god)+len(all_list)
+            all_list_list.append([all_list,all_list_god,all_list_num])
+
+
+    ##세트산물 계산##                
+    #########################################################################################################################
+        know_set_list=['22400150','22400250','22400350','22400450','22400550','21400640','31400750',
+                       '31400850','31400950','31401050','31401150','32401240','32401340','32401440']
+        know_bang1_list=['22400150','22400250','22400350','22400450','22400550']
+        know_bang2_list=['31400750','31400850','31400950','31401050','31401150']
+        know_acc_list=['32401240','32401340','32401440']
+        know_jin_list=['11410100','11410110','11410120','11410130','11410140','11410150',
+                       '21420100','21420110','21420120','21420130','21420140','21420150',
+                       '33430100','33430110','33430120','33430130','33430140','33430150']
+
+        for i in know_set_list: ##경우1:산물 하나
+            if select_item['tg'+i]==1:
+                if int(i[4:6]) <6:
+                    items0=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_0,[i],list23,list31,list32,list33_0,list40_0]
+                    items1=[]
+                    items2=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_1,[i],list23,list31,list32,list33_0,list40_0]
+                    items3=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_0,[i],list23,list31,list32,list33_1,list40_0]
+                elif int(i[4:6])==6:
+                    items0=[list11_0,list12,list13,list14,list15,[i],list22,list23,['99990'],['99990'],['99990'],list40_0]
+                    items1=[list11_1,list12,list13,list14,list15,[i],list22,list23,['99990'],['99990'],['99990'],list40_0]
+                    items2=[]
+                    items3=[]
+                elif int(i[4:6]) <12:
+                    items0=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_0,list22,list23,[i],list32,list33_0,list40_0]
+                    items1=[]
+                    items2=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_1,list22,list23,[i],list32,list33_0,list40_0]
+                    items3=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_0,list22,list23,[i],list32,list33_1,list40_0]
+                elif int(i[4:6]) <15:
+                    items0=[list11_0,list12,list13,list14,list15,list31,[i],list33_0,['99990'],['99990'],['99990'],list40_0]
+                    items1=[list11_1,list12,list13,list14,list15,list31,[i],list33_0,['99990'],['99990'],['99990'],list40_0]
+                    items2=[]
+                    items3=[list11_0,list12,list13,list14,list15,list31,[i],list33_1,['99990'],['99990'],['99990'],list40_0]
                 all_list=list(itertools.product(*items0))
-                if len(list11_1) != 0:
+                if len(list11_1) != 0 and items1 !=[]:
                     all_list1=list(itertools.product(*items1))
                 else:
                     all_list1=[]
-                if len(list21_1) != 0:
+                if len(list21_1) != 0 and items2 !=[]:
                     all_list2=list(itertools.product(*items2))
                 else:
                     all_list2=[]
-                if len(list33_1) != 0:
+                if len(list33_1) != 0 and items3 !=[]:
                     all_list3=list(itertools.product(*items3))
                 else:
                     all_list3=[]
@@ -1475,120 +1046,16 @@ def calc():
                 del all_list1,all_list2,all_list3
                 all_list_num=len(all_list_god)+len(all_list)
                 all_list_list.append([all_list,all_list_god,all_list_num])
-                
-            if keep_go_dict.get(i)==3:
-                if plist11_0.count('11'+i[1:3]+'0')==0 and list11_1.count('11'+i[1:3]+'1')==0:
-                    plist11_0=tlist11_0;plist12=tlist12;plist13=tlist13;plist14=tlist14;plist15=tlist15
-                    plist11_0=['11'+i[1:3]+'0']
-                    plist13=['13'+i[1:3]+'0']
-                    plist14=['14'+i[1:3]+'0']
-                    items0=[plist11_0,plist12,plist13,plist14,plist15,plist21_0,plist22,plist23,plist31,plist32,plist33_0,list40_0]
-                    items1=[list11_1,plist12,plist13,plist14,plist15,plist21_0,plist22,plist23,plist31,plist32,plist33_0,list40_0]
-                    items2=[plist11_0,plist12,plist13,plist14,plist15,list21_1,plist22,plist23,plist31,plist32,plist33_0,list40_0]
-                    items3=[plist11_0,plist12,plist13,plist14,plist15,plist21_0,plist22,plist23,plist31,plist32,list33_1,list40_0]
-                    all_list=list(itertools.product(*items0))
-                    if len(list11_1) != 0:
-                        all_list1=list(itertools.product(*items1))
-                    else:
-                        all_list1=[]
-                    if len(list21_1) != 0:
-                        all_list2=list(itertools.product(*items2))
-                    else:
-                        all_list2=[]
-                    if len(list33_1) != 0:
-                        all_list3=list(itertools.product(*items3))
-                    else:
-                        all_list3=[]
-                    all_list_god=all_list1+all_list2+all_list3
-                    del all_list1,all_list2,all_list3
-                    all_list_num=len(all_list_god)+len(all_list)
-                    all_list_list.append([all_list,all_list_god,all_list_num])
-                if plist12.count('12'+i[1:3]+'0')==0:
-                    plist11_0=tlist11_0;plist12=tlist12;plist13=tlist13;plist14=tlist14;plist15=tlist15
-                    plist12=['12'+i[1:3]+'0']
-                    plist13=['13'+i[1:3]+'0']
-                    plist14=['14'+i[1:3]+'0']
-                    items0=[plist11_0,plist12,plist13,plist14,plist15,plist21_0,plist22,plist23,plist31,plist32,plist33_0,list40_0]
-                    items1=[list11_1,plist12,plist13,plist14,plist15,plist21_0,plist22,plist23,plist31,plist32,plist33_0,list40_0]
-                    items2=[plist11_0,plist12,plist13,plist14,plist15,list21_1,plist22,plist23,plist31,plist32,plist33_0,list40_0]
-                    items3=[plist11_0,plist12,plist13,plist14,plist15,plist21_0,plist22,plist23,plist31,plist32,list33_1,list40_0]
-                    all_list=list(itertools.product(*items0))
-                    if len(list11_1) != 0:
-                        all_list1=list(itertools.product(*items1))
-                    else:
-                        all_list1=[]
-                    if len(list21_1) != 0:
-                        all_list2=list(itertools.product(*items2))
-                    else:
-                        all_list2=[]
-                    if len(list33_1) != 0:
-                        all_list3=list(itertools.product(*items3))
-                    else:
-                        all_list3=[]
-                    all_list_god=all_list1+all_list2+all_list3
-                    del all_list1,all_list2,all_list3
-                    all_list_num=len(all_list_god)+len(all_list)
-                    all_list_list.append([all_list,all_list_god,all_list_num])
-                if plist15.count('15'+i[1:3]+'0')==0:
-                    plist11_0=tlist11_0;plist12=tlist12;plist13=tlist13;plist14=tlist14;plist15=tlist15
-                    plist15=['15'+i[1:3]+'0']
-                    plist13=['13'+i[1:3]+'0']
-                    plist14=['14'+i[1:3]+'0']
-                    items0=[plist11_0,plist12,plist13,plist14,plist15,plist21_0,plist22,plist23,plist31,plist32,plist33_0,list40_0]
-                    items1=[list11_1,plist12,plist13,plist14,plist15,plist21_0,plist22,plist23,plist31,plist32,plist33_0,list40_0]
-                    items2=[plist11_0,plist12,plist13,plist14,plist15,list21_1,plist22,plist23,plist31,plist32,plist33_0,list40_0]
-                    items3=[plist11_0,plist12,plist13,plist14,plist15,plist21_0,plist22,plist23,plist31,plist32,list33_1,list40_0]
-                    all_list=list(itertools.product(*items0))
-                    if len(list11_1) != 0:
-                        all_list1=list(itertools.product(*items1))
-                    else:
-                        all_list1=[]
-                    if len(list21_1) != 0:
-                        all_list2=list(itertools.product(*items2))
-                    else:
-                        all_list2=[]
-                    if len(list33_1) != 0:
-                        all_list3=list(itertools.product(*items3))
-                    else:
-                        all_list3=[]
-                    all_list_god=all_list1+all_list2+all_list3
-                    del all_list1,all_list2,all_list3
-                    all_list_num=len(all_list_god)+len(all_list)
-                    all_list_list.append([all_list,all_list_god,all_list_num])
 
-##세트산물 계산##                
-#########################################################################################################################
-    know_set_list=['22400150','22400250','22400350','22400450','22400550','21400640','31400750',
-                   '31400850','31400950','31401050','31401150','32401240','32401340','32401440']
-    know_bang1_list=['22400150','22400250','22400350','22400450','22400550']
-    know_bang2_list=['31400750','31400850','31400950','31401050','31401150']
-    know_acc_list=['32401240','32401340','32401440']
-    know_jin_list=['11410100','11410110','11410120','11410130','11410140','11410150',
-                   '21420100','21420110','21420120','21420130','21420140','21420150',
-                   '33430100','33430110','33430120','33430130','33430140','33430150']
-
-    for i in know_set_list: ##경우1:산물 하나
-        if select_item['tg'+i]==1:
-            if int(i[4:6]) <6:
-                items0=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_0,[i],list23,list31,list32,list33_0,list40_0]
-                items1=[]
-                items2=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_1,[i],list23,list31,list32,list33_0,list40_0]
-                items3=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_0,[i],list23,list31,list32,list33_1,list40_0]
-            elif int(i[4:6])==6:
-                items0=[list11_0,list12,list13,list14,list15,[i],list22,list23,['99990'],['99990'],['99990'],list40_0]
-                items1=[list11_1,list12,list13,list14,list15,[i],list22,list23,['99990'],['99990'],['99990'],list40_0]
-                items2=[]
-                items3=[]
-            elif int(i[4:6]) <12:
-                items0=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_0,list22,list23,[i],list32,list33_0,list40_0]
-                items1=[]
-                items2=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_1,list22,list23,[i],list32,list33_0,list40_0]
-                items3=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_0,list22,list23,[i],list32,list33_1,list40_0]
-            elif int(i[4:6]) <15:
-                items0=[list11_0,list12,list13,list14,list15,list31,[i],list33_0,['99990'],['99990'],['99990'],list40_0]
-                items1=[list11_1,list12,list13,list14,list15,list31,[i],list33_0,['99990'],['99990'],['99990'],list40_0]
-                items2=[]
-                items3=[list11_0,list12,list13,list14,list15,list31,[i],list33_1,['99990'],['99990'],['99990'],list40_0]
+        know_bang1_on=[]
+        for i in know_bang1_list:
+            if select_item['tg'+i]==1:
+                know_bang1_on.append(i)
+        if select_item['tg21400640']==1:  ##경우2:만유(팔찌)+방어구(목걸이)
+            items0=[['99990'],['99990'],['99990'],['99990'],['99990'],['21400640'],know_bang1_on,list23,['99990'],['99990'],['99990'],list40_0]
+            items1=[]
+            items2=[]
+            items3=[]
             all_list=list(itertools.product(*items0))
             if len(list11_1) != 0 and items1 !=[]:
                 all_list1=list(itertools.product(*items1))
@@ -1606,244 +1073,216 @@ def calc():
             del all_list1,all_list2,all_list3
             all_list_num=len(all_list_god)+len(all_list)
             all_list_list.append([all_list,all_list_god,all_list_num])
+                    
+        know_acc_on=[]
+        know_bang2_on=[]
+        for i in know_acc_list:
+            if select_item['tg'+i]==1:
+                know_acc_on.append(i)
+        for i in know_bang2_list:
+            if select_item['tg'+i]==1:
+                know_bang2_on.append(i)
+        if len(know_acc_list)!=0 and len(know_bang2_on)!=0:  ##경우3: 악세(법석)+방어구(보장)
+            items0=[['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],know_bang2_on,know_acc_on,list33_0,list40_0]
+            items1=[]
+            items2=[]
+            items3=[['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],know_bang2_on,know_acc_on,list33_1,list40_0]
+            all_list=list(itertools.product(*items0))
+            if len(list11_1) != 0 and items1 !=[]:
+                all_list1=list(itertools.product(*items1))
+            else:
+                all_list1=[]
+            if len(list21_1) != 0 and items2 !=[]:
+                all_list2=list(itertools.product(*items2))
+            else:
+                all_list2=[]
+            if len(list33_1) != 0 and items3 !=[]:
+                all_list3=list(itertools.product(*items3))
+            else:
+                all_list3=[]
+            all_list_god=all_list1+all_list2+all_list3
+            del all_list1,all_list2,all_list3
+            all_list_num=len(all_list_god)+len(all_list)
+            all_list_list.append([all_list,all_list_god,all_list_num])
+            
+        jin_sang=[]
+        jin_pal=[]
+        jin_gui=[]
+        for i in know_jin_list:
+            if select_item['tg'+i]==1:
+                if i[0:2]=='11':
+                    jin_sang.append(i)
+                elif i[0:2]=='21':
+                    jin_pal.append(i)
+                elif i[0:2]=='33':
+                    jin_gui.append(i)
 
-    know_bang1_on=[]
-    for i in know_bang1_list:
-        if select_item['tg'+i]==1:
-            know_bang1_on.append(i)
-    if select_item['tg21400640']==1:  ##경우2:만유(팔찌)+방어구(목걸이)
-        items0=[['99990'],['99990'],['99990'],['99990'],['99990'],['21400640'],know_bang1_on,list23,['99990'],['99990'],['99990'],list40_0]
-        items1=[]
-        items2=[]
-        items3=[]
-        all_list=list(itertools.product(*items0))
-        if len(list11_1) != 0 and items1 !=[]:
-            all_list1=list(itertools.product(*items1))
-        else:
-            all_list1=[]
-        if len(list21_1) != 0 and items2 !=[]:
-            all_list2=list(itertools.product(*items2))
-        else:
-            all_list2=[]
-        if len(list33_1) != 0 and items3 !=[]:
-            all_list3=list(itertools.product(*items3))
-        else:
-            all_list3=[]
-        all_list_god=all_list1+all_list2+all_list3
-        del all_list1,all_list2,all_list3
-        all_list_num=len(all_list_god)+len(all_list)
-        all_list_list.append([all_list,all_list_god,all_list_num])
-                
-    know_acc_on=[]
-    know_bang2_on=[]
-    for i in know_acc_list:
-        if select_item['tg'+i]==1:
-            know_acc_on.append(i)
-    for i in know_bang2_list:
-        if select_item['tg'+i]==1:
-            know_bang2_on.append(i)
-    if len(know_acc_list)!=0 and len(know_bang2_on)!=0:  ##경우3: 악세(법석)+방어구(보장)
-        items0=[['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],know_bang2_on,know_acc_on,list33_0,list40_0]
-        items1=[]
-        items2=[]
-        items3=[['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],know_bang2_on,know_acc_on,list33_1,list40_0]
-        all_list=list(itertools.product(*items0))
-        if len(list11_1) != 0 and items1 !=[]:
-            all_list1=list(itertools.product(*items1))
-        else:
-            all_list1=[]
-        if len(list21_1) != 0 and items2 !=[]:
-            all_list2=list(itertools.product(*items2))
-        else:
-            all_list2=[]
-        if len(list33_1) != 0 and items3 !=[]:
-            all_list3=list(itertools.product(*items3))
-        else:
-            all_list3=[]
-        all_list_god=all_list1+all_list2+all_list3
-        del all_list1,all_list2,all_list3
-        all_list_num=len(all_list_god)+len(all_list)
-        all_list_list.append([all_list,all_list_god,all_list_num])
-        
-    jin_sang=[]
-    jin_pal=[]
-    jin_gui=[]
-    for i in know_jin_list:
-        if select_item['tg'+i]==1:
-            if i[0:2]=='11':
-                jin_sang.append(i)
-            elif i[0:2]=='21':
-                jin_pal.append(i)
-            elif i[0:2]=='33':
-                jin_gui.append(i)
+        for i in know_jin_list:
+            if select_item['tg'+i]==1: ##경우4: 진레전산물
+                if i[0:2]=='11': ##상의만
+                    items0=[[i],['12410'],['13410'],['14410'],['15410'],list21_0,list22,list23,list31,list32,list33_0,list40_0]
+                    items1=[]
+                    items2=[[i],['12410'],['13410'],['14410'],['15410'],list21_1,list22,list23,list31,list32,list33_0,list40_0]
+                    items3=[[i],['12410'],['13410'],['14410'],['15410'],list21_0,list22,list23,list31,list32,list33_1,list40_0]
+                    all_list=list(itertools.product(*items0))
+                    if len(list11_1) != 0 and items1 !=[]:
+                        all_list1=list(itertools.product(*items1))
+                    else:
+                        all_list1=[]
+                    if len(list21_1) != 0 and items2 !=[]:
+                        all_list2=list(itertools.product(*items2))
+                    else:
+                        all_list2=[]
+                    if len(list33_1) != 0 and items3 !=[]:
+                        all_list3=list(itertools.product(*items3))
+                    else:
+                        all_list3=[]
+                    all_list_god=all_list1+all_list2+all_list3
+                    del all_list1,all_list2,all_list3
+                    all_list_num=len(all_list_god)+len(all_list)
+                    all_list_list.append([all_list,all_list_god,all_list_num])
+                if i[0:2]=='21': ##팔찌만
+                    items0=[list11_0,list12,list13,list14,list15,[i],['22420'],['23420'],list31,list32,list33_0,list40_0]
+                    items1=[list11_1,list12,list13,list14,list15,[i],['22420'],['23420'],list31,list32,list33_0,list40_0]
+                    items2=[]
+                    items3=[list11_0,list12,list13,list14,list15,[i],['22420'],['23420'],list31,list32,list33_1,list40_0]
+                    all_list=list(itertools.product(*items0))
+                    if len(list11_1) != 0 and items1 !=[]:
+                        all_list1=list(itertools.product(*items1))
+                    else:
+                        all_list1=[]
+                    if len(list21_1) != 0 and items2 !=[]:
+                        all_list2=list(itertools.product(*items2))
+                    else:
+                        all_list2=[]
+                    if len(list33_1) != 0 and items3 !=[]:
+                        all_list3=list(itertools.product(*items3))
+                    else:
+                        all_list3=[]
+                    all_list_god=all_list1+all_list2+all_list3
+                    del all_list1,all_list2,all_list3
+                    all_list_num=len(all_list_god)+len(all_list)
+                    all_list_list.append([all_list,all_list_god,all_list_num])
+                if i[0:2]=='33': ##귀걸만
+                    items0=[list11_0,list12,list13,list14,list15,list21_0,list22,list23,['31430'],['32430'],[i],list40_0]
+                    items1=[list11_1,list12,list13,list14,list15,list21_0,list22,list23,['31430'],['32430'],[i],list40_0]
+                    items2=[list11_0,list12,list13,list14,list15,list21_1,list22,list23,['31430'],['32430'],[i],list40_0]
+                    items3=[]
+                    all_list=list(itertools.product(*items0))
+                    if len(list11_1) != 0 and items1 !=[]:
+                        all_list1=list(itertools.product(*items1))
+                    else:
+                        all_list1=[]
+                    if len(list21_1) != 0 and items2 !=[]:
+                        all_list2=list(itertools.product(*items2))
+                    else:
+                        all_list2=[]
+                    if len(list33_1) != 0 and items3 !=[]:
+                        all_list3=list(itertools.product(*items3))
+                    else:
+                        all_list3=[]
+                    all_list_god=all_list1+all_list2+all_list3
+                    del all_list1,all_list2,all_list3
+                    all_list_num=len(all_list_god)+len(all_list)
+                    all_list_list.append([all_list,all_list_god,all_list_num])
 
-    for i in know_jin_list:
-        if select_item['tg'+i]==1: ##경우4: 진레전산물
-            if i[0:2]=='11': ##상의만
-                items0=[[i],['12410'],['13410'],['14410'],['15410'],list21_0,list22,list23,list31,list32,list33_0,list40_0]
-                items1=[]
-                items2=[[i],['12410'],['13410'],['14410'],['15410'],list21_1,list22,list23,list31,list32,list33_0,list40_0]
-                items3=[[i],['12410'],['13410'],['14410'],['15410'],list21_0,list22,list23,list31,list32,list33_1,list40_0]
-                all_list=list(itertools.product(*items0))
-                if len(list11_1) != 0 and items1 !=[]:
-                    all_list1=list(itertools.product(*items1))
-                else:
-                    all_list1=[]
-                if len(list21_1) != 0 and items2 !=[]:
-                    all_list2=list(itertools.product(*items2))
-                else:
-                    all_list2=[]
-                if len(list33_1) != 0 and items3 !=[]:
-                    all_list3=list(itertools.product(*items3))
-                else:
-                    all_list3=[]
-                all_list_god=all_list1+all_list2+all_list3
-                del all_list1,all_list2,all_list3
-                all_list_num=len(all_list_god)+len(all_list)
-                all_list_list.append([all_list,all_list_god,all_list_num])
-            if i[0:2]=='21': ##팔찌만
-                items0=[list11_0,list12,list13,list14,list15,[i],['22420'],['23420'],list31,list32,list33_0,list40_0]
-                items1=[list11_1,list12,list13,list14,list15,[i],['22420'],['23420'],list31,list32,list33_0,list40_0]
-                items2=[]
-                items3=[list11_0,list12,list13,list14,list15,[i],['22420'],['23420'],list31,list32,list33_1,list40_0]
-                all_list=list(itertools.product(*items0))
-                if len(list11_1) != 0 and items1 !=[]:
-                    all_list1=list(itertools.product(*items1))
-                else:
-                    all_list1=[]
-                if len(list21_1) != 0 and items2 !=[]:
-                    all_list2=list(itertools.product(*items2))
-                else:
-                    all_list2=[]
-                if len(list33_1) != 0 and items3 !=[]:
-                    all_list3=list(itertools.product(*items3))
-                else:
-                    all_list3=[]
-                all_list_god=all_list1+all_list2+all_list3
-                del all_list1,all_list2,all_list3
-                all_list_num=len(all_list_god)+len(all_list)
-                all_list_list.append([all_list,all_list_god,all_list_num])
-            if i[0:2]=='33': ##귀걸만
-                items0=[list11_0,list12,list13,list14,list15,list21_0,list22,list23,['31430'],['32430'],[i],list40_0]
-                items1=[list11_1,list12,list13,list14,list15,list21_0,list22,list23,['31430'],['32430'],[i],list40_0]
-                items2=[list11_0,list12,list13,list14,list15,list21_1,list22,list23,['31430'],['32430'],[i],list40_0]
-                items3=[]
-                all_list=list(itertools.product(*items0))
-                if len(list11_1) != 0 and items1 !=[]:
-                    all_list1=list(itertools.product(*items1))
-                else:
-                    all_list1=[]
-                if len(list21_1) != 0 and items2 !=[]:
-                    all_list2=list(itertools.product(*items2))
-                else:
-                    all_list2=[]
-                if len(list33_1) != 0 and items3 !=[]:
-                    all_list3=list(itertools.product(*items3))
-                else:
-                    all_list3=[]
-                all_list_god=all_list1+all_list2+all_list3
-                del all_list1,all_list2,all_list3
-                all_list_num=len(all_list_god)+len(all_list)
-                all_list_list.append([all_list,all_list_god,all_list_num])
+        if len(jin_sang)!=0 and len(jin_pal)!=0: ##상의+팔찌
+            items0=[jin_sang,['12410'],['13410'],['14410'],['15410'],jin_pal,['22420'],['23420'],list31,list32,list33_0,list40_0]
+            items1=[]
+            items2=[]
+            items3=[jin_sang,['12410'],['13410'],['14410'],['15410'],jin_pal,['22420'],['23420'],list31,list32,list33_1,list40_0]
+            all_list=list(itertools.product(*items0))
+            if len(list11_1) != 0 and items1 !=[]:
+                all_list1=list(itertools.product(*items1))
+            else:
+                all_list1=[]
+            if len(list21_1) != 0 and items2 !=[]:
+                all_list2=list(itertools.product(*items2))
+            else:
+                all_list2=[]
+            if len(list33_1) != 0 and items3 !=[]:
+                all_list3=list(itertools.product(*items3))
+            else:
+                all_list3=[]
+            all_list_god=all_list1+all_list2+all_list3
+            del all_list1,all_list2,all_list3
+            all_list_num=len(all_list_god)+len(all_list)
+            all_list_list.append([all_list,all_list_god,all_list_num])
+        if len(jin_sang)!=0 and len(jin_gui)!=0: ##상의+귀걸
+            items0=[jin_sang,['12410'],['13410'],['14410'],['15410'],list21_0,list22,list23,['31430'],['32430'],jin_gui,list40_0]
+            items1=[]
+            items2=[jin_sang,['12410'],['13410'],['14410'],['15410'],list21_1,list22,list23,['31430'],['32430'],jin_gui,list40_0]
+            items3=[]
+            all_list=list(itertools.product(*items0))
+            if len(list11_1) != 0 and items1 !=[]:
+                all_list1=list(itertools.product(*items1))
+            else:
+                all_list1=[]
+            if len(list21_1) != 0 and items2 !=[]:
+                all_list2=list(itertools.product(*items2))
+            else:
+                all_list2=[]
+            if len(list33_1) != 0 and items3 !=[]:
+                all_list3=list(itertools.product(*items3))
+            else:
+                all_list3=[]
+            all_list_god=all_list1+all_list2+all_list3
+            del all_list1,all_list2,all_list3
+            all_list_num=len(all_list_god)+len(all_list)
+            all_list_list.append([all_list,all_list_god,all_list_num])
+        if len(jin_pal)!=0 and len(jin_gui)!=0: ##팔찌+귀걸
+            items0=[list11_0,list12,list13,list14,list15,jin_pal,['22420'],['23420'],['31430'],['32430'],jin_gui,list40_0]
+            items1=[list11_1,list12,list13,list14,list15,jin_pal,['22420'],['23420'],['31430'],['32430'],jin_gui,list40_0]
+            items2=[]
+            items3=[]
+            all_list=list(itertools.product(*items0))
+            if len(list11_1) != 0 and items1 !=[]:
+                all_list1=list(itertools.product(*items1))
+            else:
+                all_list1=[]
+            if len(list21_1) != 0 and items2 !=[]:
+                all_list2=list(itertools.product(*items2))
+            else:
+                all_list2=[]
+            if len(list33_1) != 0 and items3 !=[]:
+                all_list3=list(itertools.product(*items3))
+            else:
+                all_list3=[]
+            all_list_god=all_list1+all_list2+all_list3
+            del all_list1,all_list2,all_list3
+            all_list_num=len(all_list_god)+len(all_list)
+            all_list_list.append([all_list,all_list_god,all_list_num])
+        if len(jin_sang)!=0 and len(jin_pal)!=0 and len(jin_gui)!=0: ##3개 전부
+            items0=[jin_sang,['12410'],['13410'],['14410'],['15410'],jin_pal,['22420'],['23420'],['31430'],['32430'],jin_gui,list40_0]
+            items1=[]
+            items2=[]
+            items3=[]
+            all_list=list(itertools.product(*items0))
+            if len(list11_1) != 0 and items1 !=[]:
+                all_list1=list(itertools.product(*items1))
+            else:
+                all_list1=[]
+            if len(list21_1) != 0 and items2 !=[]:
+                all_list2=list(itertools.product(*items2))
+            else:
+                all_list2=[]
+            if len(list33_1) != 0 and items3 !=[]:
+                all_list3=list(itertools.product(*items3))
+            else:
+                all_list3=[]
+            all_list_god=all_list1+all_list2+all_list3
+            del all_list1,all_list2,all_list3
+            all_list_num=len(all_list_god)+len(all_list)
+            all_list_list.append([all_list,all_list_god,all_list_num])
+            
+            
 
-    if len(jin_sang)!=0 and len(jin_pal)!=0: ##상의+팔찌
-        items0=[jin_sang,['12410'],['13410'],['14410'],['15410'],jin_pal,['22420'],['23420'],list31,list32,list33_0,list40_0]
-        items1=[]
-        items2=[]
-        items3=[jin_sang,['12410'],['13410'],['14410'],['15410'],jin_pal,['22420'],['23420'],list31,list32,list33_1,list40_0]
-        all_list=list(itertools.product(*items0))
-        if len(list11_1) != 0 and items1 !=[]:
-            all_list1=list(itertools.product(*items1))
-        else:
-            all_list1=[]
-        if len(list21_1) != 0 and items2 !=[]:
-            all_list2=list(itertools.product(*items2))
-        else:
-            all_list2=[]
-        if len(list33_1) != 0 and items3 !=[]:
-            all_list3=list(itertools.product(*items3))
-        else:
-            all_list3=[]
-        all_list_god=all_list1+all_list2+all_list3
-        del all_list1,all_list2,all_list3
-        all_list_num=len(all_list_god)+len(all_list)
-        all_list_list.append([all_list,all_list_god,all_list_num])
-    if len(jin_sang)!=0 and len(jin_gui)!=0: ##상의+귀걸
-        items0=[jin_sang,['12410'],['13410'],['14410'],['15410'],list21_0,list22,list23,['31430'],['32430'],jin_gui,list40_0]
-        items1=[]
-        items2=[jin_sang,['12410'],['13410'],['14410'],['15410'],list21_1,list22,list23,['31430'],['32430'],jin_gui,list40_0]
-        items3=[]
-        all_list=list(itertools.product(*items0))
-        if len(list11_1) != 0 and items1 !=[]:
-            all_list1=list(itertools.product(*items1))
-        else:
-            all_list1=[]
-        if len(list21_1) != 0 and items2 !=[]:
-            all_list2=list(itertools.product(*items2))
-        else:
-            all_list2=[]
-        if len(list33_1) != 0 and items3 !=[]:
-            all_list3=list(itertools.product(*items3))
-        else:
-            all_list3=[]
-        all_list_god=all_list1+all_list2+all_list3
-        del all_list1,all_list2,all_list3
-        all_list_num=len(all_list_god)+len(all_list)
-        all_list_list.append([all_list,all_list_god,all_list_num])
-    if len(jin_pal)!=0 and len(jin_gui)!=0: ##팔찌+귀걸
-        items0=[list11_0,list12,list13,list14,list15,jin_pal,['22420'],['23420'],['31430'],['32430'],jin_gui,list40_0]
-        items1=[list11_1,list12,list13,list14,list15,jin_pal,['22420'],['23420'],['31430'],['32430'],jin_gui,list40_0]
-        items2=[]
-        items3=[]
-        all_list=list(itertools.product(*items0))
-        if len(list11_1) != 0 and items1 !=[]:
-            all_list1=list(itertools.product(*items1))
-        else:
-            all_list1=[]
-        if len(list21_1) != 0 and items2 !=[]:
-            all_list2=list(itertools.product(*items2))
-        else:
-            all_list2=[]
-        if len(list33_1) != 0 and items3 !=[]:
-            all_list3=list(itertools.product(*items3))
-        else:
-            all_list3=[]
-        all_list_god=all_list1+all_list2+all_list3
-        del all_list1,all_list2,all_list3
-        all_list_num=len(all_list_god)+len(all_list)
-        all_list_list.append([all_list,all_list_god,all_list_num])
-    if len(jin_sang)!=0 and len(jin_pal)!=0 and len(jin_gui)!=0: ##3개 전부
-        items0=[jin_sang,['12410'],['13410'],['14410'],['15410'],jin_pal,['22420'],['23420'],['31430'],['32430'],jin_gui,list40_0]
-        items1=[]
-        items2=[]
-        items3=[]
-        all_list=list(itertools.product(*items0))
-        if len(list11_1) != 0 and items1 !=[]:
-            all_list1=list(itertools.product(*items1))
-        else:
-            all_list1=[]
-        if len(list21_1) != 0 and items2 !=[]:
-            all_list2=list(itertools.product(*items2))
-        else:
-            all_list2=[]
-        if len(list33_1) != 0 and items3 !=[]:
-            all_list3=list(itertools.product(*items3))
-        else:
-            all_list3=[]
-        all_list_god=all_list1+all_list2+all_list3
-        del all_list1,all_list2,all_list3
-        all_list_num=len(all_list_god)+len(all_list)
-        all_list_list.append([all_list,all_list_god,all_list_num])
-        
-        
+    ##일반 경우의 수##
+    #########################################################################################################################
+        timp_list_num=0
+        for i in all_list_list:
+            timp_list_num=timp_list_num+int(i[2])
 
-##일반 경우의 수##
-#########################################################################################################################
-    timp_list_num=0
-    for i in all_list_list:
-        timp_list_num=timp_list_num+int(i[2])
-
-    if select_perfect.get() != '메타몽모드(중간)' or timp_list_num < 1000000:
         items=[list11,list12,list13,list14,list15,list21,list22,list23,list31,list32,list33]
         items0=[list11_0,list12,list13,list14,list15,list21_0,list22,list23,list31,list32,list33_0,list40_0]
         items1=[list11_1,list12,list13,list14,list15,list21_0,list22,list23,list31,list32,list33_0,list40_0]
@@ -1882,7 +1321,7 @@ def calc():
         showsta(text='중지됨')
         return
     elif all_list_list_num > 100000000:
-        ask_msg2=tkinter.messagebox.askquestion('확인',"경우의 수가 1억가지가 넘습니다.\n메모리 에러가 날 수 있고 30분이상 걸릴 수 있습니다.\n진행하시겠습니까?")
+        ask_msg2=tkinter.messagebox.askquestion('확인',"경우의 수가 1억가지가 넘습니다.\n메모리 과부하가 날 수 있고 30분이상 걸릴 수 있습니다.\n진행하시겠습니까?")
         if ask_msg2 == 'no':
             showsta(text='중지됨')
             return
@@ -1917,11 +1356,11 @@ def calc():
     
     for now_all_list in all_list_list:
         loop_counter=loop_counter+1
-        print(str(loop_counter)+'회차')
+        
         all_list_god=now_all_list[1]
         all_list=now_all_list[0]
         all_list_num=now_all_list[2]
-        print(all_list_num)
+        print(str(loop_counter)+'회차 : '+str(all_list_num))
     
         if jobup_select.get()[4:7] != "세인트" and jobup_select.get()[4:7] != "세라핌" and jobup_select.get()[4:7] != "헤카테":
             getone=opt_one.get
@@ -1981,6 +1420,9 @@ def calc():
                         max_damper=fixed_dam
                         max_criper=fixed_cri
                         skiper=0
+                        ult_1=0
+                        ult_2=0
+                        ult_3=0
                         coolper=0
                         for_calc=tuple(set_on)+calc_wep
                         oneone=len(for_calc)
@@ -1992,6 +1434,9 @@ def calc():
                             coolper=(1-(100-coolper)/100*(100-cut[20])/100)*100
                             max_damper=max([no_cut[44],max_damper])
                             max_criper=max([no_cut[45],max_criper])
+                            ult_1=(no_cut[46]/100+1)*(ult_1/100+1)*100-100
+                            ult_2=(no_cut[47]/100+1)*(ult_2/100+1)*100-100
+                            ult_3=(no_cut[48]/100+1)*(ult_3/100+1)*100-100
                             oneonelist.append(cut)
                         for i in range(oneone):
                             base_array=base_array+oneonelist[i]
@@ -2079,9 +1524,9 @@ def calc():
                         real_bon_not_ele=only_bon+base_array[5]*((base_array[9]-int(ele_skill))*0.0045+1.05)  
                         damage=((base_array[2]/100+1)*(base_array[3]/100+1)*(base_array[4]/100+1)*(base_array[6]/100+1)*(base_array[7]/100+1)*
                                 (base_array[8]/100+1)*(base_array[9]*0.0045+1.05)*(base_array[10]/100+1)*(skiper/100+1)*
-                                paslvl*((54500+3.31*base_array[0])/54500)*((4800+base_array[1])/4800)/(1.05+0.0045*int(ele_skill)))
-                        final_damage=actlvl*damage*((100/(100-coolper)-1)*cool_eff*cool_on+1)*(base_array[12]/100+1)
-                        damage_not_ele=damage*(1.05+0.0045*int(ele_skill))/(base_array[9]*0.0045+1.05)*((base_array[9]-int(ele_skill))*0.0045+1.05)/1.05*(real_bon_not_ele/100+1)/(base_array[4]/100+1)
+                                paslvl*((54500+3.31*base_array[0])/54500)*((4800+base_array[1])/4800)/(1.05+0.0045*int(ele_skill)))*wep_pre_calced
+                        final_damage=actlvl*damage*((100/(100-coolper)-1)*cool_eff*cool_on+1)*(base_array[12]/100+1)*cool_pre_calced
+                        damage_not_ele=final_damage*(1.05+0.0045*int(ele_skill))/(base_array[9]*0.0045+1.05)*((base_array[9]-int(ele_skill))*0.0045+1.05)/1.05*(real_bon_not_ele/100+1)/(base_array[4]/100+1)
                         
                         
                         inv_string="잔향부여= "+inv1_opt+"("+str(inv1_val)+"%) / "+inv2_opt+"("+str(inv2_val)+"%)"
@@ -2248,9 +1693,9 @@ def calc():
                         real_bon_not_ele=only_bon+base_array[5]*((base_array[9]-int(ele_skill))*0.0045+1.05)  
                         damage=((base_array[2]/100+1)*(base_array[3]/100+1)*(base_array[4]/100+1)*(base_array[6]/100+1)*(base_array[7]/100+1)*
                                 (base_array[8]/100+1)*(base_array[9]*0.0045+1.05)*(base_array[10]/100+1)*(skiper/100+1)*
-                                paslvl*((54500+3.31*base_array[0])/54500)*((4800+base_array[1])/4800)/(1.05+0.0045*int(ele_skill)))
-                        final_damage=actlvl*damage*((100/(100-coolper)-1)*cool_eff*cool_on+1)*(base_array[12]/100+1)
-                        damage_not_ele=damage*(1.05+0.0045*int(ele_skill))/(base_array[9]*0.0045+1.05)*((base_array[9]-int(ele_skill))*0.0045+1.05)/1.05*(real_bon_not_ele/100+1)/(base_array[4]/100+1)
+                                paslvl*((54500+3.31*base_array[0])/54500)*((4800+base_array[1])/4800)/(1.05+0.0045*int(ele_skill)))*wep_pre_calced
+                        final_damage=actlvl*damage*((100/(100-coolper)-1)*cool_eff*cool_on+1)*(base_array[12]/100+1)*cool_pre_calced
+                        damage_not_ele=final_damage*(1.05+0.0045*int(ele_skill))/(base_array[9]*0.0045+1.05)*((base_array[9]-int(ele_skill))*0.0045+1.05)/1.05*(real_bon_not_ele/100+1)/(base_array[4]/100+1)
                         
                         inv_string="잔향부여= "+inv1_opt+"("+str(inv1_val)+"%) / "+inv2_opt+"("+str(inv2_val)+"%)"
                         save_list[final_damage]=[calc_wep,base_array,damage,damage_not_ele,inv_string]
@@ -3894,68 +3339,13 @@ def update_count2():
             show_count2['fg']="white"
         time.sleep(1)
 
-def update_inv():
-    global inv_tg
-    while True:
-        if inv_mod.get()=="미부여" or inv_mod.get()=="최적부여(버퍼X)":
-            if inv_mod.get()=="미부여":
-                inv_tg=0
-            elif inv_mod.get()=="최적부여(버퍼X)":
-                inv_tg=2
-            inv_select1_1['state']='disabled'
-            inv_select1_2['state']='disabled'
-            inv_select2_1['state']='disabled'
-            inv_select2_2['state']='disabled'
-            inv_select3_1['state']='disabled'
-            inv_select3_2['state']='disabled'
-            inv_select4_1['state']='disabled'
-            inv_select4_2['state']='disabled'
-        elif inv_mod.get()=="선택부여":
-            inv_tg=1
-            inv_select1_1['state']='normal'
-            inv_select1_2['state']='normal'
-            inv_select2_1['state']='normal'
-            inv_select2_2['state']='normal'
-            inv_select3_1['state']='normal'
-            inv_select3_2['state']='normal'
-            inv_select4_1['state']='normal'
-            inv_select4_2['state']='normal'
-        time.sleep(0.5)
+
         
         
 def update_thread():
     threading.Thread(target=update_count,daemon=True).start()
 def update_thread2():
     threading.Thread(target=update_count2,daemon=True).start()
-def update_thread3():
-    threading.Thread(target=update_inv,daemon=True).start()
-
-def update_inv_buf():
-    if inv_select3_1.get()=="축스탯%/1각":
-        inv_select3_2['values']=['3%/60(상)','3%/40(중)','3%/20(하)']
-    elif inv_select3_1.get()=="축스탯%/1각%":
-        inv_select3_2['values']=['4%/3%(상)','3%/3%(중)','2%/3%(하)']
-    elif inv_select3_1.get()=="축앞뎀%/1각":
-        inv_select3_2['values']=['4%/25(상)','3%/25(중)','2%/25(하)']
-    elif inv_select3_1.get()=="축앞뎀%/1각%":
-        inv_select3_2['values']=['3%/3%(상)','3%/2%(중)','3%/1%(하)']
-    elif inv_select3_1.get()=="전직패":
-        inv_select3_2['values']=['+185(상)','+155(중)','+125(하)']
-    elif inv_select3_1.get()=="축스탯%/1각+1":
-        inv_select3_2['values']=['3%/+1(상)','2%/+1(중)','1%/+1(하)']
-def update_inv_buf2():
-    if inv_select4_1.get()=="축스탯%/1각":
-        inv_select4_2['values']=['3%/40(상)','3%/30(중)','3%/20(하)']
-    elif inv_select4_1.get()=="축스탯%/1각%":
-        inv_select4_2['values']=['4%/2%(상)','3%/2%(중)','2%/2%(하)']
-    elif inv_select4_1.get()=="축앞뎀%/1각":
-        inv_select4_2['values']=['3%/25(상)','2%/25(중)','1%/25(하)']
-    elif inv_select4_1.get()=="축앞뎀%/1각%":
-        inv_select4_2['values']=['2%/3%(상)','2%/2%(중)','2%/1%(하)']
-    elif inv_select4_1.get()=="전직패":
-        inv_select4_2['values']=['+145(상)','+115(중)','+85(하)']
-    elif inv_select4_1.get()=="축+1/1각":
-        inv_select4_2['values']=['+1/30(상)','+1/20(중)','+1/10(하)']
 
 
 def timeline_select():
@@ -4054,7 +3444,8 @@ def show_timeline(name,server):
         tkinter.messagebox.showerror("에러","API 접근 실패(네트워크 오류)")
 
 def reset():
-    know_list2=['13390150','22390240','23390450','33390750','21390340','31390540','32390650']
+    know_list2=['13390150','22390240','23390450','33390750','21390340','31390540','32390650',
+                '11390850','12390950','13391050','14391150','15391250']
     know_set_list=['22400150','22400250','22400350','22400450','22400550','21400640','31400750',
                    '31400850','31400950','31401050','31401150','32401240','32401340','32401440']
     know_jin_list=['11410100','11410110','11410120','11410130','11410140','11410150',
@@ -4084,7 +3475,7 @@ def reset():
             pass
 
 def guide_speed():
-    tkinter.messagebox.showinfo("정확도 선택","빠름=단일 선택 부위를 전부 제거\n중간=단일은 포함하되, 신화에 우선권 부여\n느림=세트 수 우선권 완화, 신화 우선권 삭제\n\n메타몽모드=메타몽 경우의 수 추가\n중간=메타몽의 경우의 수만 계산\n느림=메타몽+기존 경우의 수 전부 계산")
+    tkinter.messagebox.showinfo("정확도 선택","매우빠름=세트옵션7개 풀적용 경우의 수만 계산. 중간세팅은 고려하지 않음\n빠름=단일 선택 부위를 전부 제거\n중간=단일은 포함하되, 신화에 우선권 부여\n느림=세트 수 우선권 완화, 신화 우선권 삭제")
                                 
 
 select_item={}
@@ -4105,8 +3496,10 @@ def check_equipment():
     global select_11410100,select_11410110,select_11410120,select_11410130,select_11410140,select_11410150
     global select_21420100,select_21420110,select_21420120,select_21420130,select_21420140,select_21420150
     global select_33430100,select_33430110,select_33430120,select_33430130,select_33430140,select_33430150
+    global select_11390850,select_12390950,select_13391050,select_14391150,select_15391250
 
-    know_list2=['13390150','22390240','23390450','33390750','21390340','31390540','32390650']
+    know_list2=['13390150','22390240','23390450','33390750','21390340','31390540','32390650',
+                '11390850','12390950','13391050','14391150','15391250']
     know_set_list=['22400150','22400250','22400350','22400450','22400550','21400640','31400750',
                    '31400850','31400950','31401050','31401150','32401240','32401340','32401440']
     know_jin_list=['11410100','11410110','11410120','11410130','11410140','11410150',
@@ -4265,648 +3658,6 @@ def check_set(code):
         else:
             eval('set'+str(code))['image']=image_list_set2[str(code)]
 
-def cha_select(jobs):
-    global cha_window
-    try:
-        cha_window.destroy()
-    except:
-        pass
-    cha_window=tkinter.Toplevel(self)
-    cha_window.attributes("-topmost", True) 
-    cha_window.geometry("350x200+750+20")
-    tkinter.Label(cha_window,text="캐릭터명=\n(정확히)",font=guide_font).place(x=10,y=9)
-    cha_name=tkinter.Entry(cha_window,width=15)
-    cha_name.place(x=80,y=12)
-    tkinter.Label(cha_window,text="서버명=",font=guide_font).place(x=10,y=49)
-    sever_list=['카인','디레지에','바칼','힐더','안톤','카시야스','프레이','시로코']
-    serv_name=tkinter.ttk.Combobox(cha_window,values=sever_list,width=13)
-    serv_name.place(x=80,y=52)
-    serv_name.set('카인')
-    tkinter.Label(cha_window,text="직업=",font=guide_font).place(x=10,y=79)
-    job_name=tkinter.ttk.Combobox(cha_window,values=jobs,width=13)
-    job_name.place(x=80,y=82)
-    job_name.set('가이아(2각)')
-
-    
-    load_timeline=tkinter.Button(cha_window,command=lambda:calc_my_cha(cha_name.get(),serv_name.get(),job_name.get()),text="불러오기",font=mid_font)
-    load_timeline.place(x=240,y=25)
-    tkinter.Label(cha_window,text="한캐릭씩 볼것!",font=mid_font,fg="Red").place(x=205,y=76)
-    tkinter.Label(cha_window,text="오직 12부위 장비만 불러옵니다.(마부/강화,칭호/클쳐,압타 X)",fg="Red").place(x=7,y=110)
-    tkinter.Label(cha_window,text="메인창과 호환을 위해 커스텀은 전부 메인창을 따라갑니다.",fg="Red").place(x=7,y=130)
-    tkinter.Label(cha_window,text="100제 에픽이 아니면 전부 100제 레전으로 처리합니다.",fg="Red").place(x=7,y=150)
-    tkinter.Label(cha_window,text="서버 불안정때매 안되면 여러번 눌러보세요",fg="Red").place(x=7,y=170)
-
-def calc_my_cha(cha_name,serv_name,job_name):
-    info_stat=0
-    global show_cha_result
-    try:
-        show_cha_result.destroy()
-    except NameError as error:
-        pass
-    server_dict={'안톤':'anton','바칼':'bakal','카인':'cain','카시야스':'casillas',
-                '디레지에':'diregie','힐더':'hilder','프레이':'prey','시로코':'siroco'}
-    try:
-        sever_code=server_dict[serv_name]
-        cha_id_api=urllib.request.urlopen('https://api.neople.co.kr/df/servers/'+sever_code+'/characters?characterName='+parse.quote(cha_name)+'&apikey=' + apikey)
-        cha_id_dic=loads(cha_id_api.read().decode("utf-8"))
-        cha_id=cha_id_dic['rows'][0]['characterId']
-        print(sever_code)
-        print(cha_id)
-        cha_image(cha_id,sever_code)
-        time.sleep(0.3)
-
-        cha_api=urllib.request.urlopen('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/equip/equipment?apikey='+apikey)
-        cha_api_dic=loads(cha_api.read().decode("utf-8"))
-        cha_equ=cha_api_dic["equipment"]
-        item_list=[]
-        for i in range(0,20):
-            try:
-                if cha_equ[i]['slotName'] != '보조무기':
-                    item_list.append(cha_equ[i]['itemName'])
-                if cha_equ[i]['slotName'] == '무기':
-                    wep_name=cha_equ[i]['itemName']
-            except IndexError as error:
-                pass
-
-        ##싀칭박스
-        if job_name[4:7] == '세인트' or job_name[4:7] == '세라핌' or job_name[4:7] == '헤카테':
-            switch_api=urllib.request.urlopen('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/skill/buff/equip/equipment?apikey='+apikey)
-            switch_api_dic=loads(switch_api.read().decode("utf-8"))
-            swi_equ=switch_api_dic["skill"]['buff']['equipment']
-            swi_list=[]
-            for i in range(0,20):
-                try:
-                    if swi_equ[i]['slotName'] != '보조무기':
-                        swi_list.append(swi_equ[i]['itemName'])
-                    if swi_equ[i]['slotName'] == '무기':
-                        swi_wep_name=swi_equ[i]['itemName']
-                except IndexError as error:
-                    pass
-    except urllib.error.HTTPError as error:
-        tkinter.messagebox.showerror("에러","API 접근 실패(네트워크 오류)")
-
-    xl=openpyxl.load_workbook("DATA.xlsx", data_only=True)
-    sh=xl['one']
-    for_calc_list=[]
-    for_calc_list2=[]
-    for i in item_list:
-        for j in range(1,257):
-            if i==sh.cell(j,39).value:
-                for_calc_list.append('{}'.format(str(sh.cell(j,1).value)))
-
-    check_exist=[]
-    wep_exist=0
-    for i in for_calc_list:
-        if len(i) != 6:
-            check_exist.append(i[0:2])
-        if len(i) == 6:
-            wep_exist=1
-    if wep_exist ==0:
-        for_calc_list.append('111001')
-        wep_name='흑천의 주인(검은 성전의 기억)'
-
-    global default_legend,default_chawon,default_old
-    for i in [11,12,13,14,15]:
-        if check_exist.count(str(i))==0:
-            if default_legend==1:
-                for_calc_list.append(str(i)+'360')
-            elif default_chawon==1:
-                for_calc_list.append(str(i)+'440')
-            elif default_old==1:
-                for_calc_list.append(str(i)+'470')
-    for i in [21,22,23]:
-        if check_exist.count(str(i))==0:
-            if default_legend==1:
-                for_calc_list.append(str(i)+'370')
-            elif default_chawon==1:
-                for_calc_list.append(str(i)+'450')
-            elif default_old==1:
-                for_calc_list.append(str(i)+'480')
-    for i in [31,32,33]:
-        if check_exist.count(str(i))==0:
-            if default_legend==1:
-                for_calc_list.append(str(i)+'380')
-            elif default_chawon==1:
-                for_calc_list.append(str(i)+'460')
-            elif default_old==1:
-                for_calc_list.append(str(i)+'490')
-            
-    calc_now=[]
-    for i in for_calc_list:
-        if len(i)==6:
-            wep_num=[i]
-        else:
-            calc_now.append(i)
-    ##스위칭박스
-    if job_name[4:7] == '세인트' or job_name[4:7] == '세라핌' or job_name[4:7] == '헤카테':
-        check_exist2=[]
-        wep_exist2=0
-        for i in swi_list:
-            for j in range(1,257):
-                if i==sh.cell(j,39).value:
-                    for_calc_list2.append('{}'.format(str(sh.cell(j,1).value)))
-        for i in for_calc_list2:
-            if len(i) != 6:
-                check_exist2.append(i[0:2])
-            if len(i) == 6:
-                wep_exist2=1
-                
-        if wep_exist2 ==0:
-            for_calc_list2.append('111001')
-            wep_name2='흑천의 주인(검은 성전의 기억)'
-            
-        for i in [11,12,13,14,15]:
-            if check_exist2.count(str(i))==0:
-                if default_legend==1:
-                    for_calc_list2.append(str(i)+'360')
-                elif default_chawon==1:
-                    for_calc_list2.append(str(i)+'440')
-                elif default_old==1:
-                    for_calc_list2.append(str(i)+'470')
-        for i in [21,22,23]:
-            if check_exist2.count(str(i))==0:
-                if default_legend==1:
-                    for_calc_list2.append(str(i)+'370')
-                elif default_chawon==1:
-                    for_calc_list2.append(str(i)+'450')
-                elif default_old==1:
-                    for_calc_list2.append(str(i)+'480')
-        for i in [31,32,33]:
-            if check_exist2.count(str(i))==0:
-                if default_legend==1:
-                    for_calc_list2.append(str(i)+'380')
-                elif default_chawon==1:
-                    for_calc_list2.append(str(i)+'460')
-                elif default_old==1:
-                    for_calc_list2.append(str(i)+'490')
-                
-        calc_now2=[]
-        for i in for_calc_list2:
-            if len(i)==6:
-                wep_num2=[i]
-            else:
-                calc_now2.append(i)
-
-    opt_one={}
-    a=1
-    for row in sh.rows:
-        row_value=[]
-        row_value_cut=[]
-        for cell in row:
-            row_value.append(cell.value)
-            row_value_cut = row_value[2:]
-        opt_one[sh.cell(a,1).value]=row_value_cut
-        a=a+1
-    c=1        
-    db_buf=xl["buf"]
-    opt_buf={}
-    name_buf={}
-    for row in db_buf.rows:
-        row_value=[]
-        row_value_cut=[]
-        for cell in row:
-            row_value.append(cell.value)
-            row_value_cut = row_value[2:]
-        opt_buf[db_buf.cell(c,1).value]=row_value_cut ## DB 불러오기 ##
-        name_buf[db_buf.cell(c,1).value]=row_value
-        c=c+1
-
-    d=1        
-    db_buflvl=xl["buflvl"]
-    opt_buflvl={}
-    for row in db_buflvl.rows:
-        row_value=[]
-        row_value_cut=[]
-        for cell in row:
-            row_value.append(cell.value)
-            row_value_cut = [0] + row_value[1:]
-        opt_buflvl[db_buflvl.cell(d,1).value]=row_value_cut
-        d=d+1
-
-    load_presetc=load_workbook("preset.xlsx", data_only=True)
-    db_preset=load_presetc["custom"]
-    ele_skill=int(opt_job_ele[job_name][1])
-    ele_in=(int(db_preset["B14"].value)+int(db_preset["B15"].value)+int(db_preset["B16"].value)+
-            int(ele_skill)-int(db_preset["B18"].value)+int(db_preset["B19"].value)+13)
-    cool_eff=float(db_preset["B2"].value)/100
-
-    betterang=int(sh["J86"].value)
-    
-    if job_name[-4:] == "(진각)":
-        active_eff_one=15
-        active_eff_set=18-3
-    else:
-        active_eff_one=21
-        active_eff_set=27-3
-    global time_select
-    if time_select.get() == "60초(각성비중↓)":
-        lvl_shift=6
-    else:
-        lvl_shift=0
-    job_lv1=opt_job[job_name][11+lvl_shift]
-    job_lv2=opt_job[job_name][12+lvl_shift]
-    job_lv3=opt_job[job_name][13+lvl_shift]
-    job_lv4=opt_job[job_name][14+lvl_shift]
-    job_lv5=opt_job[job_name][15+lvl_shift]
-    job_lv6=opt_job[job_name][16+lvl_shift]
-    job_pas0=opt_job[job_name][0]
-    job_pas1=opt_job[job_name][1]
-    job_pas2=opt_job[job_name][2]
-    job_pas3=opt_job[job_name][3]
-    
-    
-    extra_dam=0
-    extra_cri=0
-    extra_bon=0
-    extra_all=0
-    extra_pas2=0
-    global style_select, creature_select
-    if style_select.get() == '증뎀칭호':
-        extra_dam=10
-    if style_select.get() == '추뎀칭호':
-        extra_bon=10
-    if creature_select.get() == '모공크리쳐':
-        extra_all=15
-    if creature_select.get() == '크증크리쳐':
-        extra_cri=18
-        extra_pas2=extra_pas2+1
-    if style_select.get() == '크증칭호' and creature_select.get() != '크증크리쳐':
-        extra_cri=10
-    
-    set_list=["1"+str(calc_now[x][2:4]) for x in range(0,11)] 
-    set_on=[];setapp=set_on.append
-    setcount=set_list.count
-    for i in range(101,136):
-        if setcount(str(i))==2:
-            setapp(str(i)+"1")
-        if 4>=setcount(str(i))>=3:
-            setapp(str(i)+"2")
-        if setcount(str(i))==5:
-            setapp(str(i)+"3")
-    for i in range(136,150):
-        if setcount(str(i))==2:
-            setapp(str(i)+"0")
-        if 4>=setcount(str(i))>=3:
-            setapp(str(i)+"1")
-        if setcount(str(i))==5:
-            setapp(str(i)+"2")
-    calc_wep=wep_num+calc_now
-    for_calc=set_on+calc_wep
-
-    if job_name[4:7] != '세인트' and job_name[4:7] != '세라핌' and job_name[4:7] != '헤카테':
-                       
-        skiper=0
-        coolper=0
-        damage=0
-        base_array=np.array([0,0,extra_dam,extra_cri,extra_bon,0,extra_all,0,0,ele_in,0,1,0,0,0,0,0,0,extra_pas2,0,0,0,0,0,0,0,0,0])
-        oneone=len(for_calc)
-        oneonelist=[]
-        for i in range(oneone):
-            no_cut=opt_one.get(for_calc[i])               ## 11번 스증
-            cut=np.array(no_cut[0:20]+no_cut[22:23]+no_cut[34:35]+no_cut[38:44])
-            skiper=(skiper/100+1)*(cut[11]/100+1)*100-100
-            coolper=(1-(100-coolper)/100*(100-cut[20])/100)*100
-            oneonelist.append(cut)
-        for i in range(oneone):
-            base_array=base_array+oneonelist[i]
-        # 코드 이름
-        # 0추스탯 1추공 2증 3크 4추 5속추
-        # 6모 7공 8스탯 9속강 10지속 11스증 12특수
-        # 13공속 14크확 / 15 특수액티브 / 16~19 패시브 /20 쿨감보정/21 2각캐특수액티브 /22~27 액티브레벨링
-
-        if set_on.count('1201')==1 and calc_wep.count('32200')==1:
-            base_array[3]=base_array[3]-5
-        if calc_wep.count('33200')==1 and calc_wep.count('31200')==0:
-            base_array[8]=base_array[8]-10
-        if calc_wep.count('33230')==1 or calc_wep.count('33231')==1:
-            if calc_wep.count('31230')==0:
-                base_array[4]=base_array[4]-10
-            if calc_wep.count('32230')==0:
-                base_array[9]=base_array[9]-40
-        if calc_wep.count('15340')==1 or calc_wep.count('23340')==1 or calc_wep.count('33340')==1 or calc_wep.count('33341')==1:
-            if set_on.count('1341')==0 and set_on.count('1342') ==0:
-                if calc_wep.count('15340')==1:
-                    base_array[9]=base_array[9]-20
-                elif calc_wep.count('23340')==1:
-                    base_array[2]=base_array[2]-10
-                elif calc_wep.count('33340')==1:
-                    base_array[6]=base_array[6]-5
-                else:
-                    base_array[9]=base_array[9]-4
-                    base_array[2]=base_array[2]-2
-                    base_array[6]=base_array[6]-1
-                    base_array[8]=base_array[8]-1.93
-        if calc_wep.count('11111')==1:
-            if set_on.count('1112')==1 or set_on.count('1113')==1:
-                coolper=(1-(100-coolper)/100*(100-11)/100)*100
-        if calc_wep.count('11301')==1:
-            if calc_wep.count('22300')!=1:
-                base_array[4]=base_array[4]-10
-                base_array[7]=base_array[7]+10
-            if calc_wep.count('31300')!=1:
-                base_array[4]=base_array[4]-10
-                base_array[7]=base_array[7]+10
-        if calc_wep.count('11061')==1:
-            if betterang ==34:
-                if calc_wep.count('12060')==1:
-                    base_array[3]=base_array[3]+1
-                if calc_wep.count('13060')==1:
-                    skiper=skiper/1.34*1.35
-                if calc_wep.count('14060')==1:
-                    base_array[9]=base_array[9]+4
-                if calc_wep.count('15060')==1:
-                    base_array[8]=base_array[8]+1
-                if set_on.count('1063')==1:
-                    base_array[4]=base_array[4]+1
-        if set_on.count('1441') ==1:
-            if calc_wep.count('11440')!=1: ##3셋 공3% 모공5% 감소
-                base_array[7]=base_array[7]-3
-                base_array[6]=base_array[6]-5
-                        
-        real_bon=base_array[4]+base_array[5]*(base_array[9]*0.0045+1.05)
-        actlvl=((base_array[active_eff_one]+base_array[22]*job_lv1+base_array[23]*job_lv2+base_array[24]*job_lv3+
-                base_array[25]*job_lv4+base_array[26]*job_lv5+base_array[27]*job_lv6)/100+1)
-        paslvl=((100+base_array[16]*job_pas0)/100)*((100+base_array[17]*job_pas1)/100)*((100+base_array[18]*job_pas2)/100)*((100+base_array[19]*job_pas3)/100)
-        damage=((base_array[2]/100+1)*(base_array[3]/100+1)*(real_bon/100+1)*(base_array[6]/100+1)*(base_array[7]/100+1)*
-                (base_array[8]/100+1)*(base_array[9]*0.0045+1.05)*(base_array[10]/100+1)*(skiper/100+1)*(base_array[12]/100+1)*
-                actlvl*paslvl*((54500+3.31*base_array[0])/54500)*((4800+base_array[1])/4800)/(1.05+0.0045*int(ele_skill)))
-
-        damage_with_cool=damage*((100/(100-coolper)-1)*cool_eff+1)
-        type_code='deal'
-
-        final_list=[damage,damage_with_cool]
-        show_my_cha(calc_now,final_list,type_code,job_name,wep_name,ele_skill,cha_name,info_stat)
-    else:
-
-        set_list2=["1"+str(calc_now2[x][2:4]) for x in range(0,11)] 
-        set_on2=[];setapp2=set_on2.append
-        setcount2=set_list2.count
-        for i in range(101,135):
-            if setcount2(str(i))==2:
-                setapp2(str(i)+"1")
-            if 4>=setcount2(str(i))>=3:
-                setapp2(str(i)+"2")
-            if setcount2(str(i))==5:
-                setapp2(str(i)+"3")
-        for i in range(136,150):
-            if setcount2(str(i))==2:
-                setapp2(str(i)+"0")
-            if 4>=setcount2(str(i))>=3:
-                setapp2(str(i)+"1")
-            if setcount2(str(i))==5:
-                setapp2(str(i)+"2")
-        calc_wep2=wep_num2+calc_now2
-        for_calc2=set_on2+calc_wep2
-        
-        base_b=10+int(db_preset['H2'].value)+int(db_preset['H4'].value)+int(db_preset['H5'].value)+1
-        base_c=12+int(db_preset['H3'].value)+1
-        base_pas0=0
-        base_pas0_c=3
-        base_pas0_b=0
-        base_stat_s=4114
-        base_stat_h=4180
-        base_pas0_1=0
-        lvlget=opt_buflvl.get
-        #코드 이름
-        #0 체정 1 지능
-        #축복 2 스탯% 3 물공% 4 마공% 5 독공%
-        #아포 6 고정 7 스탯%
-        #8 축렙 9 포렙
-        #10 아리아/보징증폭
-        #11 전직패 12 보징 13 각패1 14 각패2 15 2각 16 각패3
-        #17 깡신념 18 깡신실 19 아리아쿨 20 하베쿨
-        setget=opt_buf.get
-        base_array=np.array([base_stat_h,base_stat_s,0,0,0,0,0,0,base_b,base_c,0,base_pas0,base_pas0_1,0,0,0,0,0,0,0,0])
-        base_array2=np.array([base_stat_h,base_stat_s,0,0,0,0,0,0,base_b,base_c,0,base_pas0,base_pas0_1,0,0,0,0,0,0,0,0])
-        calc_wep=wep_num+calc_now
-        calc_wep2=wep_num2+calc_now2
-
-        b_stat=10.24 ##탈리스만
-        b_phy=0
-        b_mag=0
-        b_ind=0
-        c_per=0
-        b_stat2=10.24 ##탈리스만
-        b_phy2=0
-        b_mag2=0
-        b_ind2=0
-        c_per2=0
-        oneone=len(for_calc)
-        oneonelist=[]
-        for i in range(oneone):
-            no_cut=np.array(setget(for_calc[i]))             ## 2 3 4 5 7
-            base_array=base_array+no_cut
-            b_stat=(b_stat/100+1)*(no_cut[2]/100+1)*100-100
-            b_phy=(b_phy/100+1)*(no_cut[3]/100+1)*100-100
-            b_mag=(b_mag/100+1)*(no_cut[4]/100+1)*100-100
-            b_ind=(b_ind/100+1)*(no_cut[5]/100+1)*100-100
-            c_per=(c_per/100+1)*(no_cut[7]/100+1)*100-100
-            oneonelist.append(no_cut)
-            
-        oneone2=len(for_calc2)
-        oneonelist2=[]
-        for i in range(oneone2):
-            no_cut2=np.array(setget(for_calc2[i]))             ## 2 3 4 5 7
-            base_array2=base_array2+no_cut2
-            b_stat2=(b_stat2/100+1)*(no_cut2[2]/100+1)*100-100
-            b_phy2=(b_phy2/100+1)*(no_cut2[3]/100+1)*100-100
-            b_mag2=(b_mag2/100+1)*(no_cut2[4]/100+1)*100-100
-            b_ind2=(b_ind2/100+1)*(no_cut2[5]/100+1)*100-100
-            c_per2=(c_per2/100+1)*(no_cut2[7]/100+1)*100-100
-            oneonelist2.append(no_cut)
-
-        if set_on.count('1441') ==1:
-            if calc_wep.count('11440')!=1: ##3셋 스탯160, 영축힘지8%, 물마독3% 감소
-                base_array[0]=base_array[0]-160
-                base_array[1]=base_array[1]-160
-                b_stat=(b_stat/100+1)/1.08*100-100
-                b_phy=(b_phy/100+1)/1.03*100-100
-                b_mag=(b_mag/100+1)/1.03*100-100
-                b_ind=(b_ind/100+1)/1.03*100-100
-        if set_on2.count('1441') ==1:
-            if calc_wep2.count('11440')!=1: ##3셋 스탯160, 영축힘지8%, 물마독3% 감소
-                base_array2[0]=base_array2[0]-160
-                base_array2[1]=base_array2[1]-160
-                b_stat2=(b_stat2/100+1)/1.08*100-100
-                b_phy2=(b_phy2/100+1)/1.03*100-100
-                b_mag2=(b_mag2/100+1)/1.03*100-100
-                b_ind2=(b_ind2/100+1)/1.03*100-100
-        #0 체정 1 지능
-        #축복 2 스탯% 3 물공% 4 마공% 5 독공%
-        #아포 6 고정 7 스탯%
-        #8 축렙 9 포렙
-        #10 아리아/보징증폭
-        #11 전직패 12 보징 13 각패1 14 각패2 15 2각 16 각패3
-        #17 깡신념 18 깡신실 19 아리아쿨 20 하베쿨
-        if job_name[4:7] == "세인트":
-            b_base_att=lvlget('hol_b_atta')[int(base_array2[8])]#
-            stat_pas0lvl_b=lvlget('pas0')[int(base_array2[11])+base_pas0_b]+lvlget('hol_pas0_1')[int(base_array2[12])]#
-            stat_pas0lvl_c=lvlget('pas0')[int(base_array[11])+base_pas0_c]+lvlget('hol_pas0_1')[int(base_array[12])]
-            stat_pas1lvl=lvlget('hol_pas1')[int(base_array[13])]+base_array[17]
-            stat_pas1lvl2=lvlget('hol_pas1')[int(base_array2[13])]+base_array2[17]#
-            stat_pas2lvl=lvlget('hol_act2')[int(base_array[15])]
-            stat_pas2lvl2=lvlget('hol_act2')[int(base_array2[15])]#
-            stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
-            stat_pas3lvl2=lvlget('pas3')[int(base_array2[16])]#
-            stat_b=base_array2[0]+stat_pas0lvl_b+stat_pas1lvl2+stat_pas2lvl2+stat_pas3lvl2+19*base_array2[10]+int(db_preset['H6'].value)
-            stat_c=base_array[0]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]+int(db_preset['H1'].value)
-            b_stat_calc=int(int(lvlget('hol_b_stat')[int(base_array2[8])]*(b_stat2/100+1))*(stat_b/630+1))
-            b_phy_calc=int(int(b_base_att*(b_phy2/100+1))*(stat_b/630+1))
-            b_mag_calc=int(int(b_base_att*(b_mag2/100+1))*(stat_b/630+1))
-            b_ind_calc=int(int(b_base_att*(b_ind2/100+1))*(stat_b/630+1))
-            b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
-            c_calc=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(c_per/100+1))*(stat_c/750+1))
-            pas1_calc=int(lvlget('hol_pas1_out')[int(base_array[13])]+213)
-            pas1_out=str(int(lvlget('hol_pas1_out')[int(base_array[13])]+213))+"  ("+str(int(20+base_array[13]))+"렙)"
-            save1=str(b_stat_calc)+"/"+str(b_average)+"   ["+str(int(stat_b))+"("+str(int(base_array2[8]))+"렙)]"
-            info_stat=int(stat_c-stat_pas2lvl-528-stat_pas1lvl-213-lvlget('hol_pas0_1')[int(base_array[12])])
-
-        else:
-            if job_name[4:7] == "세라핌":
-                b_value=675
-                aria=1+aria_fix+0.05*base_array[10]*aria_dif
-            if job_name[4:7] == "헤카테":
-                b_value=665
-                aria=(0.95+aria_fix+0.05*base_array[10]*aria_dif)*1.15
-                            
-            b_base_att=lvlget('se_b_atta')[int(base_array2[8])]#
-            stat_pas0lvl_b=lvlget('pas0')[int(base_array2[11])+int(base_pas0_b)]#
-            stat_pas0lvl_c=lvlget('pas0')[int(base_array[11])+int(base_pas0_c)]
-            stat_pas1lvl=lvlget('se_pas1')[int(base_array[13])]+base_array[18]
-            stat_pas1lvl2=lvlget('se_pas1')[int(base_array2[13])]+base_array2[18]#
-            stat_pas2lvl=lvlget('se_pas2')[int(base_array[14])]
-            stat_pas2lvl2=lvlget('se_pas2')[int(base_array2[14])]#
-            stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
-            stat_pas3lvl2=lvlget('pas3')[int(base_array2[16])]#
-            stat_b=base_array2[1]+stat_pas0lvl_b+stat_pas1lvl2+stat_pas2lvl2+stat_pas3lvl2+int(db_preset['H6'].value)
-            stat_c=base_array[1]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+int(db_preset['H1'].value)
-            b_stat_calc=int(int(lvlget('se_b_stat')[int(base_array2[8])]*(b_stat2/100+1))*(stat_b/b_value+1)*aria)
-            b_phy_calc=int(int(b_base_att*(b_phy2/100+1)*(stat_b/b_value+1))*aria)
-            b_mag_calc=int(int(b_base_att*(b_mag2/100+1)*(stat_b/b_value+1))*aria)
-            b_ind_calc=int(int(b_base_att*(b_ind2/100+1)*(stat_b/b_value+1))*aria)
-            b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
-            c_calc=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(c_per/100+1))*(stat_c/750+1))
-            pas1_calc=int(stat_pas1lvl+442)
-            pas1_out=str(int(stat_pas1lvl+442))+"  ("+str(int(20+base_array[13]))+"렙)"
-            save1=str(b_stat_calc)+"("+str(int(b_stat_calc/aria))+")/"+str(b_average)+"("+str(int(b_average/aria))+")\n                  ["+str(int(stat_b))+"("+str(int(base_array2[8]))+"렙)]"
-            info_stat=stat_c-pas1_calc
-        ##1축 2포 3합
-        save2=str(c_calc)+"    ["+str(int(stat_c))+"("+str(int(base_array[9]))+"렙)]"
-        save3=pas1_out
-        save4=((15000+pas1_calc+c_calc+b_stat_calc)/250+1)*(2650+b_average)
-        type_code='buf'
-        final_list=[save1,save2,save3,save4]
-        show_my_cha(calc_now,final_list,type_code,job_name,wep_name,ele_skill,cha_name,info_stat,calc_now2)
-
-    xl.close()
-    load_presetc.close()
-    
-def cha_image(cha_code,serv_code):
-    down_url='https://img-api.neople.co.kr/df/servers/'+serv_code+'/characters/'+cha_code+'?zoom=1?apikey='+apikey
-    urllib.request.urlretrieve(down_url,'my_cha.png')
-
-def show_my_cha(equipment,final_list,type_code,job_name,wep_name,ele_skill,cha_name,info_stat,*equipment2):
-    global show_cha_result
-    show_cha_result=Toplevel(self)
-    show_cha_result.geometry("244x402+750+320")
-    show_cha_result.resizable(False,False)
-    global canvas,cha_bg,cha_img
-    canvas = Canvas(show_cha_result, width=246, height=404, bd=0)
-    canvas.place(x=-2,y=-2)
-    cha_bg=tkinter.PhotoImage(file='ext_img/bg_cha_img.png')
-    canvas.create_image(123,202,image=cha_bg)
-    cha_img=tkinter.PhotoImage(file='my_cha.png')
-    canvas.create_image(123,70,image=cha_img)
-    global image_list,image_on
-    image_on={}
-    for i in [11,12,13,14,15,21,22,23,31,32,33]:
-        for j in equipment:
-            if j[0:2] == str(i):
-                image_on[str(i)]=image_list[j]
-    global img11,img12,img13,img14,img15,img21,img22,img23,img31,img32,img33
-    img11=canvas.create_image(57,57,image=image_on['11'])
-    img12=canvas.create_image(27,87,image=image_on['12'])
-    img13=canvas.create_image(27,57,image=image_on['13'])
-    img14=canvas.create_image(57,87,image=image_on['14'])
-    img15=canvas.create_image(27,117,image=image_on['15'])
-    img21=canvas.create_image(189,57,image=image_on['21'])
-    img22=canvas.create_image(219,57,image=image_on['22'])
-    img23=canvas.create_image(219,87,image=image_on['23'])
-    img31=canvas.create_image(189,87,image=image_on['31'])
-    img32=canvas.create_image(219,117,image=image_on['32'])
-    img33=canvas.create_image(189,117,image=image_on['33'])
-
-    canvas.create_text(123,197,text="직업명= "+job_name,font=guide_font,fill='white')
-    canvas.create_text(123,217,text="무기= "+wep_name,font=guide_font,fill='white')
-    canvas.create_text(58,157,text=cha_name,font=guide_font,fill='white')
-    
-
-
-    if type_code =='deal':
-        canvas.create_text(123,237,text="스킬속강(역보정율)= "+str(ele_skill)+' (-'+str(int(100*(1-1.05/(1.05+int(ele_skill)*0.0045))))+"%)",font=guide_font,fill='white')
-        global style_select, creature_select, time_select
-        canvas.create_text(123,257,text="딜타임설정= "+time_select.get(),font=guide_font,fill='white')
-        canvas.create_text(123,277,text=style_select.get()+" / "+creature_select.get(),font=guide_font,fill='white')
-        canvas.create_text(123,307,text="순데미지= "+str(int(100*final_list[0]))+"%",font=mid_font,fill='white')
-        canvas.create_text(123,342,text="쿨감반영= "+str(int(100*final_list[1]))+"%",font=mid_font,fill='white')
-
-        canvas.create_text(123,377,text="칭호/크리쳐는 메인창에서 선택하세요.",font=guide_font,fill='red')
-
-    if type_code =='buf':
-        print(equipment2)
-        global image_on2
-        image_on2={}
-        for i in [11,12,13,14,15,21,22,23,31,32,33]:
-            for j in equipment2[0]:
-                if j[0:2] == str(i):
-                    image_on2[str(i)]=image_list[j]
-        
-        canvas.create_text(123,247,text="축복="+final_list[0],font=guide_font,fill='white')
-        canvas.create_text(123-17,282,text="1각="+final_list[1],font=guide_font,fill='white')
-        canvas.create_text(123-44,312,text="1각패="+final_list[2],font=guide_font,fill='white')
-        canvas.create_text(123,340,text="총 버프력= "+str(int(final_list[3]/10)),font=mid_font,fill='white')
-        canvas.create_text(123,368,text="예상 마을스탯="+str(int(info_stat)),font=guide_font,fill='white')
-        canvas.create_text(123,387,text="스탯/스킬렙을 커스텀에서 맞추세요.",font=guide_font,fill='red')
-
-        global toggle_cha, toggle_cha_but,toggle_swi_img,toggle_swi_img2
-        toggle_cha=0
-        toggle_swi_img=tkinter.PhotoImage(file='ext_img/info_swi.png')
-        toggle_swi_img2=tkinter.PhotoImage(file='ext_img/info_swi2.png')
-        toggle_cha_but=tkinter.Button(show_cha_result,borderwidth=0,activebackground=dark_main,bg=dark_main,image=toggle_swi_img,command=toggle_cha_swi)
-        toggle_cha_but.image=toggle_swi_img
-    
-    canvas.image = cha_bg,cha_img,image_on['11'],image_on['12'],image_on['13'],image_on['14'],image_on['15'],image_on['21'],image_on['22'],image_on['23'],image_on['31'],image_on['32'],image_on['33']
-    
-    if type_code =='buf':
-        toggle_cha_but.place(x=155,y=142)
-        tkinter.messagebox.showinfo("주의할점!","버퍼는 '반드시' 통합커스텀에서 자신에 맞는 스탯과 스킬렙을 맞춰줘야합니다.(실제 적용스탯과 여기값의 차이로 직접기입)\n굳이 API로 불러오지 않는 이유는 이후 버퍼 계산시 자신에 맞는 기준값을 정하라는 의도입니다.\n본템과 스박이 다를 경우, 이중 증폭을 하지 않는 이상 추가 스탯은 축복스탯에만 넣어두세요\n\n솔플로 버프력 측정시 솔플마부가 적용되는점 주의!(마계회합 이용하면 편함)")
-
-def toggle_cha_swi():
-    global toggle_cha,cha_bg,cha_img, toggle_cha_but,toggle_swi_img,toggle_swi_img2
-    global image_on,image_on2
-    if toggle_cha == 0:
-        image_ont=image_on2
-        toggle_cha_but['image']=toggle_swi_img2
-        toggle_cha=1
-    elif toggle_cha == 1:
-        image_ont=image_on
-        toggle_cha_but['image']=toggle_swi_img
-        toggle_cha=0
-    global img11,img12,img13,img14,img15,img21,img22,img23,img31,img32,img33
-    canvas.itemconfig(img11,image=image_ont['11'])
-    canvas.itemconfig(img12,image=image_ont['12'])
-    canvas.itemconfig(img13,image=image_ont['13'])
-    canvas.itemconfig(img14,image=image_ont['14'])
-    canvas.itemconfig(img15,image=image_ont['15'])
-    canvas.itemconfig(img21,image=image_ont['21'])
-    canvas.itemconfig(img22,image=image_ont['22'])
-    canvas.itemconfig(img23,image=image_ont['23'])
-    canvas.itemconfig(img31,image=image_ont['31'])
-    canvas.itemconfig(img32,image=image_ont['32'])
-    canvas.itemconfig(img33,image=image_ont['33'])
-    canvas.image = cha_bg,cha_img,image_ont['11'],image_ont['12'],image_ont['13'],image_ont['14'],image_ont['15'],image_ont['21'],image_ont['22'],image_ont['23'],image_ont['31'],image_ont['32'],image_ont['33']
-
-
 def stop_calc():
     global exit_calc
     exit_calc=1
@@ -4916,7 +3667,8 @@ def stop_calc():
 
     
 ## 내부 구조 ##
-know_list=['13390150','22390240','23390450','33390750','21390340','31390540','32390650']
+know_list=['13390150','22390240','23390450','33390750','21390340','31390540','32390650',
+           '11390850','12390950','13391050','14391150','15391250']
 know_set_list=['22400150','22400250','22400350','22400450','22400550','21400640','31400750',
                '31400850','31400950','31401050','31401150','32401240','32401340','32401440']
 know_jin_list=['11410100','11410110','11410120','11410130','11410140','11410150',
@@ -4987,32 +3739,58 @@ image_list_tag['99990']=PhotoImage(file="image/99990.png")
 
 
     
-select_perfect=tkinter.ttk.Combobox(self,values=['단품제외(빠름)','단품포함(중간)','세트필터↓(느림)','메타몽모드(중간)','메타몽모드(느림)'],width=15)
-select_perfect.place(x=145,y=11)
+select_perfect=tkinter.ttk.Combobox(self,values=['풀셋모드(매우빠름)','단품제외(빠름)','단품포함(중간)','세트필터↓(느림)'],width=15)
+select_perfect.place(x=145+480,y=11)
 select_perfect.set('단품포함(중간)')
 select_speed_img=PhotoImage(file="ext_img/select_speed.png")
-tkinter.Button(self,command=guide_speed,image=select_speed_img,borderwidth=0,activebackground=dark_main,bg=dark_main).place(x=29,y=7)
+tkinter.Button(self,command=guide_speed,image=select_speed_img,borderwidth=0,activebackground=dark_main,bg=dark_main).place(x=29+480,y=7)
 reset_img=PhotoImage(file="ext_img/reset.png")
-tkinter.Button(self,command=reset,image=reset_img,borderwidth=0,activebackground=dark_main,bg=dark_main).place(x=302,y=476)
+tkinter.Button(self,command=reset,image=reset_img,borderwidth=0,activebackground=dark_main,bg=dark_main).place(x=302+180+27,y=476-435)
 
 wep_list=[]
 for i in range(0,75):
     wep_list.append(name_one[str(i+111001)][1])
 wep_list.append(name_one["111076"][1])
-    
+
+wep_type_temp=[]
+def wep_job_selected(event):
+    wep_type_select["values"]=list(calc_list_wep.DNF_wep_list[str(wep_job_select.get())].keys())
+    wep_type_select.set(list(calc_list_wep.DNF_wep_list[str(wep_job_select.get())].keys())[0])
+    wep_select.set(list(calc_list_wep.DNF_wep_list[str(wep_job_select.get())][str(wep_type_select.get())])[0])
+def wep_job_selected2(event):
+    wep_select["values"]=list(calc_list_wep.DNF_wep_list[str(wep_job_select.get())][str(wep_type_select.get())])
+    wep_select.set(list(calc_list_wep.DNF_wep_list[str(wep_job_select.get())][str(wep_type_select.get())])[0])
+
+
 wep_image=PhotoImage(file="ext_img/wep.png")
 wep_g=tkinter.Label(self,image=wep_image,borderwidth=0,activebackground=dark_main,bg=dark_main)
-wep_g.place(x=29,y=55)
-wep_select=tkinter.ttk.Combobox(self,width=30,values=wep_list)
-wep_select.place(x=110,y=60)
+wep_g.place(x=29,y=30)
+wep_job_type=list(calc_list_wep.DNF_wep_list.keys())
+wep_job_select=tkinter.ttk.Combobox(self,width=12,values=wep_job_type)
+wep_job_select.place(x=110,y=30)
+wep_job_select.set('직업군 선택')
+wep_job_select.bind("<<ComboboxSelected>>",wep_job_selected)
+wep_type=list(calc_list_wep.DNF_wep_list['공통'].keys())
+wep_type_select=tkinter.ttk.Combobox(self,width=12,values=wep_type)
+wep_type_select.place(x=236,y=30)
+wep_type_select.set('무기타입 선택')
+wep_type_select.bind("<<ComboboxSelected>>",wep_job_selected2)
+wep_default=list(calc_list_wep.DNF_wep_list['공통']['무기타입 선택'])
+wep_select=tkinter.ttk.Combobox(self,width=30,values=wep_default)
+wep_select.place(x=110,y=58)
 wep_select.set('(공통)흑천의 주인')
 
-time_select=tkinter.ttk.Combobox(self,width=13,values=['20초(각성비중↑)','60초(각성비중↓)'])
-time_select.set('20초(각성비중↑)')
-time_select.place(x=390-17,y=220+52)
-jobup_select=tkinter.ttk.Combobox(self,width=13,values=jobs)
-jobup_select.set('가이아(2각)')
-jobup_select.place(x=390-17,y=190+52)
+def job_type_selected(event):
+    jobup_select["values"]=list(calc_list_job.DNF_job_list[jobtype_select.get()])
+    jobup_select.set(list(calc_list_job.DNF_job_list[jobtype_select.get()])[0])
+
+jobtype_select=tkinter.ttk.Combobox(self,width=13,values=list(calc_list_job.DNF_job_list.keys()))
+jobtype_select.bind("<<ComboboxSelected>>",job_type_selected)
+jobtype_select.set('귀검사(남)')
+jobtype_select.place(x=390-17,y=190+52)
+jobup_select=tkinter.ttk.Combobox(self,width=13,values=list(calc_list_job.DNF_job_list['귀검사(남)']))
+jobup_select.set('검신(진각)')
+jobup_select.place(x=390-17,y=220+52)
 style_list=['증뎀칭호','추뎀칭호','크증칭호','기타(직접비교)']
 style_select=tkinter.ttk.Combobox(self,width=13,values=style_list)
 style_select.set('추뎀칭호')
@@ -5049,10 +3827,6 @@ load.place(x=435+165,y=440-100)
 change_name_img=PhotoImage(file="ext_img/name_change.png")
 change_list_but=tkinter.Button(self,image=change_name_img,borderwidth=0,activebackground=dark_main,command=change_list_name,bg=dark_sub)
 change_list_but.place(x=435+165,y=405-100)
-calc_me_img=PhotoImage(file="ext_img/calc_me.png")
-calc_me=tkinter.Button(self,image=calc_me_img,borderwidth=0,activebackground=dark_main,command=lambda:cha_select(jobs),bg=dark_sub)
-calc_me.place(x=300,y=400)
-
 
 show_count=tkinter.Label(self,font=guide_font,fg="white",bg=dark_sub)
 show_count.place(x=700,y=145)
@@ -5103,8 +3877,75 @@ set135=tkinter.Button(self,bg=dark_main,borderwidth=0,activebackground=dark_main
 
 
 ##잔향부여
+
+def update_inv(event):
+    global inv_tg
+    if inv_mod.get()=="미부여" or inv_mod.get()=="최적부여(버퍼X)":
+        if inv_mod.get()=="미부여":
+            inv_tg=0
+        elif inv_mod.get()=="최적부여(버퍼X)":
+            inv_tg=2
+        inv_select1_1['state']='disabled'
+        inv_select1_2['state']='disabled'
+        inv_select2_1['state']='disabled'
+        inv_select2_2['state']='disabled'
+        inv_select3_1['state']='disabled'
+        inv_select3_2['state']='disabled'
+        inv_select4_1['state']='disabled'
+        inv_select4_2['state']='disabled'
+    elif inv_mod.get()=="선택부여":
+        inv_tg=1
+        inv_select1_1['state']='normal'
+        inv_select1_2['state']='normal'
+        inv_select2_1['state']='normal'
+        inv_select2_2['state']='normal'
+        inv_select3_1['state']='normal'
+        inv_select3_2['state']='normal'
+        inv_select4_1['state']='normal'
+        inv_select4_2['state']='normal'
+
+def update_inv_buf(event):
+    if inv_select3_1.get()=="축스탯%/1각":
+        inv_select3_2['values']=['3%/60(상)','3%/40(중)','3%/20(하)']
+        inv_select3_2.set('3%/60(상)')
+    elif inv_select3_1.get()=="축스탯%/1각%":
+        inv_select3_2['values']=['4%/3%(상)','3%/3%(중)','2%/3%(하)']
+        inv_select3_2.set('4%/3%(상)')
+    elif inv_select3_1.get()=="축앞뎀%/1각":
+        inv_select3_2['values']=['4%/25(상)','3%/25(중)','2%/25(하)']
+        inv_select3_2.set('4%/25(상)')
+    elif inv_select3_1.get()=="축앞뎀%/1각%":
+        inv_select3_2['values']=['3%/3%(상)','3%/2%(중)','3%/1%(하)']
+        inv_select3_2.set('3%/3%(상)')
+    elif inv_select3_1.get()=="전직패":
+        inv_select3_2['values']=['+185(상)','+155(중)','+125(하)']
+        inv_select3_2.set('+185(상)')
+    elif inv_select3_1.get()=="축스탯%/1각+1":
+        inv_select3_2['values']=['3%/+1(상)','2%/+1(중)','1%/+1(하)']
+        inv_select3_2.set('3%/+1(상)')
+def update_inv_buf2(event):
+    if inv_select4_1.get()=="축스탯%/1각":
+        inv_select4_2['values']=['3%/40(상)','3%/30(중)','3%/20(하)']
+        inv_select4_2.set('3%/40(상)')
+    elif inv_select4_1.get()=="축스탯%/1각%":
+        inv_select4_2['values']=['4%/2%(상)','3%/2%(중)','2%/2%(하)']
+        inv_select4_2.set('4%/2%(상)')
+    elif inv_select4_1.get()=="축앞뎀%/1각":
+        inv_select4_2['values']=['3%/25(상)','2%/25(중)','1%/25(하)']
+        inv_select4_2.set('3%/25(상)')
+    elif inv_select4_1.get()=="축앞뎀%/1각%":
+        inv_select4_2['values']=['2%/3%(상)','2%/2%(중)','2%/1%(하)']
+        inv_select4_2.set('2%/3%(상)')
+    elif inv_select4_1.get()=="전직패":
+        inv_select4_2['values']=['+145(상)','+115(중)','+85(하)']
+        inv_select4_2.set('+145(상)')
+    elif inv_select4_1.get()=="축+1/1각":
+        inv_select4_2['values']=['+1/30(상)','+1/20(중)','+1/10(하)']
+        inv_select4_2.set('+1/30(상)')
 inv_mod_list=["미부여","선택부여","최적부여(버퍼X)"]
 inv_mod=tkinter.ttk.Combobox(self,width=10,values=inv_mod_list);inv_mod.place(x=785,y=285);inv_mod.set("미부여")
+inv_mod.bind("<<ComboboxSelected>>",update_inv)
+
 inv_type_list=["증뎀","크증","추뎀","모공","공%","스탯"]
 inv_value_list1=[6,8,10]
 inv_value_list2=[3,4,5]
@@ -5118,10 +3959,12 @@ inv_type_list2_1=["축스탯%/1각","축스탯%/1각%","축앞뎀%/1각","축앞
 inv_value_list3=['3%/60(상)','3%/40(중)','3%/20(하)']
 inv_value_list3_1=['3%/40(상)','3%/30(중)','3%/20(하)']
 inv_select3_1=tkinter.ttk.Combobox(self,width=12,values=inv_type_list2);inv_select3_1.place(x=785,y=385);inv_select3_1.set("축스탯%/1각")
-inv_select3_2=tkinter.ttk.Combobox(self,width=12,values=inv_value_list3,postcommand=update_inv_buf);inv_select3_2.place(x=785,y=412);inv_select3_2.set('세부선택')
+inv_select3_2=tkinter.ttk.Combobox(self,width=12,values=inv_value_list3);inv_select3_2.place(x=785,y=412);inv_select3_2.set('3%/60(상)')
 inv_select4_1=tkinter.ttk.Combobox(self,width=12,values=inv_type_list2_1);inv_select4_1.place(x=785,y=440);inv_select4_1.set("축스탯%/1각")
-inv_select4_2=tkinter.ttk.Combobox(self,width=12,values=inv_value_list3,postcommand=update_inv_buf2);inv_select4_2.place(x=785,y=467);inv_select4_2.set('세부선택')
-
+inv_select4_2=tkinter.ttk.Combobox(self,width=12,values=inv_value_list3_1);inv_select4_2.place(x=785,y=467);inv_select4_2.set('3%/40(상)')
+inv_select3_1.bind("<<ComboboxSelected>>",update_inv_buf)
+inv_select4_1.bind("<<ComboboxSelected>>",update_inv_buf2)
+update_inv(0)
 ##장비융합
 set151=tkinter.Button(self,bg=dark_main,borderwidth=0,activebackground=dark_main,image=image_list_set2['151'],command=lambda:click_set(151));set151.place(x=710+10,y=445+95) ##
 set152=tkinter.Button(self,bg=dark_main,borderwidth=0,activebackground=dark_main,image=image_list_set2['152'],command=lambda:click_set(152));set152.place(x=710+10,y=475+95) ##
@@ -5173,6 +4016,8 @@ select_item['tg33390750']=0;select_item['tg22400450']=0;select_item['tg31401150'
 select_item['tg21390340']=0;select_item['tg22400550']=0;select_item['tg32401240']=0
 select_item['tg31390540']=0;select_item['tg21400640']=0;select_item['tg32401340']=0
 select_item['tg32390650']=0;select_item['tg31400750']=0;select_item['tg32401440']=0
+select_item['tg11390850']=0;select_item['tg12390950']=0;select_item['tg13391050']=0;
+select_item['tg14391150']=0;select_item['tg15391250']=0;
 
 select_item['tg11410100']=0;select_item['tg11410110']=0;select_item['tg11410120']=0
 select_item['tg11410130']=0;select_item['tg11410140']=0;select_item['tg11410150']=0
@@ -5187,6 +4032,7 @@ def know_epic():
     global select_11410100,select_11410110,select_11410120,select_11410130,select_11410140,select_11410150
     global select_21420100,select_21420110,select_21420120,select_21420130,select_21420140,select_21420150
     global select_33430100,select_33430110,select_33430120,select_33430130,select_33430140,select_33430150
+    global select_11390850,select_12390950,select_13391050,select_14391150,select_15391250
     global know_window
     try:
         know_window.destroy()
@@ -5217,6 +4063,16 @@ def know_epic():
     select_31390540.place(x=454-290,y=20)
     select_32390650=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['32390650'],command=lambda:click_equipment(32390650))
     select_32390650.place(x=484-290,y=20)
+    select_11390850=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['11390850'],command=lambda:click_equipment(11390850))
+    select_11390850.place(x=484-290+80,y=20)
+    select_12390950=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['12390950'],command=lambda:click_equipment(12390950))
+    select_12390950.place(x=484-290+110,y=20)
+    select_13391050=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['13391050'],command=lambda:click_equipment(13391050))
+    select_13391050.place(x=484-290+140,y=20)
+    select_14391150=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['14391150'],command=lambda:click_equipment(14391150))
+    select_14391150.place(x=484-290+170,y=20)
+    select_15391250=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['15391250'],command=lambda:click_equipment(15391250))
+    select_15391250.place(x=484-290+200,y=20)
 
     tkinter.Label(know_window,bg=dark_main,image=image_list_set['201']).place(x=303-290,y=70)
     select_22400150=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['22400150'],command=lambda:click_equipment(22400150))
@@ -5301,7 +4157,6 @@ def know_epic():
     select_33430150=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['33430150'],command=lambda:click_equipment(33430150))
     select_33430150.place(x=280+195,y=70+280)
 
-    tkinter.Label(know_window,bg=dark_main,font=mid_font,fg='white',text="<주의할 점>").place(x=315,y=20)
     tkinter.Label(know_window,bg=dark_main,fg='white',text=("세트 산물은 증/크증이 겹치는 경우가 있습니다.\n칭호/크리쳐 선택에 유의하세요.\n(중복안되게 계산식 처리 해놨음)\n\n"
                                                             +"불마/엘드 셋의 '마딜 전용'옵션은\n따로 구분되어 계산되지 않습니다.\n알아서 빼주세요.\n\n"
                                                             +"스탯 옵션은 버프+가호 받은 기준입니다.\n가호 미적용 스탯이 많은 산물 특성상,\n수련방 솔플 효율과 굉장히 다를수 있습니다.")).place(x=250,y=70)
@@ -5757,7 +4612,6 @@ if auto_custom==1:
 if __name__ == "__main__":
     update_thread()
     update_thread2()
-    update_thread3()
 self.mainloop()
 
 

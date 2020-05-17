@@ -63,33 +63,36 @@ def update_preset():
         db_custom['A19']="ele_buf_anti"
         db_custom['B19']=60
     if db_save['A257'].value!='13390150':
-        db_save['A257']='13390150';db_save['B257']='+5 퍼펙트컨트롤'
+        db_save['A257']='13390150'
         db_save['C257']=0;db_save['D257']=0;db_save['E257']=0;db_save['F257']=0;db_save['G257']=0
-        db_save['H257']=0;db_save['I257']=0;db_save['J257']=0;db_save['K257']=0;db_save['L257']=0
+        db_save['H257']=0;db_save['I257']=0;db_save['J257']=0;db_save['K257']=0;db_save['B257']=0
+    for i in range(257,264):
+        if db_save['B'+str(i)]!=0 and db_save['B'+str(i)]!=1:
+            db_save['B'+str(i)]=0
     if db_save['A258'].value!='22390240':
-        db_save['A258']='22390240';db_save['B258']='+4 선지자의 목걸이'
+        db_save['A258']='22390240'
         db_save['C258']=0;db_save['D258']=0;db_save['E258']=0;db_save['F258']=0;db_save['G258']=0
-        db_save['H258']=0;db_save['I258']=0;db_save['J258']=0;db_save['K258']=0;db_save['L258']=0
+        db_save['H258']=0;db_save['I258']=0;db_save['J258']=0;db_save['K258']=0;db_save['B258']=0
     if db_save['A259'].value!='21390340':
-        db_save['A259']='21390340';db_save['B259']='+4 독을 머금은 가시장갑'
+        db_save['A259']='21390340'
         db_save['C259']=0;db_save['D259']=0;db_save['E259']=0;db_save['F259']=0;db_save['G259']=0
-        db_save['H259']=0;db_save['I259']=0;db_save['J259']=0;db_save['K259']=0;db_save['L259']=0
+        db_save['H259']=0;db_save['I259']=0;db_save['J259']=0;db_save['K259']=0;db_save['B259']=0
     if db_save['A260'].value!='23390450':
-        db_save['A260']='23390450';db_save['B260']='+5 할기의 링'
+        db_save['A260']='23390450'
         db_save['C260']=0;db_save['D260']=0;db_save['E260']=0;db_save['F260']=0;db_save['G260']=0
-        db_save['H260']=0;db_save['I260']=0;db_save['J260']=0;db_save['K260']=0;db_save['L260']=0
+        db_save['H260']=0;db_save['I260']=0;db_save['J260']=0;db_save['K260']=0;db_save['B260']=0
     if db_save['A261'].value!='31390540':
-        db_save['A261']='31390540';db_save['B261']='+4 청면수라의 가면'
+        db_save['A261']='31390540'
         db_save['C261']=0;db_save['D261']=0;db_save['E261']=0;db_save['F261']=0;db_save['G261']=0
-        db_save['H261']=0;db_save['I261']=0;db_save['J261']=0;db_save['K261']=0;db_save['L261']=0
+        db_save['H261']=0;db_save['I261']=0;db_save['J261']=0;db_save['K261']=0;db_save['B261']=0
     if db_save['A262'].value!='32390650':
-        db_save['A262']='32390650';db_save['B262']='+5 적귀의 차원석'
+        db_save['A262']='32390650'
         db_save['C262']=0;db_save['D262']=0;db_save['E262']=0;db_save['F262']=0;db_save['G262']=0
-        db_save['H262']=0;db_save['I262']=0;db_save['J262']=0;db_save['K262']=0;db_save['L262']=0
+        db_save['H262']=0;db_save['I262']=0;db_save['J262']=0;db_save['K262']=0;db_save['B262']=0
     if db_save['A263'].value!='33390750':
-        db_save['A263']='33390750';db_save['B263']='+5 패스트퓨처 이어링'
+        db_save['A263']='33390750'
         db_save['C263']=0;db_save['D263']=0;db_save['E263']=0;db_save['F263']=0;db_save['G263']=0
-        db_save['H263']=0;db_save['I263']=0;db_save['J263']=0;db_save['K263']=0;db_save['L263']=0
+        db_save['H263']=0;db_save['I263']=0;db_save['J263']=0;db_save['K263']=0;db_save['B263']=0
 
     if db_save['A264'].value!='22400150':  ##2.2.0 패치 산물 14종 추가
         db_save['A264']='22400150'
@@ -177,6 +180,69 @@ def update_preset():
     if db_custom['H7'].value==None: ## 2.4.0 아리아 증폭율 커스텀 추가
         db_custom['G7']="aria_up"
         db_custom['H7']="템에따라"
+
+    if db_custom['B3'].value!=0:  ##3.0.0 각성스증 대개편
+        db_custom['B3']=0 #비활성화
+
+    if db_save['A296'].value!='11390850': ##신규 산물 5종+융합/잔향 추가
+        db_save['A296']='11390850'
+        db_save['A297']='12390950'
+        db_save['A298']='13391050'
+        db_save['A299']='14391150'
+        db_save['A300']='15391250'
+        db_save['A301']='41510';db_save['A302']='41520';db_save['A303']='41530';db_save['A304']='41540';db_save['A305']='41550'
+        db_save['A306']='42510';db_save['A307']='42520';db_save['A308']='42530';db_save['A309']='42540';db_save['A310']='42550'
+        db_save['A311']='43510';db_save['A312']='43520';db_save['A313']='43530';db_save['A314']='43540';db_save['A315']='43550'
+        for i in ['C','D','E','F','G','H','I','J','K','B']:
+            for j in range(296,316):
+                db_save[i+str(j)]=0
+        for i in ['C','D','E','F','G','H','I','J','K','B']:  ## 세이브 기능 확대
+            db_custom[i+'26']='화'
+            db_custom[i+'27']='50'
+            db_custom[i+'28']='0'
+            db_custom[i+'29']='17'
+            db_custom[i+'30']='0'
+            db_custom[i+'31']='0'
+            db_custom[i+'32']='0'
+            db_custom[i+'33']='0'
+            db_custom[i+'34']='0'
+            db_custom[i+'35']='0'
+            db_custom[i+'36']='0'
+            db_custom[i+'37']='전설↓'
+            db_custom[i+'38']='10'
+            db_custom[i+'39']='131'
+            db_custom[i+'40']='131'
+            db_custom[i+'41']='7'
+            db_custom[i+'42']='0'
+            db_custom[i+'43']='50'
+            db_custom[i+'44']='60'
+            db_custom[i+'45']='0'
+            db_custom[i+'46']='3'
+            db_custom[i+'47']='2'
+            db_custom[i+'48']='2'
+            db_custom[i+'49']='1'
+            db_custom[i+'50']='0'
+            db_custom[i+'51']='템에따라'
+            db_custom['A52']='jobtype_select';db_custom[i+'52']='귀검사(남)'
+            db_custom['A53']='jobup_select';db_custom[i+'53']='검신(진각)'
+            db_custom['A54']='wep_job_select';db_custom[i+'54']='공통'
+            db_custom['A55']='wep_type_select';db_custom[i+'55']='무기타입 선택'
+            db_custom['A56']='wep_select';db_custom[i+'56']='(공통)흑천의 주인'
+            db_custom['A57']='select_perfect';db_custom[i+'57']='단품포함(중간)'
+            db_custom['A58']='style_select';db_custom[i+'58']='추뎀칭호'
+            db_custom['A59']='creature_select';db_custom[i+'59']='크증크리쳐'
+            db_custom['A60']='req_cool';db_custom[i+'60']='X(순데미지)'
+            db_custom['A61']='inv_mod';db_custom[i+'61']='X(순데미지)'
+            db_custom['A62']='inv_select1_1';db_custom[i+'62']='미부여'
+            db_custom['A63']='inv_select1_2';db_custom[i+'63']='증뎀'
+            db_custom['A64']='inv_select2_1';db_custom[i+'64']='10'
+            db_custom['A65']='inv_select2_2';db_custom[i+'65']='5'
+            db_custom['A66']='inv_select3_1';db_custom[i+'66']='축스탯%/1각'
+            db_custom['A67']='inv_select3_2';db_custom[i+'67']='3%/60(상)'
+            db_custom['A68']='inv_select4_1';db_custom[i+'68']='축스탯%/1각'
+            db_custom['A69']='inv_select4_2';db_custom[i+'69']='3%/40(상)'
+            
+        
         
 
     
@@ -184,6 +250,5 @@ def update_preset():
     load_preset.save("preset.xlsx")
     load_preset.close()
 
-update_preset()
 
         

@@ -337,4 +337,90 @@ def making_cases(case_list,god,mode):
 
 
 
+    if mode==6: ################################################################################
+        if god==0:
+            for i in case_list:
+                temp_make=[]
+                for j in i:
+                    if len(j)==3:
+                        if int(j) <116:
+                            pass
+                        elif int(j) <120:
+                            set_type_list=['21','22','23']
+                        elif int(j) <124:
+                            set_type_list=['31','32','33']
+                        for k in set_type_list:
+                            temp_make.append(k+str(j)[1:3]+'0')
+                    elif len(j)==15: ## X11 X22 X33 X44 X55 
+                        temp_make.append('11'+j[1:3]+'0')
+                        temp_make.append('12'+j[4:6]+'0')
+                        temp_make.append('13'+j[7:9]+'0')
+                        temp_make.append('14'+j[10:12]+'0')
+                        temp_make.append('15'+j[13:]+'0')
+                result_list.append(temp_make)
+        if god==1:
+            for i in case_list:
+                temp_make=[]
+                for j in i:
+                    if len(j)==3:
+                        if int(j) <116:
+                            pass
+                        elif int(j) <120:
+                            set_type_list=['21','22','23']
+                        elif int(j) <124:
+                            set_type_list=['31','32','33']
+                        for k in set_type_list:
+                            temp_make.append(k+str(j)[1:3]+'0')
+                    elif len(j)==15: ## X11 X22 X33 X44 X55 
+                        temp_make.append('11'+j[1:3]+'1')
+                        temp_make.append('12'+j[4:6]+'0')
+                        temp_make.append('13'+j[7:9]+'0')
+                        temp_make.append('14'+j[10:12]+'0')
+                        temp_make.append('15'+j[13:]+'0')
+                result_list.append(temp_make)
+        if god==2:
+            for i in case_list:
+                temp_make=[]
+                for j in i:
+                    if len(j)==3:
+                        if int(j) <116:
+                            pass
+                        elif int(j) <120:
+                            set_type_list=['22','23']
+                            temp_make.append('21'+str(j)[1:3]+'1')
+                        elif int(j) <124:
+                            set_type_list=['31','32','33']
+                        for k in set_type_list:
+                            temp_make.append(k+str(j)[1:3]+'0')
+                    elif len(j)==15: ## X11 X22 X33 X44 X55 
+                        temp_make.append('11'+j[1:3]+'0')
+                        temp_make.append('12'+j[4:6]+'0')
+                        temp_make.append('13'+j[7:9]+'0')
+                        temp_make.append('14'+j[10:12]+'0')
+                        temp_make.append('15'+j[13:]+'0')
+                result_list.append(temp_make)
+        if god==3:
+            for i in case_list:
+                temp_make=[]
+                for j in i:
+                    if len(j)==3:
+                        if int(j) <116:
+                            pass
+                        elif int(j) <120:
+                            set_type_list=['21','22','23']
+                        elif int(j) <124:
+                            set_type_list=['31','32']
+                            temp_make.append('33'+str(j)[1:3]+'1')
+                        for k in set_type_list:
+                            temp_make.append(k+str(j)[1:3]+'0')
+                    elif len(j)==15: ## X11 X22 X33 X44 X55 
+                        temp_make.append('11'+j[1:3]+'0')
+                        temp_make.append('12'+j[4:6]+'0')
+                        temp_make.append('13'+j[7:9]+'0')
+                        temp_make.append('14'+j[10:12]+'0')
+                        temp_make.append('15'+j[13:]+'0')
+                result_list.append(temp_make)
+
+
+
     return result_list

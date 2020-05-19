@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- Encoding: UTF-8 -*-
-
 now_version="3.0.0"
 ver_time='200516'
 
@@ -41,7 +38,7 @@ dark_main=_from_rgb((32, 34, 37))
 dark_sub=_from_rgb((46, 49, 52))
 dark_blue=_from_rgb((29, 30, 36))
 
-
+    
 apikey = "TQS79U4MT11jswCLHq7G260XzXU0JhGC" ##보안코드
 
 auto_saved=0
@@ -105,8 +102,8 @@ del opt_job["empty"]
 del opt_job["직업명"]
 jobs=list(opt_job.keys())
 
-
-
+    
+    
 load_preset0=load_workbook("preset.xlsx", data_only=True)
 db_custom=load_preset0["custom"]
 db_save=load_preset0["one"]
@@ -126,15 +123,15 @@ try:
         load_preset0.save("preset.xlsx")
         load_preset0.close()
         calc_update.update_preset ## 외부모듈
-
-
+        
+    
 except PermissionError as error:
     tkinter.messagebox.showerror("에러","업데이트 실패. 엑셀을 닫고 다시 실행해주세요.")
     self.destroy()
 load_excel1.close()
 
 
-
+    
 ## 계산 함수 ##
 def calc():
     global result_window
@@ -164,7 +161,7 @@ def calc():
         name_one[db_one.cell(a,1).value]=row_value
         a=a+1
 
-    b=1
+    b=1        
     db_set=load_excel["set"]
     opt_set={}
     for row in db_set.rows:
@@ -176,7 +173,7 @@ def calc():
         opt_set[db_set.cell(b,1).value]=row_value_cut ## DB 불러오기 ##
         b=b+1
 
-    c=1
+    c=1        
     db_buf=load_excel["buf"]
     opt_buf={}
     name_buf={}
@@ -190,7 +187,7 @@ def calc():
         name_buf[db_buf.cell(c,1).value]=row_value
         c=c+1
 
-    d=1
+    d=1        
     db_buflvl=load_excel["buflvl"]
     opt_buflvl={}
     for row in db_buflvl.rows:
@@ -224,12 +221,12 @@ def calc():
     elif db_preset["H7"].value == "항상미증폭":
         aria_fix=0.25
         aria_dif=0
-
-
+        
+    
     global count_num, count_all, show_number,all_list_list_num, max_setopt, inv_tg
     count_num=0;count_all=0;show_number=0;metamong=0
-
-
+    
+    
     if jobup_select.get()[-4:] == "(진각)":
         silmari=0
         active_eff_one=15
@@ -260,7 +257,7 @@ def calc():
                 if wep_type_select.get()==db_job.cell(63,j).value:
                     wep_pre_calced=float(db_job.cell(i,j).value)
                     cool_pre_calced=(1/float(db_job.cell(i,j+38).value)-1)*cool_eff*cool_on+1
-
+                    
     if wep_pre_calced==0:
         ask_wep=tkinter.messagebox.askquestion('확인',"착용할 수 없는 무기를 선택했습니다. 이 경우 모든 무기 보정이 비활성화되어 마스터리/앞뎀 반영이 되지 않습니다. 진행하시겠습니까?")
         if ask_wep == 'yes':
@@ -269,8 +266,8 @@ def calc():
         elif ask_wep == 'no':
             showsta(text='중지됨')
             return
-
-
+        
+    
     list11=[];list12=[];list13=[];list14=[];list15=[]
     list21=[];list22=[];list23=[];list31=[];list32=[];list33=[]
     list11_0=[];list11_1=[];list21_0=[];list21_1=[];list33_0=[];list33_1=[]
@@ -286,7 +283,7 @@ def calc():
                 list_setnum1.append('1'+str(i)[1:3])
         except KeyError as error:
             c=1
-
+    
     for i in range(201,299):
         try:
             if eval('select_item["tg1{}0"]'.format(i)) == 1:
@@ -387,7 +384,7 @@ def calc():
                 list_setnum1.append('1'+str(i)[1:3])
         except KeyError as error:
             c=1
-
+  
     algo_list=['11','12','13','14','15','21','22','23','31','32','33']
     if select_perfect.get() == '단품제외(빠름)':
         for i in list_num:
@@ -400,7 +397,7 @@ def calc():
                         except:
                             c=1
 
-    ##신화
+    ##신화                        
     for i in range(101,199):
         try:
             if eval('select_item["tg1{}1"]'.format(i)) == 1:
@@ -480,7 +477,7 @@ def calc():
                 eval('list{}_0.append(str({}))'.format(know_one[0:2],know_one))
             if know_one[0:2] =='33':
                 eval('list{}_0.append(str({}))'.format(know_one[0:2],know_one))
-
+                
     list41=[];list42=[];list43=[]
     ##융합
     for i in ['41','42','43']:
@@ -535,7 +532,7 @@ def calc():
     extra_cper=0;extra_bstat=0;extra_clvl=0
     extra_blvl=0;extra_batt=0;extra_cstat=0
     extra_stat=0
-
+    
     if style_select.get() == '증뎀칭호':
         fixed_dam=10
     if style_select.get() == '추뎀칭호':
@@ -578,7 +575,7 @@ def calc():
             extra_att=extra_att+int(inv_select2_2.get())
         elif inv_select2_1.get()=="스탯" and inv2_on_tg==1:
             extra_sta=extra_sta+int(inv_select2_2.get())
-
+            
 
         inv3_opt=inv_select3_1.get()
         inv3_val=inv_select3_2.get()[:-3]
@@ -674,8 +671,8 @@ def calc():
         inv2_val=" X "
         inv4_opt="미충족"
         inv4_val=""
-
-
+        
+            
     if inv_tg==0:
         inv1_opt="미부여"
         inv1_val=""
@@ -691,7 +688,7 @@ def calc():
         inv4_opt="미부여"
         inv4_val=""
 
-
+    
     all_list_num=0
     all_list_list_num=0
     all_list_list=[]
@@ -706,7 +703,7 @@ def calc():
         active_sang3_0=[];active_sang3_1=[];active_sang2=[]
         active_ha3_0=[];active_ha3_1=[];active_ha2_0=[];active_ha2_1=[]
         active_sin3_0=[];active_sin3_1=[];active_sin2_0=[];active_sin2_1=[]
-
+        
         for i in range(1,36): ##경우의 수 가르기
             if i < 16:
                 if set_num_dict1.get(str(i+100))==5:
@@ -762,7 +759,7 @@ def calc():
                 if list31.count('3'+str(i+100)+'0')==1:
                     active_sang2.append(str(i+100))
 
-
+                    
         all_list_before_inv=[]
         all_list_god_before_inv=[]
         ##1. 533 풀셋
@@ -816,7 +813,7 @@ def calc():
             bang_on_dict[str(100+i)]=temp_bang_on
             bang_on_dict1[str(100+i)]=temp_bang_on1
             bang_on_dict2[str(100+i)]=temp_bang_on2
-
+            
         SG32_0=[]
         SG32_1=[]
         tem_tg=0
@@ -856,8 +853,8 @@ def calc():
             case_list=list(itertools.product(*items32_33_3))
             all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,3,6)
 
-
-
+                            
+                
         ##2. 표준3332 풀셋
         temp_list2=[]
         temp_list_god2=[]
@@ -879,7 +876,7 @@ def calc():
             all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,3,2)
         ##3. 변형3332 풀셋
         #0번 상의변형
-        temp_list3_0=[]
+        temp_list3_0=[]  
         temp_list_god3_0=[]
         items2333=[active_sang2,active_ha3_0,active_sin3_0,active_bang3_1_0]
         items2333_1=[active_sang2,active_ha3_0,active_sin3_0,active_bang3_1_1]
@@ -898,7 +895,7 @@ def calc():
             case_list=list(itertools.product(*items2333_3))
             all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,3,3)
         #1번 하의변형
-        temp_list3_1=[]
+        temp_list3_1=[]  
         temp_list_god3_1=[]
         items3233=[active_sang3_0,active_ha2_0,active_sin3_0,active_bang3_2]
         items3233_1=[active_sang3_1,active_ha2_0,active_sin3_0,active_bang3_2]
@@ -917,7 +914,7 @@ def calc():
             case_list=list(itertools.product(*items3233_3))
             all_list_god_before_inv=all_list_god_before_inv+calc_fullset.making_cases(case_list,3,4)
         #2번 신발변형
-        temp_list3_2=[]
+        temp_list3_2=[]  
         temp_list_god3_2=[]
         items3323=[active_sang3_0,active_ha3_0,active_sin2_0,active_bang3_3]
         items3323_1=[active_sang3_1,active_ha3_0,active_sin2_0,active_bang3_3]
@@ -947,20 +944,20 @@ def calc():
                 tempx.append(i)
                 all_list_god.append(tuple(tempx))
 
-
+        
         all_list_num=len(all_list_god)+len(all_list)
         if all_list_num==0:
             tkinter.messagebox.showerror('에러',"풀셋이 없습니다.")
             return
         all_list_list.append([all_list,all_list_god,all_list_num])
-
-
-
-
+                    
+                
+            
+        
     else:
 ##레전기본값##
 ##########################################################################################################################
-
+    
         global default_legend,default_chawon,default_old
         if default_legend==1:
             df11='11360';df12='12360';df13='13360';df14='14360';df15='15360'
@@ -982,14 +979,14 @@ def calc():
             list11.append(df11);list12.append(df12);list13.append(df13);list14.append(df14);list15.append(df15);list11_0.append(df11)
         elif len(list15)==0:
             list11.append(df11);list12.append(df12);list13.append(df13);list14.append(df14);list15.append(df15);list11_0.append(df11)
-
+            
         if len(list21_0)==0 and len(list22)==0:
             list21.append(df21);list22.append(df22);list23.append(df23);list21_0.append(df21)
         elif len(list22)==0 and len(list23)==0:
             list21.append(df21);list22.append(df22);list23.append(df23);list21_0.append(df21)
         elif len(list23)==0 and len(list21_0)==0:
             list21.append(df21);list22.append(df22);list23.append(df23);list21_0.append(df21)
-
+            
         if len(list31)==0 and len(list32)==0:
             list31.append(df31);list32.append(df32);list33.append(df33);list33_0.append(df33)
         elif len(list32)==0 and len(list33_0)==0:
@@ -1010,8 +1007,8 @@ def calc():
         if len(list33_0)==0:
             list33.append(df33);list33_0.append(df33)
 
-
-
+        
+                    
         if max(set_max_list1) < 2:
             items0=[[df11],[df12],[df13],[df14],[df15],list21_0,list22,list23,list31,list32,list33_0,list40_0]
             items1=[]
@@ -1087,7 +1084,7 @@ def calc():
             all_list_list.append([all_list,all_list_god,all_list_num])
 
 
-    ##세트산물 계산##
+    ##세트산물 계산##                
     #########################################################################################################################
         know_set_list=['22400150','22400250','22400350','22400450','22400550','21400640','31400750',
                        '31400850','31400950','31401050','31401150','32401240','32401340','32401440']
@@ -1164,7 +1161,7 @@ def calc():
             del all_list1,all_list2,all_list3
             all_list_num=len(all_list_god)+len(all_list)
             all_list_list.append([all_list,all_list_god,all_list_num])
-
+                    
         know_acc_on=[]
         know_bang2_on=[]
         for i in know_acc_list:
@@ -1195,7 +1192,7 @@ def calc():
             del all_list1,all_list2,all_list3
             all_list_num=len(all_list_god)+len(all_list)
             all_list_list.append([all_list,all_list_god,all_list_num])
-
+            
         jin_sang=[]
         jin_pal=[]
         jin_gui=[]
@@ -1365,8 +1362,8 @@ def calc():
             del all_list1,all_list2,all_list3
             all_list_num=len(all_list_god)+len(all_list)
             all_list_list.append([all_list,all_list_god,all_list_num])
-
-
+            
+            
 
     ##일반 경우의 수##
     #########################################################################################################################
@@ -1431,10 +1428,10 @@ def calc():
 
 #########################################################################################################################계산 시작
 
-    for i in range(0,76):  ## 무기
+    for i in range(0,76):  ## 무기 
         if wep_select.get() == wep_list[i]:
             wep_num=(str(i+111001),)
-
+            
     global exit_calc
     showsta(text='계산 시작')
     save_list={}
@@ -1444,24 +1441,24 @@ def calc():
     max_setopt=0
     loop_counter=0
 
-
+    
     for now_all_list in all_list_list:
         loop_counter=loop_counter+1
-
+        
         all_list_god=now_all_list[1]
         all_list=now_all_list[0]
         all_list_num=now_all_list[2]
         print(str(loop_counter)+'회차 : '+str(all_list_num))
-
+    
         if jobup_select.get()[4:7] != "세인트" and jobup_select.get()[4:7] != "세라핌" and jobup_select.get()[4:7] != "헤카테":
             getone=opt_one.get
-
+            
             if len(all_list_god)!=0:
                 for calc_now in all_list_god:
                     if exit_calc==1:
                         showsta(text='중지됨')
                         return
-                    set_list=["1"+str(calc_now[x][2:4]) for x in range(0,11)]
+                    set_list=["1"+str(calc_now[x][2:4]) for x in range(0,11)] 
                     set_val=Counter(set_list)
                     del set_val['136'],set_val['137'],set_val['138'],set_val['144'],set_val['145'],set_val['146'],set_val['147'],set_val['148'],set_val['149']
                     setopt_num=sum([floor(x*0.7) for x in set_val.values()])+1
@@ -1578,7 +1575,7 @@ def calc():
                             if onecount('11440')!=1: ##3셋 공3% 모공5% 감소
                                 base_array[7]=base_array[7]-3
                                 base_array[6]=base_array[6]-5
-
+                                
                         base_array[11]=skiper
                         base_array[2]=max_damper+base_array[2]
                         base_array[3]=max_criper+base_array[3]
@@ -1618,14 +1615,14 @@ def calc():
                             ult2_per=job_ult2*(1+(base_array[25]*0.1203+0.04348*base_array[27]*silmari))/actlvl*(ult_2/100)
                             ult3_per=job_ult3*(1+base_array[27]*0.1883)/actlvl*(ult_3/100)
                             ult_skiper=(ult1_per+ult2_per+ult3_per)*100
-                        real_bon_not_ele=only_bon+base_array[5]*((base_array[9]-int(ele_skill))*0.0045+1.05)
+                        real_bon_not_ele=only_bon+base_array[5]*((base_array[9]-int(ele_skill))*0.0045+1.05)  
                         damage=((base_array[2]/100+1)*(base_array[3]/100+1)*(base_array[4]/100+1)*(base_array[6]/100+1)*(base_array[7]/100+1)*
                                 (base_array[8]/100+1)*(base_array[9]*0.0045+1.05)*(base_array[10]/100+1)*(skiper/100+1)*
                                 paslvl*((54500+3.31*base_array[0])/54500)*((4800+base_array[1])/4800)/(1.05+0.0045*int(ele_skill)))*wep_pre_calced
                         final_damage=damage*((100/(100-coolper)-1)*cool_eff*cool_on+1)*((base_array[12]+(actlvl-1)*100+ult_skiper)/100+1)*cool_pre_calced
                         damage_not_ele=final_damage*(1.05+0.0045*int(ele_skill))/(base_array[9]*0.0045+1.05)*((base_array[9]-int(ele_skill))*0.0045+1.05)/1.05*(real_bon_not_ele/100+1)/(base_array[4]/100+1)
-
-
+                        
+                        
                         inv_string="잔향부여= "+inv1_opt+"("+str(inv1_val)+"%) / "+inv2_opt+"("+str(inv2_val)+"%)"
                         save_list[final_damage]=[calc_wep,base_array,damage,damage_not_ele,inv_string,[ult_1,ult_2,ult_3,ult_skiper]]
                         count_num=count_num+1
@@ -1640,7 +1637,7 @@ def calc():
                     if exit_calc==1:
                         showsta(text='중지됨')
                         return
-                    set_list=["1"+str(calc_now[x][2:4]) for x in range(0,11)]
+                    set_list=["1"+str(calc_now[x][2:4]) for x in range(0,11)] 
                     set_val=Counter(set_list)
                     del set_val['136'],set_val['137'],set_val['138'],set_val['144'],set_val['145'],set_val['146'],set_val['147'],set_val['148'],set_val['149']
                     setopt_num=sum([floor(x*0.7) for x in set_val.values()])
@@ -1708,7 +1705,7 @@ def calc():
                             oneonelist.append(cut)
                         for i in range(oneone):
                             base_array=base_array+oneonelist[i]
-
+                        
 
                         if set_oncount('1201')==1 and onecount('32200')==1:
                             base_array[3]=base_array[3]-5
@@ -1758,7 +1755,7 @@ def calc():
                             if onecount('11440')!=1: ##3셋 공3% 모공5% 감소
                                 base_array[7]=base_array[7]-3
                                 base_array[6]=base_array[6]-5
-
+                        
                         base_array[11]=skiper
                         base_array[2]=max_damper+base_array[2]
                         base_array[3]=max_criper+base_array[3]
@@ -1798,14 +1795,14 @@ def calc():
                             ult2_per=job_ult2*(1+(base_array[25]*0.1203+0.04348*base_array[27]*silmari))/actlvl*(ult_2/100)
                             ult3_per=job_ult3*(1+base_array[27]*0.1883)/actlvl*(ult_3/100)
                             ult_skiper=(ult1_per+ult2_per+ult3_per)*100
-                        real_bon_not_ele=only_bon+base_array[5]*((base_array[9]-int(ele_skill))*0.0045+1.05)
+                        real_bon_not_ele=only_bon+base_array[5]*((base_array[9]-int(ele_skill))*0.0045+1.05)  
                         damage=((base_array[2]/100+1)*(base_array[3]/100+1)*(base_array[4]/100+1)*(base_array[6]/100+1)*(base_array[7]/100+1)*
                                 (base_array[8]/100+1)*(base_array[9]*0.0045+1.05)*(base_array[10]/100+1)*(skiper/100+1)*
                                 paslvl*((54500+3.31*base_array[0])/54500)*((4800+base_array[1])/4800)/(1.05+0.0045*int(ele_skill)))*wep_pre_calced
                         final_damage=damage*((100/(100-coolper)-1)*cool_eff*cool_on+1)*((base_array[12]+(actlvl-1)*100+ult_skiper)/100+1)*cool_pre_calced
                         damage_not_ele=final_damage*(1.05+0.0045*int(ele_skill))/(base_array[9]*0.0045+1.05)*((base_array[9]-int(ele_skill))*0.0045+1.05)/1.05*(real_bon_not_ele/100+1)/(base_array[4]/100+1)
-
-
+                        
+                        
                         inv_string="잔향부여= "+inv1_opt+"("+str(inv1_val)+"%) / "+inv2_opt+"("+str(inv2_val)+"%)"
                         save_list[final_damage]=[calc_wep,base_array,damage,damage_not_ele,inv_string,[ult_1,ult_2,ult_3,ult_skiper]]
                         count_num=count_num+1
@@ -1814,7 +1811,7 @@ def calc():
             else:
                 print('스킵됨')
                 count_all=count_all+len(all_list)
-
+                
         else: ##버퍼
             base_b=10+int(db_preset['H2'].value)+int(db_preset['H4'].value)+int(db_preset['H5'].value)+1+extra_blvl
             base_c=12+int(db_preset['H3'].value)+1+extra_clvl
@@ -1836,7 +1833,7 @@ def calc():
             #10 아리아/보징증폭
             #11 전직패 12 보징 13 각패1 14 각패2 15 2각 16 각패3
             #17 깡신념 18 깡신실 19 아리아쿨 20 하베쿨 21 1각시특수피증(시로코옵션)
-
+            
             setget=opt_buf.get
             if len(all_list_god)!=0:
                 for calc_now in all_list_god:
@@ -1910,7 +1907,7 @@ def calc():
                                 b_phy=(b_phy/100+1)/1.03*100-100
                                 b_mag=(b_mag/100+1)/1.03*100-100
                                 b_ind=(b_ind/100+1)/1.03*100-100
-
+                        
                         if jobup_select.get()[4:7] == "세인트":
                             b_base_att=lvlget('hol_b_atta')[int(base_array[8])]
                             stat_pas0lvl_b=lvlget('pas0')[int(base_array[11])+base_pas0_b]+lvlget('hol_pas0_1')[int(base_array[12])]
@@ -1937,7 +1934,7 @@ def calc():
                             if jobup_select.get()[4:7] == "헤카테":
                                 b_value=665
                                 aria=(0.95+aria_fix+0.05*base_array[10]*aria_dif)*1.15
-
+                                
                             b_base_att=lvlget('se_b_atta')[int(base_array[8])]
                             stat_pas0lvl_b=lvlget('pas0')[int(base_array[11])+int(base_pas0_b)]
                             stat_pas0lvl_c=lvlget('pas0')[int(base_array[11])+int(base_pas0_c)]
@@ -1961,11 +1958,11 @@ def calc():
                         save_list1[((15000+b_stat_calc)/250+1)*(2650+b_average)]=[list(calc_wep),[save1,save2,pas1_out],inv_string]
                         save_list2[((15000+c_calc)/250+1)*2650*(base_array[21]/100+1)]=[list(calc_wep),[save1,save2,pas1_out],inv_string]
                         save_list3[((15000+pas1_calc+c_calc+b_stat_calc)/250+1)*(2650+b_average)*(base_array[21]/100+1)]=[list(calc_wep),[save1,save2,pas1_out],inv_string]
-
+                                                
                         count_num=count_num+1
                     else:
                         count_all=count_all+1
-
+                        
             if max_setopt != 8 or set_perfect==1:
                 for calc_now in all_list:
                     if exit_calc==1:
@@ -2038,7 +2035,7 @@ def calc():
                                 b_phy=(b_phy/100+1)/1.03*100-100
                                 b_mag=(b_mag/100+1)/1.03*100-100
                                 b_ind=(b_ind/100+1)/1.03*100-100
-
+                            
                         if jobup_select.get()[4:7] == "세인트":
                             b_base_att=lvlget('hol_b_atta')[int(base_array[8])]
                             stat_pas0lvl_b=lvlget('pas0')[int(base_array[11])+base_pas0_b]+lvlget('hol_pas0_1')[int(base_array[12])]
@@ -2065,7 +2062,7 @@ def calc():
                             if jobup_select.get()[4:7] == "헤카테":
                                 b_value=665
                                 aria=(0.95+aria_fix+0.05*base_array[10]*aria_dif)*1.15
-
+                                
                             b_base_att=lvlget('se_b_atta')[int(base_array[8])]
                             stat_pas0lvl_b=lvlget('pas0')[int(base_array[11])+int(base_pas0_b)]
                             stat_pas0lvl_c=lvlget('pas0')[int(base_array[11])+int(base_pas0_c)]
@@ -2089,7 +2086,7 @@ def calc():
                         save_list1[((15000+b_stat_calc)/250+1)*(2650+b_average)]=[list(calc_wep),[save1,save2,pas1_out],inv_string]
                         save_list2[((15000+c_calc)/250+1)*2650*(base_array[21]/100+1)]=[list(calc_wep),[save1,save2,pas1_out],inv_string]
                         save_list3[((15000+pas1_calc+c_calc+b_stat_calc)/250+1)*(2650+b_average)*(base_array[21]/100+1)]=[list(calc_wep),[save1,save2,pas1_out],inv_string]
-
+                                                
                         count_num=count_num+1
                     else:
                         count_all=count_all+1
@@ -2100,7 +2097,7 @@ def calc():
 
 
     if jobup_select.get()[4:7] != "세인트" and jobup_select.get()[4:7] != "세라핌" and jobup_select.get()[4:7] != "헤카테":
-
+                    
         show_number=0
         showsta(text='결과 집계중')
 
@@ -2113,12 +2110,12 @@ def calc():
                 showsta(text='결과 집계중'+str(j)+" / 5")
             except ValueError as error:
                 pass
-
+                
         show_result(ranking,'deal',ele_skill,cool_eff)
 
 
     else: ##버퍼
-
+        
         show_number=0
         showsta(text='결과 집계중')
 
@@ -2150,7 +2147,7 @@ def calc():
     load_excel.close()
     showsta(text='출력 완료')
     print("걸린 시간 = "+str(time.time() - start_time)+"초")
-
+    
 def calc_thread():
     threading.Thread(target=calc,daemon=True).start()
 
@@ -2174,7 +2171,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
     global res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43,wep_select,jobup_select, now_rank_num, res_wep
     now_rank_num=0
     set_name_toggle=0
-
+    
     wep_name=wep_select.get()
     job_name=jobup_select.get()[:-4]
     job_up_name=jobup_select.get()[-4:]
@@ -2200,7 +2197,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
             tagkgum.place(x=182,y=7)
             tagkgum.image=tagkgum_img
             tagkgum.command=change_tagk
-
+            
         global result_image_on,result_image_tag,rank_dam,rank_stat,rank_stat2,rank_stat3,req_cool,res_dam,res_stat,res_stat2, res_stat3, rank_dam_tagk,rank_dam_noele, res_ele, rank_inv, res_inv, rank_dam_tagk_noele
         cool_check=req_cool.get()[2:6]
         canvas_res.create_text(122,114,text=cool_check,font=small_font,fill='white')
@@ -2244,7 +2241,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                         if j[0:2] == str(i):
                             result_image_on[0][str(i)]=image_list[j]
                             result_image_tag[0][str(i)]=j
-
+                            
             rank_dam[1]=str(int(100*rank_list[1][0]))+"%"
             rank_dam_nolv[1]=int(100*rank_list[1][1][2])
             rank_dam_noele[1]=int(100*rank_list[1][1][3])
@@ -2267,7 +2264,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                         if j[0:2] == str(i):
                             result_image_on[1][str(i)]=image_list[j]
                             result_image_tag[1][str(i)]=j
-
+                            
             rank_dam[2]=str(int(100*rank_list[2][0]))+"%"
             rank_dam_nolv[2]=int(100*rank_list[2][1][2])
             rank_dam_noele[2]=int(100*rank_list[2][1][3])
@@ -2419,7 +2416,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                                        "\n"+str(int(round(rss[i][25],0)))+' : '+str(int((1+rank_ult[i][1]/100)*rank_dam_tagk_nolv[i]*(1+simari*(0.2+0.05*rss[i][27]))/(1+simari*0.2)*(1+0.2318898690189789*(rss[i][25]+4))/(1+0.2318898690189789*4)))+'%'+
                                        "\n"+str(int(round(rss[i][26],0)))+' : '+str(int(rank_dam_tagk_nolv[i]*jingakgi*(1+0.1014953549605047*(rss[i][26]+5))/(1+0.1014953549605047*5)))+'%'+
                                        "\n"+str(int(round(rss[i][27],0)))+' : '+str(int((1+rank_ult[i][2]/100)*rank_dam_tagk_nolv[i]*jingakgi*(1+0.2318898690189789*(rss[i][27]+1))/(1+0.2318898690189789*1)))+'%')
-
+                               
                 rank_stat3[i]=(str(round(rss[i][16],1))+
                                "\n"+str(int(round(rss[i][17],0)))+
                                "\n"+str(int(round(rss[i][18],0)))+
@@ -2427,7 +2424,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
             except TypeError as error:
                 c=1
 
-
+        
         if int(ele_skill) != 0:
             ele_change_toggle=1
             res_ele=canvas_res.create_text(122,149,text="자속강X="+str(rank_dam_noele[0])+"%",fill='white',font=small_font)
@@ -2470,7 +2467,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                 cn1=0
                 cn4=5
         length=len(rank_list)
-
+        
         canvas_res.create_text(217,361,text="계산기\n버전=\n "+str(now_version),fill='white', anchor='c')
 
     elif job_type=='buf': ##########################
@@ -2734,7 +2731,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                             result_image_on1_tag[4][str(i)]=j
         except IndexError as error:
             c=1
-
+            
         #canvas_res.create_text(122,193,text="커스텀 축복+"+str(int(r_preset['H2'].value)+int(r_preset['H4'].value)+int(r_preset['H5'].value))+"렙 / "+"커스텀 1각+"+str(int(r_preset['H3'].value))+"렙\n축복스탯+"+str(int(r_preset['H6'].value))+" / 1각 스탯+"+str(int(r_preset['H1'].value)),font=guide_font,fill='white')
 
         canvas_res.create_text(122-55,193,text=rank_inv1[0],font=small_font,fill='white',anchor="w")
@@ -2789,13 +2786,13 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         rank_type_but1.image=type1_img
         rank_type_but2.image=type2_img
         rank_type_but3.image=type3_img
-
+        
         load_presetr.close()
 
-
-
+    
+    
     show_detail_img=tkinter.PhotoImage(file='ext_img/show_detail.png')
-
+    
     res_bt1=tkinter.Button(result_window,command=lambda:change_rank(0,job_type,ele_skill),image=show_detail_img,bg=dark_blue,borderwidth=0,activebackground=dark_blue);res_bt1.place(x=486,y=20+78*0)
     res_bt2=tkinter.Button(result_window,command=lambda:change_rank(1,job_type,ele_skill),image=show_detail_img,bg=dark_blue,borderwidth=0,activebackground=dark_blue)
     res_bt3=tkinter.Button(result_window,command=lambda:change_rank(2,job_type,ele_skill),image=show_detail_img,bg=dark_blue,borderwidth=0,activebackground=dark_blue)
@@ -2859,7 +2856,7 @@ def change_tagk(ele_skill):
             except:
                 pass
 
-
+        
 
 def change_rank(now,job_type,ele_skill):
     global image_list,canvas_res, res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43, now_rank_num, res_wep, res_dam_list
@@ -2867,7 +2864,7 @@ def change_rank(now,job_type,ele_skill):
     if job_type =='deal':
         global tagk_tg, tagkgum, tagkgum_exist, rank_dam_tagk, rank_stat_tagk, rank_stat_tagk2, rank_dam_tagk_noele
         global res_dam,res_stat,res_stat2,res_stat3,rank_stat,rank_stat2,rank_stat3,result_image_on,res_ele,rank_dam_noele, rank_inv, res_inv
-        try:
+        try:      
             image_changed=result_image_on[now]
             canvas_res.itemconfig(res_img11,image=image_changed['11'])
             canvas_res.itemconfig(res_img12,image=image_changed['12'])
@@ -2919,7 +2916,7 @@ def change_rank(now,job_type,ele_skill):
             canvas_res.itemconfig(res_buf,text=rank_changed)
             canvas_res.itemconfig(res_buf_ex1,text=rank_buf_ex_changed[now][0])
             canvas_res.itemconfig(res_buf_ex2,text=rank_buf_ex_changed[now][1])
-            canvas_res.itemconfig(res_buf_ex3,text=rank_buf_ex_changed[now][2])
+            canvas_res.itemconfig(res_buf_ex3,text=rank_buf_ex_changed[now][2])                
             canvas_res.itemconfig(res_img11,image=image_changed['11'])
             canvas_res.itemconfig(res_img12,image=image_changed['12'])
             canvas_res.itemconfig(res_img13,image=image_changed['13'])
@@ -3015,7 +3012,7 @@ def show_set_name(job_type):
             canvas_res.itemconfig(res_img42,image=image_list[temp_image_tag[now_rank_num]['42']])
             canvas_res.itemconfig(res_img43,image=image_list[temp_image_tag[now_rank_num]['43']])
 
-
+        
 def change_rank_type(in_type):
     global image_list,canvas_res, res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43
     global result_image_on1,result_image_on2,result_image_on3,rank_buf1,rank_buf2,rank_buf3, rank_type_buf, res_img_list, res_buf_list, res_buf_ex1, res_buf_ex2, res_buf_ex3, rank_buf_ex1, rank_buf_ex2, rank_buf_ex3, res_buf_type_what
@@ -3043,7 +3040,7 @@ def change_rank_type(in_type):
     canvas_res.itemconfig(res_buf_type_what,text=type_changed)
     canvas_res.itemconfig(res_buf_ex1,text=rank_buf_ex_changed[0][0])
     canvas_res.itemconfig(res_buf_ex2,text=rank_buf_ex_changed[0][1])
-    canvas_res.itemconfig(res_buf_ex3,text=rank_buf_ex_changed[0][2])
+    canvas_res.itemconfig(res_buf_ex3,text=rank_buf_ex_changed[0][2])            
     canvas_res.itemconfig(res_buf,text=rank_changed[0])
     canvas_res.itemconfig(res_img11,image=image_changed['11'])
     canvas_res.itemconfig(res_img12,image=image_changed['12'])
@@ -3069,7 +3066,7 @@ def change_rank_type(in_type):
                 canvas_res.itemconfig(res_buf_list[j],text=rank_changed[j],font=mid_font,fill='white')
             except KeyError as error:
                 c=1
-
+   
 def costum(auto):
     global custom_window
     try:
@@ -3077,21 +3074,21 @@ def costum(auto):
     except:
         pass
     custom_window=tkinter.Toplevel(self)
-    custom_window.attributes("-topmost", True)
+    custom_window.attributes("-topmost", True) 
     custom_window.geometry("620x400+750+20")
 
     load_preset=load_workbook("preset.xlsx",data_only=True)
     db_preset=load_preset["custom"]
-
+    
     tkinter.Label(custom_window,text="<딜러환경>",font=mid_font).place(x=100,y=10)
     tkinter.Label(custom_window,text="주속성=",font=guide_font).place(x=10,y=50)
     ele_list=['화','수','명','암']
-    ele_type=tkinter.ttk.Combobox(custom_window,width=5,values=ele_list); ele_type.place(x=80,y=52) ##
+    ele_type=tkinter.ttk.Combobox(custom_window,width=5,values=ele_list); ele_type.place(x=80,y=52) ##     
     ele_type.set(db_preset['B1'].value)
     tkinter.Label(custom_window,text="쿨감보정=          %",font=guide_font).place(x=160,y=50) ##Y11/Z11
     cool_con=tkinter.Entry(custom_window,width=5);cool_con.place(x=230,y=52)
     cool_con.insert(END,db_preset['B2'].value)
-
+    
     tkinter.Label(custom_window,text="<딜러장비>",font=mid_font).place(x=100,y=85)
     tkinter.Label(custom_window,text="% 입력창은 그만큼 %딜증가로 환산한다는 뜻",fg="Red").place(x=30,y=120)
     tkinter.Label(custom_window,text="선택벨트=  자동",font=guide_font).place(x=160,y=155) ##O164
@@ -3109,7 +3106,7 @@ def costum(auto):
     cus4=tkinter.ttk.Combobox(custom_window,width=2,values=lvl_list); cus4.place(x=230,y=247)
     cus4.set(db_preset['B13'].value)
 
-
+    
     tkinter.Label(custom_window,text="흐름상의=          %",font=guide_font).place(x=10,y=155) ##O100
     cus6=tkinter.Entry(custom_window,width=5);cus6.place(x=80,y=157)
     cus6.insert(END,db_preset['B5'].value)
@@ -3142,10 +3139,10 @@ def costum(auto):
     b_stat.insert(END,db_preset['H6'].value)
     three=[0,1,2,3];two=[0,1,2]
     tkinter.Label(custom_window,text="축복칭호=",font=guide_font).place(x=320,y=110)
-    b_style_lvl=tkinter.ttk.Combobox(custom_window,width=5,values=three); b_style_lvl.place(x=390,y=112) ##
+    b_style_lvl=tkinter.ttk.Combobox(custom_window,width=5,values=three); b_style_lvl.place(x=390,y=112) ##     
     b_style_lvl.set(db_preset['H2'].value)
     tkinter.Label(custom_window,text="1각칭호=",font=guide_font).place(x=470,y=110)
-    c_style_lvl=tkinter.ttk.Combobox(custom_window,width=5,values=two); c_style_lvl.place(x=540,y=112) ##
+    c_style_lvl=tkinter.ttk.Combobox(custom_window,width=5,values=two); c_style_lvl.place(x=540,y=112) ##     
     c_style_lvl.set(db_preset['H3'].value)
     tkinter.Label(custom_window,text="축복플티=",font=guide_font).place(x=320,y=140)
     b_plt=tkinter.ttk.Combobox(custom_window,width=5,values=two); b_plt.place(x=390,y=142) ##
@@ -3157,7 +3154,7 @@ def costum(auto):
     tkinter.Label(custom_window,text="아리아/퍼펫 증폭율 여부=",font=guide_font).place(x=320,y=170)
     aria_up=tkinter.ttk.Combobox(custom_window,values=aria_value,width=10);aria_up.place(x=540-55,y=170)
     aria_up.set(db_preset['H7'].value)
-
+    
 
     tkinter.Label(custom_window,text="<딜러속강>",font=mid_font).place(x=410,y=175+70)
     tkinter.Label(custom_window,text="마부총합=",font=guide_font).place(x=470,y=210+70)
@@ -3196,7 +3193,7 @@ def costum(auto):
         print('자동저장')
         auto_saved=0
         auto=0
-
+    
 def save_custom(ele_type,cool_con,cus1,cus2,cus3,cus4,cus6,cus7,cus8,cus9,cus10,cus11,cus12,c_stat,b_stat,b_style_lvl,c_style_lvl,b_plt,b_cri,ele1,ele2,ele3,ele4,ele5,ele6,aria_up):
     try:
         load_excel3=load_workbook("DATA.xlsx")
@@ -3204,7 +3201,7 @@ def save_custom(ele_type,cool_con,cus1,cus2,cus3,cus4,cus6,cus7,cus8,cus9,cus10,
         db_custom1=load_preset1["custom"]
         db_save_one=load_excel3["one"]
         db_save_set=load_excel3["set"]
-
+        
         db_custom1['B1']=ele_type
         if ele_type == '화':
             db_save_one['L181']=0;db_save_one['L165']=0;db_save_one['L149']=24;db_save_one['L129']=0
@@ -3218,7 +3215,7 @@ def save_custom(ele_type,cool_con,cus1,cus2,cus3,cus4,cus6,cus7,cus8,cus9,cus10,
         elif ele_type == '암':
             db_save_one['L181']=0;db_save_one['L165']=0;db_save_one['L149']=0;db_save_one['L129']=24
             db_save_one['L429']=0;db_save_one['L430']=0;db_save_one['L431']=0;db_save_one['L433']=20
-
+        
         db_custom1['B3']=float(cus1);db_save_one['O164']=float(cus1)
         db_custom1['B4']=float(cus2);db_save_one['O180']=float(cus2)
         db_custom1['B5']=float(cus6);db_save_one['O100']=float(cus6);db_save_one['O101']=float(cus6)
@@ -3251,7 +3248,7 @@ def save_custom(ele_type,cool_con,cus1,cus2,cus3,cus4,cus6,cus7,cus8,cus9,cus10,
         db_custom1['B17']=ele4
         db_custom1['B18']=ele5
         db_custom1['B19']=ele6
-
+        
         load_preset1.save("preset.xlsx")
         load_preset1.close()
         load_excel3.save("DATA.xlsx")
@@ -3309,7 +3306,7 @@ def load_checklist():
         wep_job_selected2(0)
         job_type_selected(0)
         tkinter.messagebox.showinfo("알림","불러오기 완료")
-
+        
 
 def save_checklist():
     ask_msg2=tkinter.messagebox.askquestion('확인',"저장하시겠습니까?")
@@ -3333,13 +3330,13 @@ def save_checklist():
                         save_cell(opt_save[code],2+ssnum2).value=1
                 except KeyError as error:
                     passss1=1
-
+                    
                 try:
                     if eval("select_item['tg{}']".format(code)) == 0:
                         save_cell(opt_save[code],2+ssnum2).value=0
                 except KeyError as error:
                     passss1=1
-
+                
                 passss=1
             for i in range(52,70):
                 temp_opt=str(save_cus(i,1).value)
@@ -3349,7 +3346,7 @@ def save_checklist():
                 save_cus(i+25,2+ssnum2).value=str(save_cus(i,2).value)
             for i in range(1,8):
                 save_cus(i+44,2+ssnum2).value=str(save_cus(i,8).value)
-
+                
             load_preset4.save("preset.xlsx")
             load_preset4.close()
             tkinter.messagebox.showinfo("알림","저장 완료")
@@ -3392,7 +3389,7 @@ def change_savelist(in1,in2,in3,in4,in5,in6,in7,in8,in9,in10):
     try:
         load_preset5=load_workbook("preset.xlsx", data_only=True)
         db_custom2=load_preset5["custom"]
-
+        
         for i in range(1,11):
             db_custom2.cell(i,5).value=in_list[i-1]
         global save_name_list
@@ -3463,7 +3460,7 @@ def update_count2():
                 a_num[10]=a_num[10]+select_item['tg3{}0'.format(i+200)]+select_item['tg3{}1'.format(i+200)]
             except KeyError as error:
                 p=0
-
+                
         if a_num[0]==0:
             a_num[0]=a_num[0]+1;a_num[1]=a_num[1]+1;a_num[2]=a_num[2]+1;a_num[3]=a_num[3]+1;a_num[4]=a_num[4]+1;
         if a_num[1]==0:
@@ -3479,21 +3476,21 @@ def update_count2():
             a_num[5]=a_num[5]+1;a_num[6]=a_num[6]+1;a_num[7]=a_num[7]+1
         if a_num[8]+a_num[9]+a_num[10]<2:
             a_num[8]=a_num[8]+1;a_num[9]=a_num[9]+1;a_num[10]=a_num[10]+1
-
+            
         if a_num[5]==0:
             a_num[5]=a_num[5]+1
         if a_num[6]==0:
             a_num[6]=a_num[6]+1
         if a_num[7]==0:
             a_num[7]=a_num[7]+1
-
+            
         if a_num[8]==0:
             a_num[8]=a_num[8]+1
         if a_num[9]==0:
             a_num[9]=a_num[9]+1
         if a_num[10]==0:
             a_num[10]=a_num[10]+1
-
+            
         a_num_all=a_num[0]*a_num[1]*a_num[2]*a_num[3]*a_num[4]*a_num[5]*a_num[6]*a_num[7]*a_num[8]*a_num[9]*a_num[10]
         showcon2(text="경우의 수= "+str(a_num_all))
         if a_num_all>10000000:
@@ -3503,8 +3500,8 @@ def update_count2():
         time.sleep(1)
 
 
-
-
+        
+        
 def update_thread():
     threading.Thread(target=update_count,daemon=True).start()
 def update_thread2():
@@ -3518,7 +3515,7 @@ def timeline_select():
     except:
         pass
     timeline_window=tkinter.Toplevel(self)
-    timeline_window.attributes("-topmost", True)
+    timeline_window.attributes("-topmost", True) 
     timeline_window.geometry("310x150+750+20")
     tkinter.Label(timeline_window,text="캐릭터명=\n(정확히)",font=guide_font).place(x=10,y=9)
     cha_name=tkinter.Entry(timeline_window,width=13)
@@ -3534,7 +3531,7 @@ def timeline_select():
     tkinter.Label(timeline_window,text="서버 불안정때매 안되면 여러번 눌러보세요",fg="Red").place(x=10,y=120)
 
 def show_timeline(name,server):
-
+    
     server_dict={'안톤':'anton','바칼':'bakal','카인':'cain','카시야스':'casillas',
                 '디레지에':'diregie','힐더':'hilder','프레이':'prey','시로코':'siroco'}
     try:
@@ -3583,16 +3580,16 @@ def show_timeline(name,server):
                     timeline_list=timeline_list+timeline_next2['rows']
                     time.sleep(0.3)
                     show_next=timeline_next2['next']
-
+            
         all_item=[]
         for now in timeline_list:
             item=now['data']['itemId']
             all_item.append(item)
         xl=openpyxl.load_workbook("DATA.xlsx", data_only=True)
         sh=xl['one']
-
+        
         reset()
-
+            
         for i in range(76,257):
             api_cod=sh.cell(i,40).value
             if all_item.count(api_cod) != 0:
@@ -3639,7 +3636,7 @@ def reset():
 
 def guide_speed():
     tkinter.messagebox.showinfo("정확도 선택","매우빠름=세트옵션7개 풀적용 경우의 수만 계산. 중간세팅은 고려하지 않음\n빠름=단일 선택 부위를 전부 제거\n중간=단일은 포함하되, 신화에 우선권 부여\n느림=세트 수 우선권 완화, 신화 우선권 삭제")
-
+                                
 
 select_item={}
 def click_equipment(code):
@@ -3732,8 +3729,8 @@ def click_set(code):
                         set_checked=set_checked+1 ##그럼 변수에 +1을 더함
                 except KeyError as error:
                     c=1
-
-
+            
+        
         if set_checked==3: ## 채택 숫자가 3이면
             for i in range(11,44): ##모든 부위에서
                 try:
@@ -3751,7 +3748,7 @@ def click_set(code):
                     c=1
             eval('set'+str(code))['image']=image_list_set[str(code)] ##세트이미지도 온으로 바꿈
 
-
+            
     else:
         for i in range(11,16): ## 방어구 부위에서
             try:
@@ -3759,7 +3756,7 @@ def click_set(code):
                     set_checked=set_checked+1 ##그럼 변수에 +1을 더함
             except KeyError as error:
                 c=1
-
+        
         if set_checked==5: ## 채택 숫자가 5이면
             for i in range(11,16): ## 방어구 부위에서
                 try:
@@ -3768,7 +3765,7 @@ def click_set(code):
                 except KeyError as error:
                     c=1
             eval('set'+str(code))['image']=image_list_set2[str(code)] ##세트이미지도 오프로 바꿈
-
+            
         else: ## 채택 숫자가 5미만이면
             for i in range(11,16): ## 방어구 부위에서
                 try:
@@ -3777,7 +3774,7 @@ def click_set(code):
                 except KeyError as error:
                     c=1
             eval('set'+str(code))['image']=image_list_set[str(code)] ##세트이미지도 온으로 바꿈
-
+                    
 def check_set(code):
     code_str=str(code)[1:3]
     set_checked=0
@@ -3809,7 +3806,7 @@ def check_set(code):
         for i in [41,42,43]:
             if select_item['tg'+str(i)+code_str+'0']==1:
                 set_checked=set_checked+1
-
+                
     if code < 116:
         if set_checked==5:
             eval('set'+str(code))['image']=image_list_set[str(code)]
@@ -3828,7 +3825,7 @@ def stop_calc():
     exit_calc=0
 
 
-
+    
 ## 내부 구조 ##
 know_list=['13390150','22390240','23390450','33390750','21390340','31390540','32390650',
            '11390850','12390950','13391050','14391150','15391250']
@@ -3860,7 +3857,7 @@ for i in know_jin_list:
     image_list[i]=eval('PhotoImage(file="image/{}n.png")'.format(i))
     image_list2[i]=eval('PhotoImage(file="image/{}f.png")'.format(i))
     image_list_tag[i]=eval('PhotoImage(file="image/{}t.png")'.format(i))
-
+           
 for i in range(1101,3350):
     try:
         image_list[str(i)+"0"]=eval('PhotoImage(file="image/{}0n.png")'.format(i))
@@ -3906,7 +3903,7 @@ tkinter.Label(self,fg="white",bg=dark_main, text="3. 둘이 값이 다르면 증
 tkinter.Label(self,fg="white",bg=dark_main, text="4. 자기 직업에 템 관련해서 특수한 케이스가 있는지 생각해본다").place(x=296,y=477)
 tkinter.Label(self,fg="white",bg=dark_main, text="5. 이래도 뭔가 이상하면 꼴리는데로 한다 (책임안짐)").place(x=296,y=495)
 
-
+    
 select_perfect=tkinter.ttk.Combobox(self,values=['풀셋모드(매우빠름)','단품제외(빠름)','단품포함(중간)','세트필터↓(느림)'],width=15)
 select_perfect.place(x=145+470,y=11+15)
 select_perfect.set('단품포함(중간)')
@@ -4208,7 +4205,7 @@ def know_epic():
     except:
         pass
     know_window=tkinter.Toplevel(self)
-    know_window.attributes("-topmost", True)
+    know_window.attributes("-topmost", True) 
     know_window.geometry("545x405+750+20")
     know_window.resizable(False, False)
     know_window.configure(bg=dark_main)
@@ -4747,7 +4744,7 @@ def blog():
 blog_image=PhotoImage(file='ext_img/blog.png')
 blog_url=tkinter.Button(self,image=blog_image, command=blog,borderwidth=0,bg=dark_main,activebackground=dark_main)
 blog_url.place(x=615+219,y=410-402)
-
+    
 def hamjung():
     tkinter.messagebox.showinfo("제작자 크레딧","총제작자=Dawnclass(새벽반)\n이미지/그래픽=경철부동산\n직업/버퍼DB=대략볼록할철\n서버제공=던파오프\n기타조언=히든 도비 4,5,6호\n\n오류 제보는 블로그 덧글이나 던조 쪽지로")
 maker_image=PhotoImage(file='ext_img/maker.png')
@@ -4786,3 +4783,4 @@ self.mainloop()
 
 
 self.quit()
+

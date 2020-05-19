@@ -1,5 +1,5 @@
-now_version="3.0.0"
-ver_time='200516'
+now_version="3.1.1"
+ver_time='200519'
 
 ## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
 ## Copyright ⓒ 2020 Dawnclass(새벽반) dawnclass16@naver.com
@@ -22,10 +22,13 @@ import numpy as np
 from collections import Counter
 from math import floor
 import webbrowser
+import cv2
+from PIL import Image
+from PIL import ImageTk
+from PIL import ImageEnhance
 import calc_update
-import calc_list_wep,calc_list_job,calc_fullset
+import calc_list_wep,calc_list_job,calc_fullset,calc_setlist,calc_gif
 
-#print(calc_list_wep.DNF_wep_list.keys())
 
 #https://dunfaoff.com/DawnClass.df
 
@@ -39,7 +42,7 @@ dark_sub=_from_rgb((46, 49, 52))
 dark_blue=_from_rgb((29, 30, 36))
 
     
-apikey = "TQS79U4MT11jswCLHq7G260XzXU0JhGC" ##보안코드
+apikey = "TQS79U4MT11jswCLHq7G260XzXU0JhGC" ##api 코드
 
 auto_saved=0
 exit_calc=0
@@ -113,7 +116,32 @@ for i in range(1,11):
 
 auto_custom=0
 ########## 버전 최초 구동 프리셋 업데이트 ###########
+def update_log():
+    def donotshow():
+        load_show=load_workbook("preset.xlsx", data_only=True)
+        load_show["custom"]['K2']=1
+        load_show.save("preset.xlsx")
+        load_show.close()
+        update_window.destroy()
+    update_window=tkinter.Toplevel(self)
+    update_window.attributes("-topmost", True) 
+    update_window.resizable(False, False)
+    update_window.configure(bg=dark_main)
+    tkinter.Label(update_window,bg=dark_main,font=mid_font,fg='white',text="< 3.1.1 업데이트>").pack()
+    tkinter.Label(update_window,bg=dark_main,font=guide_font,fg='white',text="1. 메타몽 풀셋모드 버그픽스",anchor='w').pack()
+    tkinter.Label(update_window,bg=dark_main).pack()
+    tkinter.Label(update_window,bg=dark_main,font=mid_font,fg='white',text="< 3.1.0 업데이트>").pack()
+    tkinter.Label(update_window,bg=dark_main,font=guide_font,fg='white',text="1. 메타몽 풀셋모드 추가",anchor='w').pack()
+    tkinter.Label(update_window,bg=dark_main,font=guide_font,fg='white',text="2. 결과창 신화/융합 이펙트 추가",anchor='w').pack()
+    tkinter.Label(update_window,bg=dark_main,font=guide_font,fg='white',text="3. 세이브/로드 버그 픽스",anchor='w').pack()
+    tkinter.Label(update_window,bg=dark_main).pack()
+    tkinter.Label(update_window,bg=dark_main,font=guide_font,fg='red',text="2.X.X 버전이랑 계수 호환 X",anchor='w').pack()
+    tkinter.Label(update_window,bg=dark_main).pack()
+    tkinter.Button(update_window,font=small_font,command=donotshow,text="업데이트 전까지 보지않기").pack()
+    tkinter.Label(update_window,bg=dark_main).pack()
 try:
+    if str(db_custom['K2'].value) != '1':
+        update_log()
     print("Preset 엑셀 버전= "+str(db_custom['K1'].value))
     print("클라이언트 버전= "+now_version)
     if str(db_custom['K1'].value) != now_version:
@@ -123,6 +151,7 @@ try:
         load_preset0.save("preset.xlsx")
         load_preset0.close()
         calc_update.update_preset ## 외부모듈
+    
         
     
 except PermissionError as error:
@@ -134,15 +163,28 @@ load_excel1.close()
     
 ## 계산 함수 ##
 def calc():
-    global result_window
+    global result_window, all_list_list_num, a_num_all
     try:
-        result_window.destroy()
+        result_window.after(0,result_window.destroy)
+        result_window.after(50,time_delay2)
+        result_window.after(50,time_delay4)
+        result_window.after(500,time_delay1)
+        result_window.after(500,time_delay3)
+        
     except NameError as error:
         pass
-    if select_perfect.get() == '세트필터↓(느림)' or select_perfect.get() == '풀셋모드(매우빠름)':
+    if select_perfect.get() == '세트필터↓(느림)' or select_perfect.get() == '풀셋모드(매우빠름)' or select_perfect.get() == '메타몽풀셋모드':
         set_perfect=1
     else:
         set_perfect=0
+    if a_num_all>100000000:
+        if select_perfect.get() != "풀셋모드(빠름)" or select_perfect.get() != "메타몽풀셋모드":
+            ask_really=tkinter.messagebox.askquestion('확인',"1억가지가 넘는 경우의 수는 풀셋/메타몽풀셋 모드를 권장합니다.\n그냥 진행하시겠습니까?")
+            if ask_really == 'yes':
+                pass
+            elif ask_really == 'no':
+                showsta(text='중지됨')
+                return
     showsta(text="조합 알고리즘 구동 준비중...")
     start_time = time.time()
     load_excel=load_workbook("DATA.xlsx",data_only=True)
@@ -223,7 +265,7 @@ def calc():
         aria_dif=0
         
     
-    global count_num, count_all, show_number,all_list_list_num, max_setopt, inv_tg
+    global count_num, count_all, show_number, max_setopt, inv_tg
     count_num=0;count_all=0;show_number=0;metamong=0
     
     
@@ -258,7 +300,7 @@ def calc():
                     wep_pre_calced=float(db_job.cell(i,j).value)
                     cool_pre_calced=(1/float(db_job.cell(i,j+38).value)-1)*cool_eff*cool_on+1
                     
-    if wep_pre_calced==0:
+    if wep_pre_calced==0 and jobup_select.get()[0:4]!="(버프)":
         ask_wep=tkinter.messagebox.askquestion('확인',"착용할 수 없는 무기를 선택했습니다. 이 경우 모든 무기 보정이 비활성화되어 마스터리/앞뎀 반영이 되지 않습니다. 진행하시겠습니까?")
         if ask_wep == 'yes':
             wep_pre_calced=1
@@ -266,7 +308,11 @@ def calc():
         elif ask_wep == 'no':
             showsta(text='중지됨')
             return
-        
+    elif wep_pre_calced==0 and jobup_select.get()[0:4]=="(버프)":
+        tkinter.messagebox.showerror('에러',"버퍼가 사용할 수 없는 무기입니다.")
+        showsta(text='중지됨')
+        return
+
     
     list11=[];list12=[];list13=[];list14=[];list15=[]
     list21=[];list22=[];list23=[];list31=[];list32=[];list33=[]
@@ -695,7 +741,7 @@ def calc():
 
 ##풀셋모드##
 ##########################################################################################################################
-    if select_perfect.get() == '풀셋모드(매우빠름)':
+    if select_perfect.get() == '풀셋모드(매우빠름)' or select_perfect.get() == '메타몽풀셋모드':
         active_bang5_0=[];active_bang5_1=[]
         active_bang2_0=[];active_bang3_1_0=[];active_bang3_1_1=[];active_bang3_2=[];active_bang3_3=[] #1:상의(1_1:신화), 2:하의, 3:신발 / 포함 어벨
         active_acc3_0=[];active_acc3_1=[]
@@ -944,15 +990,30 @@ def calc():
                 tempx.append(i)
                 all_list_god.append(tuple(tempx))
 
-        
+        fullseton=0
         all_list_num=len(all_list_god)+len(all_list)
-        if all_list_num==0:
+        if all_list_num==0 and select_perfect.get() != '메타몽풀셋모드':
             tkinter.messagebox.showerror('에러',"풀셋이 없습니다.")
+            showsta(text='중지됨')
             return
-        all_list_list.append([all_list,all_list_god,all_list_num])
+        if all_list_num==0 and select_perfect.get() == '메타몽풀셋모드':
+            pass
+        else:
+            fullseton=1
+            all_list_list.append([all_list,all_list_god,all_list_num])
                     
-                
-            
+        if select_perfect.get() == '메타몽풀셋모드':
+            showsta(text='메타몽 계산중(오래걸릴수 있음)')
+            evert_list=list11+list12+list13+list14+list15+list21+list22+list23+list31+list32+list33
+            result_metamong=calc_fullset.meta_ful(set_num_dict,evert_list,bang_on_dict,list40_0)
+            if result_metamong[2]!=0:
+                all_list_list.append(result_metamong)
+            elif fullseton==1:
+                pass
+            else:
+                tkinter.messagebox.showerror('에러',"풀셋이 없습니다.")
+                showsta(text='중지됨')
+                return
         
     else:
 ##레전기본값##
@@ -1014,74 +1075,25 @@ def calc():
             items1=[]
             items2=[[df11],[df12],[df13],[df14],[df15],list21_1,list22,list23,list31,list32,list33_0,list40_0]
             items3=[[df11],[df12],[df13],[df14],[df15],list21_0,list22,list23,list31,list32,list33_1,list40_0]
-            all_list=list(itertools.product(*items0))
-            all_list1=[]
-            if len(list21_1) != 0:
-                all_list2=list(itertools.product(*items2))
-            else:
-                all_list2=[]
-            if len(list33_1) != 0:
-                all_list3=list(itertools.product(*items3))
-            else:
-                all_list3=[]
-            all_list_god=all_list1+all_list2+all_list3
-            del all_list1,all_list2,all_list3
-            all_list_num=len(all_list_god)+len(all_list)
-            all_list_list.append([all_list,all_list_god,all_list_num])
+            all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
         if max(set_max_list2) < 2:
             items0=[list11_0,list12,list13,list14,list15,[df21],[df22],[df23],list31,list32,list33_0,list40_0]
             items1=[list11_1,list12,list13,list14,list15,[df21],[df22],[df23],list31,list32,list33_0,list40_0]
             items2=[]
             items3=[list11_0,list12,list13,list14,list15,[df21],[df22],[df23],list31,list32,list33_1,list40_0]
-            all_list=list(itertools.product(*items0))
-            if len(list11_1) != 0:
-                all_list1=list(itertools.product(*items1))
-            else:
-                all_list1=[]
-            all_list2=[]
-            if len(list33_1) != 0:
-                all_list3=list(itertools.product(*items3))
-            else:
-                all_list3=[]
-            all_list_god=all_list1+all_list2+all_list3
-            del all_list1,all_list2,all_list3
-            all_list_num=len(all_list_god)+len(all_list)
-            all_list_list.append([all_list,all_list_god,all_list_num])
+            all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
         if max(set_max_list3) < 2:
             items0=[list11_0,list12,list13,list14,list15,list21_0,list22,list23,[df31],[df32],[df33],list40_0]
             items1=[list11_1,list12,list13,list14,list15,list21_0,list22,list23,[df31],[df32],[df33],list40_0]
             items2=[list11_0,list12,list13,list14,list15,list21_1,list22,list23,[df31],[df32],[df33],list40_0]
             items3=[]
-            all_list=list(itertools.product(*items0))
-            if len(list11_1) != 0:
-                all_list1=list(itertools.product(*items1))
-            else:
-                all_list1=[]
-            if len(list21_1) != 0:
-                all_list2=list(itertools.product(*items2))
-            else:
-                all_list2=[]
-            all_list3=[]
-            all_list_god=all_list1+all_list2+all_list3
-            del all_list1,all_list2,all_list3
-            all_list_num=len(all_list_god)+len(all_list)
-            all_list_list.append([all_list,all_list_god,all_list_num])
+            all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
         if max(set_max_list2) < 2 and max(set_max_list3) < 2:
             items0=[list11_0,list12,list13,list14,list15,[df21],[df22],[df23],[df31],[df32],[df33],list40_0]
             items1=[list11_1,list12,list13,list14,list15,[df21],[df22],[df23],[df31],[df32],[df33],list40_0]
             items2=[]
             items3=[]
-            all_list=list(itertools.product(*items0))
-            if len(list11_1) != 0:
-                all_list1=list(itertools.product(*items1))
-            else:
-                all_list1=[]
-            all_list2=[]
-            all_list3=[]
-            all_list_god=all_list1+all_list2+all_list3
-            del all_list1,all_list2,all_list3
-            all_list_num=len(all_list_god)+len(all_list)
-            all_list_list.append([all_list,all_list_god,all_list_num])
+            all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
 
 
     ##세트산물 계산##                
@@ -1117,23 +1129,7 @@ def calc():
                     items1=[list11_1,list12,list13,list14,list15,list31,[i],list33_0,['99990'],['99990'],['99990'],list40_0]
                     items2=[]
                     items3=[list11_0,list12,list13,list14,list15,list31,[i],list33_1,['99990'],['99990'],['99990'],list40_0]
-                all_list=list(itertools.product(*items0))
-                if len(list11_1) != 0 and items1 !=[]:
-                    all_list1=list(itertools.product(*items1))
-                else:
-                    all_list1=[]
-                if len(list21_1) != 0 and items2 !=[]:
-                    all_list2=list(itertools.product(*items2))
-                else:
-                    all_list2=[]
-                if len(list33_1) != 0 and items3 !=[]:
-                    all_list3=list(itertools.product(*items3))
-                else:
-                    all_list3=[]
-                all_list_god=all_list1+all_list2+all_list3
-                del all_list1,all_list2,all_list3
-                all_list_num=len(all_list_god)+len(all_list)
-                all_list_list.append([all_list,all_list_god,all_list_num])
+                all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
 
         know_bang1_on=[]
         for i in know_bang1_list:
@@ -1144,23 +1140,7 @@ def calc():
             items1=[]
             items2=[]
             items3=[]
-            all_list=list(itertools.product(*items0))
-            if len(list11_1) != 0 and items1 !=[]:
-                all_list1=list(itertools.product(*items1))
-            else:
-                all_list1=[]
-            if len(list21_1) != 0 and items2 !=[]:
-                all_list2=list(itertools.product(*items2))
-            else:
-                all_list2=[]
-            if len(list33_1) != 0 and items3 !=[]:
-                all_list3=list(itertools.product(*items3))
-            else:
-                all_list3=[]
-            all_list_god=all_list1+all_list2+all_list3
-            del all_list1,all_list2,all_list3
-            all_list_num=len(all_list_god)+len(all_list)
-            all_list_list.append([all_list,all_list_god,all_list_num])
+            all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
                     
         know_acc_on=[]
         know_bang2_on=[]
@@ -1175,23 +1155,7 @@ def calc():
             items1=[]
             items2=[]
             items3=[['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],know_bang2_on,know_acc_on,list33_1,list40_0]
-            all_list=list(itertools.product(*items0))
-            if len(list11_1) != 0 and items1 !=[]:
-                all_list1=list(itertools.product(*items1))
-            else:
-                all_list1=[]
-            if len(list21_1) != 0 and items2 !=[]:
-                all_list2=list(itertools.product(*items2))
-            else:
-                all_list2=[]
-            if len(list33_1) != 0 and items3 !=[]:
-                all_list3=list(itertools.product(*items3))
-            else:
-                all_list3=[]
-            all_list_god=all_list1+all_list2+all_list3
-            del all_list1,all_list2,all_list3
-            all_list_num=len(all_list_god)+len(all_list)
-            all_list_list.append([all_list,all_list_god,all_list_num])
+            all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
             
         jin_sang=[]
         jin_pal=[]
@@ -1212,156 +1176,44 @@ def calc():
                     items1=[]
                     items2=[[i],['12410'],['13410'],['14410'],['15410'],list21_1,list22,list23,list31,list32,list33_0,list40_0]
                     items3=[[i],['12410'],['13410'],['14410'],['15410'],list21_0,list22,list23,list31,list32,list33_1,list40_0]
-                    all_list=list(itertools.product(*items0))
-                    if len(list11_1) != 0 and items1 !=[]:
-                        all_list1=list(itertools.product(*items1))
-                    else:
-                        all_list1=[]
-                    if len(list21_1) != 0 and items2 !=[]:
-                        all_list2=list(itertools.product(*items2))
-                    else:
-                        all_list2=[]
-                    if len(list33_1) != 0 and items3 !=[]:
-                        all_list3=list(itertools.product(*items3))
-                    else:
-                        all_list3=[]
-                    all_list_god=all_list1+all_list2+all_list3
-                    del all_list1,all_list2,all_list3
-                    all_list_num=len(all_list_god)+len(all_list)
-                    all_list_list.append([all_list,all_list_god,all_list_num])
+                    all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
                 if i[0:2]=='21': ##팔찌만
                     items0=[list11_0,list12,list13,list14,list15,[i],['22420'],['23420'],list31,list32,list33_0,list40_0]
                     items1=[list11_1,list12,list13,list14,list15,[i],['22420'],['23420'],list31,list32,list33_0,list40_0]
                     items2=[]
                     items3=[list11_0,list12,list13,list14,list15,[i],['22420'],['23420'],list31,list32,list33_1,list40_0]
-                    all_list=list(itertools.product(*items0))
-                    if len(list11_1) != 0 and items1 !=[]:
-                        all_list1=list(itertools.product(*items1))
-                    else:
-                        all_list1=[]
-                    if len(list21_1) != 0 and items2 !=[]:
-                        all_list2=list(itertools.product(*items2))
-                    else:
-                        all_list2=[]
-                    if len(list33_1) != 0 and items3 !=[]:
-                        all_list3=list(itertools.product(*items3))
-                    else:
-                        all_list3=[]
-                    all_list_god=all_list1+all_list2+all_list3
-                    del all_list1,all_list2,all_list3
-                    all_list_num=len(all_list_god)+len(all_list)
-                    all_list_list.append([all_list,all_list_god,all_list_num])
+                    all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
                 if i[0:2]=='33': ##귀걸만
                     items0=[list11_0,list12,list13,list14,list15,list21_0,list22,list23,['31430'],['32430'],[i],list40_0]
                     items1=[list11_1,list12,list13,list14,list15,list21_0,list22,list23,['31430'],['32430'],[i],list40_0]
                     items2=[list11_0,list12,list13,list14,list15,list21_1,list22,list23,['31430'],['32430'],[i],list40_0]
                     items3=[]
-                    all_list=list(itertools.product(*items0))
-                    if len(list11_1) != 0 and items1 !=[]:
-                        all_list1=list(itertools.product(*items1))
-                    else:
-                        all_list1=[]
-                    if len(list21_1) != 0 and items2 !=[]:
-                        all_list2=list(itertools.product(*items2))
-                    else:
-                        all_list2=[]
-                    if len(list33_1) != 0 and items3 !=[]:
-                        all_list3=list(itertools.product(*items3))
-                    else:
-                        all_list3=[]
-                    all_list_god=all_list1+all_list2+all_list3
-                    del all_list1,all_list2,all_list3
-                    all_list_num=len(all_list_god)+len(all_list)
-                    all_list_list.append([all_list,all_list_god,all_list_num])
+                    all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
 
         if len(jin_sang)!=0 and len(jin_pal)!=0: ##상의+팔찌
             items0=[jin_sang,['12410'],['13410'],['14410'],['15410'],jin_pal,['22420'],['23420'],list31,list32,list33_0,list40_0]
             items1=[]
             items2=[]
             items3=[jin_sang,['12410'],['13410'],['14410'],['15410'],jin_pal,['22420'],['23420'],list31,list32,list33_1,list40_0]
-            all_list=list(itertools.product(*items0))
-            if len(list11_1) != 0 and items1 !=[]:
-                all_list1=list(itertools.product(*items1))
-            else:
-                all_list1=[]
-            if len(list21_1) != 0 and items2 !=[]:
-                all_list2=list(itertools.product(*items2))
-            else:
-                all_list2=[]
-            if len(list33_1) != 0 and items3 !=[]:
-                all_list3=list(itertools.product(*items3))
-            else:
-                all_list3=[]
-            all_list_god=all_list1+all_list2+all_list3
-            del all_list1,all_list2,all_list3
-            all_list_num=len(all_list_god)+len(all_list)
-            all_list_list.append([all_list,all_list_god,all_list_num])
+            all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
         if len(jin_sang)!=0 and len(jin_gui)!=0: ##상의+귀걸
             items0=[jin_sang,['12410'],['13410'],['14410'],['15410'],list21_0,list22,list23,['31430'],['32430'],jin_gui,list40_0]
             items1=[]
             items2=[jin_sang,['12410'],['13410'],['14410'],['15410'],list21_1,list22,list23,['31430'],['32430'],jin_gui,list40_0]
             items3=[]
-            all_list=list(itertools.product(*items0))
-            if len(list11_1) != 0 and items1 !=[]:
-                all_list1=list(itertools.product(*items1))
-            else:
-                all_list1=[]
-            if len(list21_1) != 0 and items2 !=[]:
-                all_list2=list(itertools.product(*items2))
-            else:
-                all_list2=[]
-            if len(list33_1) != 0 and items3 !=[]:
-                all_list3=list(itertools.product(*items3))
-            else:
-                all_list3=[]
-            all_list_god=all_list1+all_list2+all_list3
-            del all_list1,all_list2,all_list3
-            all_list_num=len(all_list_god)+len(all_list)
-            all_list_list.append([all_list,all_list_god,all_list_num])
+            all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
         if len(jin_pal)!=0 and len(jin_gui)!=0: ##팔찌+귀걸
             items0=[list11_0,list12,list13,list14,list15,jin_pal,['22420'],['23420'],['31430'],['32430'],jin_gui,list40_0]
             items1=[list11_1,list12,list13,list14,list15,jin_pal,['22420'],['23420'],['31430'],['32430'],jin_gui,list40_0]
             items2=[]
             items3=[]
-            all_list=list(itertools.product(*items0))
-            if len(list11_1) != 0 and items1 !=[]:
-                all_list1=list(itertools.product(*items1))
-            else:
-                all_list1=[]
-            if len(list21_1) != 0 and items2 !=[]:
-                all_list2=list(itertools.product(*items2))
-            else:
-                all_list2=[]
-            if len(list33_1) != 0 and items3 !=[]:
-                all_list3=list(itertools.product(*items3))
-            else:
-                all_list3=[]
-            all_list_god=all_list1+all_list2+all_list3
-            del all_list1,all_list2,all_list3
-            all_list_num=len(all_list_god)+len(all_list)
-            all_list_list.append([all_list,all_list_god,all_list_num])
+            all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
         if len(jin_sang)!=0 and len(jin_pal)!=0 and len(jin_gui)!=0: ##3개 전부
             items0=[jin_sang,['12410'],['13410'],['14410'],['15410'],jin_pal,['22420'],['23420'],['31430'],['32430'],jin_gui,list40_0]
             items1=[]
             items2=[]
             items3=[]
-            all_list=list(itertools.product(*items0))
-            if len(list11_1) != 0 and items1 !=[]:
-                all_list1=list(itertools.product(*items1))
-            else:
-                all_list1=[]
-            if len(list21_1) != 0 and items2 !=[]:
-                all_list2=list(itertools.product(*items2))
-            else:
-                all_list2=[]
-            if len(list33_1) != 0 and items3 !=[]:
-                all_list3=list(itertools.product(*items3))
-            else:
-                all_list3=[]
-            all_list_god=all_list1+all_list2+all_list3
-            del all_list1,all_list2,all_list3
-            all_list_num=len(all_list_god)+len(all_list)
-            all_list_list.append([all_list,all_list_god,all_list_num])
+            all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
             
             
 
@@ -1371,33 +1223,12 @@ def calc():
         for i in all_list_list:
             timp_list_num=timp_list_num+int(i[2])
 
-        items=[list11,list12,list13,list14,list15,list21,list22,list23,list31,list32,list33]
         items0=[list11_0,list12,list13,list14,list15,list21_0,list22,list23,list31,list32,list33_0,list40_0]
         items1=[list11_1,list12,list13,list14,list15,list21_0,list22,list23,list31,list32,list33_0,list40_0]
         items2=[list11_0,list12,list13,list14,list15,list21_1,list22,list23,list31,list32,list33_0,list40_0]
         items3=[list11_0,list12,list13,list14,list15,list21_0,list22,list23,list31,list32,list33_1,list40_0]
 
-        all_list=list(itertools.product(*items0))
-        if len(list11_1) != 0:
-            all_list1=list(itertools.product(*items1))
-        else:
-            all_list1=[]
-        if len(list21_1) != 0:
-            all_list2=list(itertools.product(*items2))
-        else:
-            all_list2=[]
-        if len(list33_1) != 0:
-            all_list3=list(itertools.product(*items3))
-        else:
-            all_list3=[]
-        all_list_god=all_list1+all_list2+all_list3
-        del all_list1,all_list2,all_list3
-
-        all_list_num=len(all_list_god)+len(all_list)
-        if all_list_num==0:
-            all_list=[('11360','12360','13360','14360','15360','11360','21370','22370','23370','31380','32380','33380','4000')]
-
-        all_list_list.append([all_list,all_list_god,all_list_num])
+        all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
 
 #########################################################################################################################
 
@@ -1409,12 +1240,12 @@ def calc():
         showsta(text='중지됨')
         return
     elif all_list_list_num > 100000000:
-        ask_msg2=tkinter.messagebox.askquestion('확인',"경우의 수가 1억가지가 넘습니다.\n메모리 과부하가 날 수 있고 30분이상 걸릴 수 있습니다.\n진행하시겠습니까?")
+        ask_msg2=tkinter.messagebox.askquestion('확인',"경우의 수가 1억가지가 넘습니다.\n메모리 과부하가 날 수 있고 30분이상 걸릴 수 있습니다.\n강행으로 인한 PC파손은 책임지지 않습니다.\n진행하시겠습니까?")
         if ask_msg2 == 'no':
             showsta(text='중지됨')
             return
     elif all_list_list_num > 30000000:
-        ask_msg2=tkinter.messagebox.askquestion('확인',"경우의 수가 3천만가지가 넘습니다.\n다소 오래 걸릴 수 있습니다.\n진행하시겠습니까?")
+        ask_msg2=tkinter.messagebox.askquestion('확인',"경우의 수가 3천만가지가 넘습니다.\n다소 오래 걸릴 수 있습니다.\n강행으로 인한 PC파손은 책임지지 않습니다.\n진행하시겠습니까?")
         if ask_msg2 == 'no':
             showsta(text='중지됨')
             return
@@ -2151,6 +1982,10 @@ def calc():
 def calc_thread():
     threading.Thread(target=calc,daemon=True).start()
 
+pause_gif=0
+stop_gif=0
+stop_gif2=0
+
 def show_result(rank_list,job_type,ele_skill,cool_eff):
     global result_window
     result_window=tkinter.Toplevel(self)
@@ -2167,11 +2002,11 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         result_bg=tkinter.PhotoImage(file='ext_img/bg_result2.png')
     canvas_res.create_image(293,202,image=result_bg)
 
-    global image_list, set_name_toggle, image_list_tag, now_version
+    global image_list, set_name_toggle, image_list_tag, now_version,pause_gif,stop_gif,stop_gif2
     global res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43,wep_select,jobup_select, now_rank_num, res_wep
     now_rank_num=0
     set_name_toggle=0
-    
+    pause_gif=0;stop_gif=0;stop_gif2=0
     wep_name=wep_select.get()
     job_name=jobup_select.get()[:-4]
     job_up_name=jobup_select.get()[-4:]
@@ -2183,7 +2018,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                    '31400850','31400950','31401050','31401150','32401240','32401340','32401440']
 
     ele_change_toggle=0
-
+    
     if job_type=='deal': ###########################
         global tagkgum_exist,tagk_tg
         tagkgum_exist=0
@@ -2199,6 +2034,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
             tagkgum.command=change_tagk
             
         global result_image_on,result_image_tag,rank_dam,rank_stat,rank_stat2,rank_stat3,req_cool,res_dam,res_stat,res_stat2, res_stat3, rank_dam_tagk,rank_dam_noele, res_ele, rank_inv, res_inv, rank_dam_tagk_noele
+        global result_image_gif, result_image_gif_tg,result_siroco_gif,result_siroco_gif_tg
         cool_check=req_cool.get()[2:6]
         canvas_res.create_text(122,114,text=cool_check,font=small_font,fill='white')
         if cool_check=='쿨감보정':
@@ -2216,126 +2052,56 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         rank_dam_tagk_noele=[0,0,0,0,0]
         rank_setting=[0,0,0,0,0]
         rss=[0,0,0,0,0]
+        result_image_gif=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        result_image_gif_tg=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        result_siroco_gif=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        result_siroco_gif_tg=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
         result_image_on=[{},{},{},{},{}]
         result_image_tag=[{},{},{},{},{}]
-        try:
-            rank_dam[0]=str(int(100*rank_list[0][0]))+"%"
-            rank_dam_nolv[0]=int(100*rank_list[0][1][2])
-            rank_dam_noele[0]=int(100*rank_list[0][1][3])
-            rank_inv[0]=rank_list[0][1][4]
-            rank_ult[0]=rank_list[0][1][5]
-            rank_setting[0]=list(rank_list[0][1][0]) ##0번이 랭킹이다
-            for i in rank_setting[0]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting[0].append('415'+i[1]+'0')
-                    rank_setting[0].append('425'+i[2]+'0')
-                    rank_setting[0].append('435'+i[3]+'0')
-                    rank_setting[0].remove(i)
-            rss[0]=rank_list[0][1][1]
-            rank_dam_tagk[0]=str(int((100*rank_list[0][0])*(100+rss[0][6])/(121+rss[0][6])*1.23))+"%"
-            rank_dam_tagk_nolv[0]=int((100+rss[0][6])/(121+rss[0][6])*1.23*(rank_dam_nolv[0]))
-            rank_dam_tagk_noele[0]=int((100+rss[0][6])/(121+rss[0][6])*1.23*(rank_dam_noele[0]))
-            for i in [11,12,13,14,15,21,22,23,31,32,33,41,42,43]:
-                for j in rank_setting[0]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on[0][str(i)]=image_list[j]
-                            result_image_tag[0][str(i)]=j
-                            
-            rank_dam[1]=str(int(100*rank_list[1][0]))+"%"
-            rank_dam_nolv[1]=int(100*rank_list[1][1][2])
-            rank_dam_noele[1]=int(100*rank_list[1][1][3])
-            rank_inv[1]=rank_list[1][1][4]
-            rank_ult[1]=rank_list[1][1][5]
-            rank_setting[1]=list(rank_list[1][1][0])
-            for i in rank_setting[1]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting[1].append('415'+i[1]+'0')
-                    rank_setting[1].append('425'+i[2]+'0')
-                    rank_setting[1].append('435'+i[3]+'0')
-                    rank_setting[1].remove(i)
-            rss[1]=rank_list[1][1][1]
-            rank_dam_tagk[1]=str(int((100*rank_list[1][0])*(100+rss[1][6])/(121+rss[1][6])*1.23))+"%"
-            rank_dam_tagk_nolv[1]=int((100+rss[1][6])/(121+rss[1][6])*1.23*(rank_dam_nolv[1]))
-            rank_dam_tagk_noele[1]=int((100+rss[1][6])/(121+rss[1][6])*1.23*(rank_dam_noele[1]))
-            for i in [11,12,13,14,15,21,22,23,31,32,33,41,42,43]:
-                for j in rank_setting[1]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on[1][str(i)]=image_list[j]
-                            result_image_tag[1][str(i)]=j
-                            
-            rank_dam[2]=str(int(100*rank_list[2][0]))+"%"
-            rank_dam_nolv[2]=int(100*rank_list[2][1][2])
-            rank_dam_noele[2]=int(100*rank_list[2][1][3])
-            rank_inv[2]=rank_list[2][1][4]
-            rank_ult[2]=rank_list[2][1][5]
-            rank_setting[2]=list(rank_list[2][1][0])
-            for i in rank_setting[2]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting[2].append('415'+i[1]+'0')
-                    rank_setting[2].append('425'+i[2]+'0')
-                    rank_setting[2].append('435'+i[3]+'0')
-                    rank_setting[2].remove(i)
-            rss[2]=rank_list[2][1][1]
-            rank_dam_tagk[2]=str(int((100*rank_list[2][0])*(100+rss[2][6])/(121+rss[2][6])*1.23))+"%"
-            rank_dam_tagk_nolv[2]=int((100+rss[2][6])/(121+rss[2][6])*1.23*(rank_dam_nolv[2]))
-            rank_dam_tagk_noele[2]=int((100+rss[2][6])/(121+rss[2][6])*1.23*(rank_dam_noele[2]))
-            for i in [11,12,13,14,15,21,22,23,31,32,33,41,42,43]:
-                for j in rank_setting[2]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on[2][str(i)]=image_list[j]
-                            result_image_tag[2][str(i)]=j
-
-            rank_dam[3]=str(int(100*rank_list[3][0]))+"%"
-            rank_dam_nolv[3]=int(100*rank_list[3][1][2])
-            rank_dam_noele[3]=int(100*rank_list[3][1][3])
-            rank_inv[3]=rank_list[3][1][4]
-            rank_ult[3]=rank_list[3][1][5]
-            rank_setting[3]=list(rank_list[3][1][0])
-            for i in rank_setting[3]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting[3].append('415'+i[1]+'0')
-                    rank_setting[3].append('425'+i[2]+'0')
-                    rank_setting[3].append('435'+i[3]+'0')
-                    rank_setting[3].remove(i)
-            rss[3]=rank_list[3][1][1]
-            rank_dam_tagk[3]=str(int((100*rank_list[3][0])*(100+rss[3][6])/(121+rss[3][6])*1.23))+"%"
-            rank_dam_tagk_nolv[3]=int((100+rss[3][6])/(121+rss[3][6])*1.23*(rank_dam_nolv[3]))
-            rank_dam_tagk_noele[3]=int((100+rss[3][6])/(121+rss[3][6])*1.23*(rank_dam_noele[3]))
-            for i in [11,12,13,14,15,21,22,23,31,32,33,41,42,43]:
-                for j in rank_setting[3]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on[3][str(i)]=image_list[j]
-                            result_image_tag[3][str(i)]=j
-
-            rank_dam[4]=str(int(100*rank_list[4][0]))+"%"
-            rank_dam_nolv[4]=int(100*rank_list[4][1][2])
-            rank_dam_noele[4]=int(100*rank_list[4][1][3])
-            rank_inv[4]=rank_list[4][1][4]
-            rank_ult[4]=rank_list[4][1][5]
-            rank_setting[4]=list(rank_list[4][1][0])
-            for i in rank_setting[4]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting[4].append('415'+i[1]+'0')
-                    rank_setting[4].append('425'+i[2]+'0')
-                    rank_setting[4].append('435'+i[3]+'0')
-                    rank_setting[4].remove(i)
-            rss[4]=rank_list[4][1][1]
-            rank_dam_tagk[4]=str(int((100*rank_list[4][0])*(100+rss[4][6])/(121+rss[4][6])*1.23))+"%"
-            rank_dam_tagk_nolv[4]=int((100+rss[4][6])/(121+rss[4][6])*1.23*(rank_dam_nolv[4]))
-            rank_dam_tagk_noele[4]=int((100+rss[4][6])/(121+rss[4][6])*1.23*(rank_dam_noele[4]))
-            for i in [11,12,13,14,15,21,22,23,31,32,33,41,42,43]:
-                for j in rank_setting[4]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on[4][str(i)]=image_list[j]
-                            result_image_tag[4][str(i)]=j
-
-        except IndexError as error:
-            c=1
+        for temp_rank in range(0,5):
+            try:
+                rank_dam[temp_rank]=str(int(100*rank_list[temp_rank][0]))+"%"
+                rank_dam_nolv[temp_rank]=int(100*rank_list[temp_rank][1][2])
+                rank_dam_noele[temp_rank]=int(100*rank_list[temp_rank][1][3])
+                rank_inv[temp_rank]=rank_list[temp_rank][1][4]
+                rank_ult[temp_rank]=rank_list[temp_rank][1][5]
+                rank_setting[temp_rank]=list(rank_list[temp_rank][1][0]) ##0번이 랭킹이다
+                for i in rank_setting[temp_rank]:
+                    if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
+                        rank_setting[temp_rank].append('415'+i[1]+'0')
+                        rank_setting[temp_rank].append('425'+i[2]+'0')
+                        rank_setting[temp_rank].append('435'+i[3]+'0')
+                        rank_setting[temp_rank].remove(i)
+                rss[temp_rank]=rank_list[temp_rank][1][1]
+                rank_dam_tagk[temp_rank]=str(int((100*rank_list[temp_rank][0])*(100+rss[temp_rank][6])/(121+rss[temp_rank][6])*1.23))+"%"
+                rank_dam_tagk_nolv[temp_rank]=int((100+rss[temp_rank][6])/(121+rss[temp_rank][6])*1.23*(rank_dam_nolv[temp_rank]))
+                rank_dam_tagk_noele[temp_rank]=int((100+rss[temp_rank][6])/(121+rss[temp_rank][6])*1.23*(rank_dam_noele[temp_rank]))
+                for i in [11,12,13,14,15,21,22,23,31,32,33,41,42,43]:
+                    for j in rank_setting[temp_rank]:
+                        if len(j) != 6:
+                            if j[0:2] == str(i):
+                                result_image_on[temp_rank][str(i)]=image_list[j]
+                                result_image_tag[temp_rank][str(i)]=j
+                                if i ==11 and j[4:5]=='1' and len(j)==5:
+                                    result_image_gif[temp_rank][0]=calc_gif.img_gif(j,0)
+                                    result_image_gif_tg[temp_rank][0]=1
+                                if i ==21 and j[4:5]=='1' and len(j)==5:
+                                    result_image_gif[temp_rank][1]=calc_gif.img_gif(j,0)
+                                    result_image_gif_tg[temp_rank][1]=1
+                                if i ==33 and j[4:5]=='1' and len(j)==5:
+                                    result_image_gif[temp_rank][2]=calc_gif.img_gif(j,0)
+                                    result_image_gif_tg[temp_rank][2]=1
+                                if i ==41 and j[3:5]!='00' and len(j)==5:
+                                    result_siroco_gif[temp_rank][0]=calc_gif.img_gif(j,1)
+                                    result_siroco_gif_tg[temp_rank][0]=1
+                                if i ==42 and j[3:5]!='00' and len(j)==5:
+                                    result_siroco_gif[temp_rank][1]=calc_gif.img_gif(j,1)
+                                    result_siroco_gif_tg[temp_rank][1]=1
+                                if i ==43 and j[3:5]!='00' and len(j)==5:
+                                    result_siroco_gif[temp_rank][2]=calc_gif.img_gif(j,1)
+                                    result_siroco_gif_tg[temp_rank][2]=1
+            except IndexError as error:
+                pass
 
         for i in range(0,5):
             try:
@@ -2422,7 +2188,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                                "\n"+str(int(round(rss[i][18],0)))+
                                "\n"+str(int(round(rss[i][19],0))))
             except TypeError as error:
-                c=1
+                pass
 
         
         if int(ele_skill) != 0:
@@ -2448,17 +2214,20 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         res_img41=canvas_res.create_image(27,87,image=result_image_on[0]['41'])
         res_img42=canvas_res.create_image(219,87,image=result_image_on[0]['42'])
         res_img43=canvas_res.create_image(189,87,image=result_image_on[0]['43'])
+
+        
         cn1=0
         cn4=5
-        global res_dam_list
+        global res_dam_list, res_item_list
+        res_item_list=[{},{},{},{},{}]
         res_dam_list=[0,0,0,0,0]
         for j in range(0,5):
             try:
                 for i in [11,12,13,14,15,21,22,23,31,32,33]:
-                    canvas_res.create_image(268+cn1*29,67+78*j,image=result_image_on[j][str(i)])
+                    res_item_list[j][str(i)]=canvas_res.create_image(268+cn1*29,67+78*j,image=result_image_on[j][str(i)])
                     cn1=cn1+1
                 for i in [41,42,43]:
-                    canvas_res.create_image(268+cn4*29,67-30+78*j,image=result_image_on[j][str(i)])
+                    res_item_list[j][str(i)]=canvas_res.create_image(268+cn4*29,67-30+78*j,image=result_image_on[j][str(i)])
                     cn4=cn4+1
                 cn1=0
                 cn4=5
@@ -2467,6 +2236,30 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                 cn1=0
                 cn4=5
         length=len(rank_list)
+        if result_image_gif_tg[0][0]==1:
+            play_gif( 0,0,0,res_img11,result_image_gif,0,1,0)
+        if result_image_gif_tg[0][1]==1:
+            play_gif( 0,0,1,res_img21,result_image_gif,0,1,0)
+        if result_image_gif_tg[0][2]==1:
+            play_gif( 0,0,2,res_img33,result_image_gif,0,1,0)
+        if result_siroco_gif_tg[0][0]==1:
+            play_gif( 0,0,0,res_img41,result_siroco_gif,0,1,0)
+        if result_siroco_gif_tg[0][1]==1:
+            play_gif( 0,0,1,res_img42,result_siroco_gif,0,1,0)
+        if result_siroco_gif_tg[0][2]==1:
+            play_gif( 0,0,2,res_img43,result_siroco_gif,0,1,0)
+
+        for i in range(0,5):
+            for j in [11,21,33]:
+                temp=int(j/10)-1
+                if result_image_gif_tg[i][temp]==1:
+                    play_gif(0,i,temp,res_item_list[i][str(j)],result_image_gif,1,0,0)
+            for j in [41,42,43]:
+                temp=j-41
+                if result_siroco_gif_tg[i][temp]==1:
+                    play_gif(0,i,temp,res_item_list[i][str(j)],result_siroco_gif,1,0,0)
+                    
+                    
         
         canvas_res.create_text(217,361,text="계산기\n버전=\n "+str(now_version),fill='white', anchor='c')
 
@@ -2475,6 +2268,8 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         r_preset=load_presetr["custom"]
         global result_image_on1,result_image_on2,result_image_on3,rank_buf1,rank_buf2,rank_buf3, rank_type_buf, res_buf, res_img_list, res_buf_list, res_buf_ex1, res_buf_ex2, res_buf_ex3, rank_buf_ex1, rank_buf_ex2, rank_buf_ex3, res_buf_type_what
         global result_image_on1_tag,result_image_on2_tag,result_image_on3_tag,rank_inv1,rank_inv2,rank_inv3
+        global result_image_gif1, result_image_gif1_tg,result_image_gif2, result_image_gif2_tg,result_image_gif3, result_image_gif3_tg
+        global result_siroco_gif1,result_siroco_gif2,result_siroco_gif3,result_siroco_gif1_tg,result_siroco_gif2_tg,result_siroco_gif3_tg
         rank_type_buf=3
         rank_setting1=[0,0,0,0,0]
         rank_setting2=[0,0,0,0,0]
@@ -2488,6 +2283,18 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         result_image_on1_tag=[{},{},{},{},{}]
         result_image_on2_tag=[{},{},{},{},{}]
         result_image_on3_tag=[{},{},{},{},{}]
+        result_image_gif1=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        result_image_gif2=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        result_image_gif3=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        result_image_gif1_tg=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        result_image_gif2_tg=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        result_image_gif3_tg=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        result_siroco_gif1=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        result_siroco_gif2=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        result_siroco_gif3=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        result_siroco_gif1_tg=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        result_siroco_gif2_tg=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        result_siroco_gif3_tg=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
         rank_buf1=[0,0,0,0,0]
         rank_buf2=[0,0,0,0,0]
         rank_buf3=[0,0,0,0,0]
@@ -2498,239 +2305,95 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         ## a: 0=축복,1=크오,2=합계
         ## b: 0=계수,1=스펙or증가량
         ## c: b에서 1 선택시, 0=스펙, 1=증가량
-        try:
-            rank_setting3[0]=rank_list[2][0][1][0]  ##2번째 숫자가 랭킹임
-            rank_setting2[0]=rank_list[1][0][1][0]
-            rank_setting1[0]=rank_list[0][0][1][0]
-            rank_inv3[0]=rank_list[2][0][1][2]
-            rank_inv2[0]=rank_list[1][0][1][2]
-            rank_inv1[0]=rank_list[0][0][1][2]
-            rank_buf3[0]=int(rank_list[2][0][0]/10)
-            rank_buf2[0]=int(rank_list[1][0][0]/10)
-            rank_buf1[0]=int(rank_list[0][0][0]/10)
-            rank_buf_ex3[0]=rank_list[2][0][1][1]
-            rank_buf_ex2[0]=rank_list[1][0][1][1]
-            rank_buf_ex1[0]=rank_list[0][0][1][1]
-            for i in rank_setting3[0]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting3[0].append('415'+i[1]+'0')
-                    rank_setting3[0].append('425'+i[2]+'0')
-                    rank_setting3[0].append('435'+i[3]+'0')
-                    rank_setting3[0].remove(i)
-            for i in rank_setting2[0]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting2[0].append('415'+i[1]+'0')
-                    rank_setting2[0].append('425'+i[2]+'0')
-                    rank_setting2[0].append('435'+i[3]+'0')
-                    rank_setting2[0].remove(i)
-            for i in rank_setting1[0]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting1[0].append('415'+i[1]+'0')
-                    rank_setting1[0].append('425'+i[2]+'0')
-                    rank_setting1[0].append('435'+i[3]+'0')
-                    rank_setting1[0].remove(i)
-            for i in [11,12,13,14,15,21,22,23,31,32,33,41,42,43]:
-                for j in rank_setting3[0]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on3[0][str(i)]=image_list[j]
-                            result_image_on3_tag[0][str(i)]=j
-                for j in rank_setting2[0]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on2[0][str(i)]=image_list[j]
-                            result_image_on2_tag[0][str(i)]=j
-                for j in rank_setting1[0]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on1[0][str(i)]=image_list[j] ##
-                            result_image_on1_tag[0][str(i)]=j
-            rank_setting3[1]=rank_list[2][1][1][0]
-            rank_setting2[1]=rank_list[1][1][1][0]
-            rank_setting1[1]=rank_list[0][1][1][0]
-            rank_inv3[1]=rank_list[2][1][1][2]
-            rank_inv2[1]=rank_list[1][1][1][2]
-            rank_inv1[1]=rank_list[0][1][1][2]
-            rank_buf3[1]=int(rank_list[2][1][0]/10)
-            rank_buf2[1]=int(rank_list[1][1][0]/10)
-            rank_buf1[1]=int(rank_list[0][1][0]/10)
-            rank_buf_ex3[1]=rank_list[2][1][1][1]
-            rank_buf_ex2[1]=rank_list[1][1][1][1]
-            rank_buf_ex1[1]=rank_list[0][1][1][1]
-            for i in rank_setting3[1]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting3[1].append('415'+i[1]+'0')
-                    rank_setting3[1].append('425'+i[2]+'0')
-                    rank_setting3[1].append('435'+i[3]+'0')
-                    rank_setting3[1].remove(i)
-            for i in rank_setting2[1]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting2[1].append('415'+i[1]+'0')
-                    rank_setting2[1].append('425'+i[2]+'0')
-                    rank_setting2[1].append('435'+i[3]+'0')
-                    rank_setting2[1].remove(i)
-            for i in rank_setting1[1]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting1[1].append('415'+i[1]+'0')
-                    rank_setting1[1].append('425'+i[2]+'0')
-                    rank_setting1[1].append('435'+i[3]+'0')
-                    rank_setting1[1].remove(i)
-            for i in [11,12,13,14,15,21,22,23,31,32,33,41,42,43]:
-                for j in rank_setting3[1]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on3[1][str(i)]=image_list[j]
-                            result_image_on3_tag[1][str(i)]=j
-                for j in rank_setting2[1]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on2[1][str(i)]=image_list[j]
-                            result_image_on2_tag[1][str(i)]=j
-                for j in rank_setting1[1]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on1[1][str(i)]=image_list[j] ##
-                            result_image_on1_tag[1][str(i)]=j
-            rank_setting3[2]=rank_list[2][2][1][0]
-            rank_setting2[2]=rank_list[1][2][1][0]
-            rank_setting1[2]=rank_list[0][2][1][0]
-            rank_inv3[2]=rank_list[2][2][1][2]
-            rank_inv2[2]=rank_list[1][2][1][2]
-            rank_inv1[2]=rank_list[0][2][1][2]
-            rank_buf3[2]=int(rank_list[2][2][0]/10)
-            rank_buf2[2]=int(rank_list[1][2][0]/10)
-            rank_buf1[2]=int(rank_list[0][2][0]/10)
-            rank_buf_ex3[2]=rank_list[2][2][1][1]
-            rank_buf_ex2[2]=rank_list[1][2][1][1]
-            rank_buf_ex1[2]=rank_list[0][2][1][1]
-            for i in rank_setting3[2]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting3[2].append('415'+i[1]+'0')
-                    rank_setting3[2].append('425'+i[2]+'0')
-                    rank_setting3[2].append('435'+i[3]+'0')
-                    rank_setting3[2].remove(i)
-            for i in rank_setting2[2]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting2[2].append('415'+i[1]+'0')
-                    rank_setting2[2].append('425'+i[2]+'0')
-                    rank_setting2[2].append('435'+i[3]+'0')
-                    rank_setting2[2].remove(i)
-            for i in rank_setting1[2]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting1[2].append('415'+i[1]+'0')
-                    rank_setting1[2].append('425'+i[2]+'0')
-                    rank_setting1[2].append('435'+i[3]+'0')
-                    rank_setting1[2].remove(i)
-            for i in [11,12,13,14,15,21,22,23,31,32,33,41,42,43]:
-                for j in rank_setting3[2]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on3[2][str(i)]=image_list[j]
-                            result_image_on3_tag[2][str(i)]=j
-                for j in rank_setting2[2]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on2[2][str(i)]=image_list[j]
-                            result_image_on2_tag[2][str(i)]=j
-                for j in rank_setting1[2]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on1[2][str(i)]=image_list[j] ##
-                            result_image_on1_tag[2][str(i)]=j
-            rank_setting3[3]=rank_list[2][3][1][0]
-            rank_setting2[3]=rank_list[1][3][1][0]
-            rank_setting1[3]=rank_list[0][3][1][0]
-            rank_inv3[3]=rank_list[2][3][1][2]
-            rank_inv2[3]=rank_list[1][3][1][2]
-            rank_inv1[3]=rank_list[0][3][1][2]
-            rank_buf3[3]=int(rank_list[2][3][0]/10)
-            rank_buf2[3]=int(rank_list[1][3][0]/10)
-            rank_buf1[3]=int(rank_list[0][3][0]/10)
-            rank_buf_ex3[3]=rank_list[2][3][1][1]
-            rank_buf_ex2[3]=rank_list[1][3][1][1]
-            rank_buf_ex1[3]=rank_list[0][3][1][1]
-            for i in rank_setting3[3]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting3[3].append('415'+i[1]+'0')
-                    rank_setting3[3].append('425'+i[2]+'0')
-                    rank_setting3[3].append('435'+i[3]+'0')
-                    rank_setting3[3].remove(i)
-            for i in rank_setting2[3]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting2[3].append('415'+i[1]+'0')
-                    rank_setting2[3].append('425'+i[2]+'0')
-                    rank_setting2[3].append('435'+i[3]+'0')
-                    rank_setting2[3].remove(i)
-            for i in rank_setting1[3]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting1[3].append('415'+i[1]+'0')
-                    rank_setting1[3].append('425'+i[2]+'0')
-                    rank_setting1[3].append('435'+i[3]+'0')
-                    rank_setting1[3].remove(i)
-            for i in [11,12,13,14,15,21,22,23,31,32,33,41,42,43]:
-                for j in rank_setting3[3]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on3[3][str(i)]=image_list[j]
-                            result_image_on3_tag[3][str(i)]=j
-                for j in rank_setting2[3]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on2[3][str(i)]=image_list[j]
-                            result_image_on2_tag[3][str(i)]=j
-                for j in rank_setting1[3]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on1[3][str(i)]=image_list[j] ##
-                            result_image_on1_tag[3][str(i)]=j
-            rank_setting3[4]=rank_list[2][4][1][0]
-            rank_setting2[4]=rank_list[1][4][1][0]
-            rank_setting1[4]=rank_list[0][4][1][0]
-            rank_inv3[4]=rank_list[2][4][1][2]
-            rank_inv2[4]=rank_list[1][4][1][2]
-            rank_inv1[4]=rank_list[0][4][1][2]
-            rank_buf3[4]=int(rank_list[2][4][0]/10)
-            rank_buf2[4]=int(rank_list[1][4][0]/10)
-            rank_buf1[4]=int(rank_list[0][4][0]/10)
-            rank_buf_ex3[4]=rank_list[2][4][1][1]
-            rank_buf_ex2[4]=rank_list[1][4][1][1]
-            rank_buf_ex1[4]=rank_list[0][4][1][1]
-            for i in rank_setting3[4]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting3[4].append('415'+i[1]+'0')
-                    rank_setting3[4].append('425'+i[2]+'0')
-                    rank_setting3[4].append('435'+i[3]+'0')
-                    rank_setting3[4].remove(i)
-            for i in rank_setting2[4]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting2[4].append('415'+i[1]+'0')
-                    rank_setting2[4].append('425'+i[2]+'0')
-                    rank_setting2[4].append('435'+i[3]+'0')
-                    rank_setting2[4].remove(i)
-            for i in rank_setting1[4]:
-                if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
-                    rank_setting1[4].append('415'+i[1]+'0')
-                    rank_setting1[4].append('425'+i[2]+'0')
-                    rank_setting1[4].append('435'+i[3]+'0')
-                    rank_setting1[4].remove(i)
-            for i in [11,12,13,14,15,21,22,23,31,32,33,41,42,43]:
-                for j in rank_setting3[4]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on3[4][str(i)]=image_list[j]
-                            result_image_on3_tag[4][str(i)]=j
-                for j in rank_setting2[4]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on2[4][str(i)]=image_list[j]
-                            result_image_on2_tag[4][str(i)]=j
-                for j in rank_setting1[4]:
-                    if len(j) != 6:
-                        if j[0:2] == str(i):
-                            result_image_on1[4][str(i)]=image_list[j] ##
-                            result_image_on1_tag[4][str(i)]=j
-        except IndexError as error:
-            c=1
+        for temp_rank in range(0,5):
+            try:
+                rank_setting3[temp_rank]=rank_list[2][temp_rank][1][0]  
+                rank_setting2[temp_rank]=rank_list[1][temp_rank][1][0]
+                rank_setting1[temp_rank]=rank_list[0][temp_rank][1][0]
+                rank_inv3[temp_rank]=rank_list[2][temp_rank][1][2]
+                rank_inv2[temp_rank]=rank_list[1][temp_rank][1][2]
+                rank_inv1[temp_rank]=rank_list[0][temp_rank][1][2]
+                rank_buf3[temp_rank]=int(rank_list[2][temp_rank][0]/10)
+                rank_buf2[temp_rank]=int(rank_list[1][temp_rank][0]/10)
+                rank_buf1[temp_rank]=int(rank_list[0][temp_rank][0]/10)
+                rank_buf_ex3[temp_rank]=rank_list[2][temp_rank][1][1]
+                rank_buf_ex2[temp_rank]=rank_list[1][temp_rank][1][1]
+                rank_buf_ex1[temp_rank]=rank_list[0][temp_rank][1][1]
+                for i in rank_setting3[temp_rank]:
+                    if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
+                        rank_setting3[temp_rank].append('415'+i[1]+'0')
+                        rank_setting3[temp_rank].append('425'+i[2]+'0')
+                        rank_setting3[temp_rank].append('435'+i[3]+'0')
+                        rank_setting3[temp_rank].remove(i)
+                for i in rank_setting2[temp_rank]:
+                    if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
+                        rank_setting2[temp_rank].append('415'+i[1]+'0')
+                        rank_setting2[temp_rank].append('425'+i[2]+'0')
+                        rank_setting2[temp_rank].append('435'+i[3]+'0')
+                        rank_setting2[temp_rank].remove(i)
+                for i in rank_setting1[temp_rank]:
+                    if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
+                        rank_setting1[temp_rank].append('415'+i[1]+'0')
+                        rank_setting1[temp_rank].append('425'+i[2]+'0')
+                        rank_setting1[temp_rank].append('435'+i[3]+'0')
+                        rank_setting1[temp_rank].remove(i)
+                for i in [11,12,13,14,15,21,22,23,31,32,33,41,42,43]:
+                    for j in rank_setting3[temp_rank]:
+                        if len(j) != 6:
+                            if j[0:2] == str(i):
+                                result_image_on3[temp_rank][str(i)]=image_list[j]
+                                result_image_on3_tag[temp_rank][str(i)]=j
+                                for k in [11,21,33]:
+                                    if i ==k and j[4:5]=='1' and len(j)==5:
+                                        result_image_gif3[temp_rank][int(str(k+90)[1:2])]=calc_gif.img_gif(j,0)
+                                        result_image_gif3_tg[temp_rank][int(str(k+90)[1:2])]=1
+                                if i ==41 and j[3:5]!='00' and len(j)==5:
+                                    result_siroco_gif3[temp_rank][0]=calc_gif.img_gif(j,1)
+                                    result_siroco_gif3_tg[temp_rank][0]=1
+                                if i ==42 and j[3:5]!='00' and len(j)==5:
+                                    result_siroco_gif3[temp_rank][1]=calc_gif.img_gif(j,1)
+                                    result_siroco_gif3_tg[temp_rank][1]=1
+                                if i ==43 and j[3:5]!='00' and len(j)==5:
+                                    result_siroco_gif3[temp_rank][2]=calc_gif.img_gif(j,1)
+                                    result_siroco_gif3_tg[temp_rank][2]=1
+                    for j in rank_setting2[temp_rank]:
+                        if len(j) != 6:
+                            if j[0:2] == str(i):
+                                result_image_on2[temp_rank][str(i)]=image_list[j]
+                                result_image_on2_tag[temp_rank][str(i)]=j
+                                for k in [11,21,33]:
+                                    if i ==k and j[4:5]=='1' and len(j)==5:
+                                        result_image_gif2[temp_rank][int(str(k+90)[1:2])]=calc_gif.img_gif(j,0)
+                                        result_image_gif2_tg[temp_rank][int(str(k+90)[1:2])]=1
+                                if i ==41 and j[3:5]!='00' and len(j)==5:
+                                    result_siroco_gif2[temp_rank][0]=calc_gif.img_gif(j,1)
+                                    result_siroco_gif2_tg[temp_rank][0]=1
+                                if i ==42 and j[3:5]!='00' and len(j)==5:
+                                    result_siroco_gif2[temp_rank][1]=calc_gif.img_gif(j,1)
+                                    result_siroco_gif2_tg[temp_rank][1]=1
+                                if i ==43 and j[3:5]!='00' and len(j)==5:
+                                    result_siroco_gif2[temp_rank][2]=calc_gif.img_gif(j,1)
+                                    result_siroco_gif2_tg[temp_rank][2]=1
+                    for j in rank_setting1[temp_rank]:
+                        if len(j) != 6:
+                            if j[0:2] == str(i):
+                                result_image_on1[temp_rank][str(i)]=image_list[j] ##
+                                result_image_on1_tag[temp_rank][str(i)]=j
+                                for k in [11,21,33]:
+                                    if i ==k and j[4:5]=='1' and len(j)==5:
+                                        result_image_gif1[temp_rank][int(str(k+90)[1:2])]=calc_gif.img_gif(j,0)
+                                        result_image_gif1_tg[temp_rank][int(str(k+90)[1:2])]=1
+                                if i ==41 and j[3:5]!='00' and len(j)==5:
+                                    result_siroco_gif1[temp_rank][0]=calc_gif.img_gif(j,1)
+                                    result_siroco_gif1_tg[temp_rank][0]=1
+                                if i ==42 and j[3:5]!='00' and len(j)==5:
+                                    result_siroco_gif1[temp_rank][1]=calc_gif.img_gif(j,1)
+                                    result_siroco_gif1_tg[temp_rank][1]=1
+                                if i ==43 and j[3:5]!='00' and len(j)==5:
+                                    result_siroco_gif1[temp_rank][2]=calc_gif.img_gif(j,1)
+                                    result_siroco_gif1_tg[temp_rank][2]=1
+            except IndexError as error:
+                pass
             
         #canvas_res.create_text(122,193,text="커스텀 축복+"+str(int(r_preset['H2'].value)+int(r_preset['H4'].value)+int(r_preset['H5'].value))+"렙 / "+"커스텀 1각+"+str(int(r_preset['H3'].value))+"렙\n축복스탯+"+str(int(r_preset['H6'].value))+" / 1각 스탯+"+str(int(r_preset['H1'].value)),font=guide_font,fill='white')
 
@@ -2786,10 +2449,31 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         rank_type_but1.image=type1_img
         rank_type_but2.image=type2_img
         rank_type_but3.image=type3_img
+
+        if result_image_gif3_tg[0][0]==1:
+            play_gif( 0,0,0,res_img11,result_image_gif3,0,1,1)
+        if result_image_gif3_tg[0][1]==1:
+            play_gif( 0,0,1,res_img21,result_image_gif3,0,1,1)
+        if result_image_gif3_tg[0][2]==1:
+            play_gif( 0,0,2,res_img33,result_image_gif3,0,1,1)
+        if result_siroco_gif3_tg[0][0]==1:
+            play_gif( 0,0,0,res_img41,result_siroco_gif3,0,1,1)
+        if result_siroco_gif3_tg[0][1]==1:
+            play_gif( 0,0,1,res_img42,result_siroco_gif3,0,1,1)
+        if result_siroco_gif3_tg[0][2]==1:
+            play_gif( 0,0,2,res_img43,result_siroco_gif3,0,1,1)
+
+        for i in range(0,5):
+            for j in [11,21,33]:
+                temp=int(j/10)-1
+                if result_image_gif3_tg[i][temp]==1:
+                    play_gif(0,i,temp,res_img_list[str(i)+str(j)],result_image_gif3,1,0,1)
+            for j in [41,42,43]:
+                temp=j-41
+                if result_siroco_gif3_tg[i][temp]==1:
+                    play_gif(0,i,temp,res_img_list[str(i)+str(j)],result_siroco_gif3,1,0,1)
         
         load_presetr.close()
-
-    
     
     show_detail_img=tkinter.PhotoImage(file='ext_img/show_detail.png')
     
@@ -2815,6 +2499,30 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
     canvas_res.image=result_bg
     res_bt1.image=show_detail_img
 
+def play_gif(count_frame,now_rank,now_pc,show_res,gif_list,mode,mode2,mode3):
+    #now_rank:순위
+    #now_pc:0(상의,하의),1(팔찌,반지),2(귀걸,보장)
+    #show_res:이미지 재생될 canvas 객체
+    #gif_list:딜벞 구분
+    #mode:0(인포창),1(리스트)
+    #mode2:0(정지불가),1(정지가능)  > 순위 바꾸기 정지
+    #mode3:0(정지불가),1(정지가능)  > 버퍼 정렬변경 정지
+    global pause_gif, stop_gif, stop_gif2, result_window
+    now_frame=gif_list[now_rank][now_pc][int(count_frame)]
+    count_frame += 0.3
+    if pause_gif ==0 or mode==1:
+        canvas_res.itemconfig(show_res,image=now_frame)
+    while stop_gif==1 and mode2==1:
+        return
+    while stop_gif2==1 and mode3==1:
+        return
+    else:
+        if count_frame >=len(gif_list[now_rank][now_pc]):
+            result_window.after(30, play_gif, 0,now_rank,now_pc,show_res,gif_list,mode,mode2,mode3)
+        else:
+            result_window.after(30, play_gif, count_frame,now_rank,now_pc,show_res,gif_list,mode,mode2,mode3)
+        
+  
 def change_tagk(ele_skill):
     global tagk_tg, tagkgum
     global res_stat,res_stat2,rank_stat_tagk, rank_stat, rank_stat_tagk2, rank_stat2
@@ -2856,15 +2564,45 @@ def change_tagk(ele_skill):
             except:
                 pass
 
-        
+def time_delay1():
+    global stop_gif
+    stop_gif=0
+def time_delay2():
+    global stop_gif
+    stop_gif=1
+    threading.Timer(0.035, time_delay1).start()
+def time_delay():
+    threading.Timer(0, time_delay2).start()
+
+def time_delay3():
+    global stop_gif2
+    stop_gif2=0
+def time_delay4():
+    global stop_gif2
+    stop_gif2=1
+    threading.Timer(0.035, time_delay3).start()
+def time_delayy():
+    threading.Timer(0, time_delay4).start()
+
 
 def change_rank(now,job_type,ele_skill):
+    threading.Timer(0.05, change_rank2,args=(now,job_type,ele_skill)).start()
+    threading.Timer(0, time_delay).start()
+
+def change_rank_type(in_type):
+    threading.Timer(0.05, change_rank_type2,args=(in_type,)).start()
+    threading.Timer(0, time_delayy).start()
+
+def change_rank2(now,job_type,ele_skill):
     global image_list,canvas_res, res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43, now_rank_num, res_wep, res_dam_list
+    global stop_gif,stop_gif2
+    global result_window
     now_rank_num=now
     if job_type =='deal':
         global tagk_tg, tagkgum, tagkgum_exist, rank_dam_tagk, rank_stat_tagk, rank_stat_tagk2, rank_dam_tagk_noele
         global res_dam,res_stat,res_stat2,res_stat3,rank_stat,rank_stat2,rank_stat3,result_image_on,res_ele,rank_dam_noele, rank_inv, res_inv
-        try:      
+        global result_image_gif, result_image_gif_tg,result_siroco_gif,result_siroco_gif_tg
+        try:
             image_changed=result_image_on[now]
             canvas_res.itemconfig(res_img11,image=image_changed['11'])
             canvas_res.itemconfig(res_img12,image=image_changed['12'])
@@ -2895,24 +2633,51 @@ def change_rank(now,job_type,ele_skill):
                     canvas_res.itemconfig(res_ele,text="자속강X="+str(rank_dam_tagk_noele[now])+"%")
                 else:
                     canvas_res.itemconfig(res_ele,text="자속강X="+str(rank_dam_noele[now])+"%")
+            
+            if result_image_gif_tg[now][0]==1:
+                result_window.after(0,play_gif,0,now,0,res_img11,result_image_gif,0,1,0)
+            if result_image_gif_tg[now][1]==1:
+                result_window.after(0,play_gif,0,now,1,res_img21,result_image_gif,0,1,0)
+            if result_image_gif_tg[now][2]==1:
+                result_window.after(0,play_gif,0,now,2,res_img33,result_image_gif,0,1,0)
+            if result_siroco_gif_tg[now][0]==1:
+                result_window.after(0,play_gif,0,now,0,res_img41,result_siroco_gif,0,1,0)
+            if result_siroco_gif_tg[now][1]==1:
+                result_window.after(0,play_gif,0,now,1,res_img42,result_siroco_gif,0,1,0)
+            if result_siroco_gif_tg[now][2]==1:
+                result_window.after(0,play_gif,0,now,2,res_img43,result_siroco_gif,0,1,0)
         except KeyError as error:
             c=1
 
     elif job_type =='buf':
         global result_image_on1,result_image_on2,result_image_on3,rank_buf1,rank_buf2,rank_buf3, rank_type_buf, res_buf, res_buf_ex1, res_buf_ex2, res_buf_ex3, rank_buf_ex1, rank_buf_ex2, rank_buf_ex3
+        global result_image_gif1,result_image_gif1_tg,result_image_gif2,result_image_gif2_tg,result_image_gif3,result_image_gif3_tg
+        global result_siroco_gif1,result_siroco_gif2,result_siroco_gif3,result_siroco_gif1_tg,result_siroco_gif2_tg,result_siroco_gif3_tg
         try:
             if rank_type_buf==1:
                 image_changed=result_image_on1[now]
                 rank_changed=rank_buf1[now]
                 rank_buf_ex_changed=rank_buf_ex1
+                image_gif_changed=result_image_gif1
+                image_gif_changed_tg=result_image_gif1_tg
+                siroco_gif_changed=result_siroco_gif1
+                siroco_gif_changed_tg=result_siroco_gif1_tg
             elif rank_type_buf==2:
                 image_changed=result_image_on2[now]
                 rank_changed=rank_buf2[now]
                 rank_buf_ex_changed=rank_buf_ex2
+                image_gif_changed=result_image_gif2
+                image_gif_changed_tg=result_image_gif2_tg
+                siroco_gif_changed=result_siroco_gif2
+                siroco_gif_changed_tg=result_siroco_gif2_tg
             elif rank_type_buf==3:
                 image_changed=result_image_on3[now]
                 rank_changed=rank_buf3[now]
                 rank_buf_ex_changed=rank_buf_ex3
+                image_gif_changed=result_image_gif3
+                image_gif_changed_tg=result_image_gif3_tg
+                siroco_gif_changed=result_siroco_gif3
+                siroco_gif_changed_tg=result_siroco_gif3_tg
             canvas_res.itemconfig(res_buf,text=rank_changed)
             canvas_res.itemconfig(res_buf_ex1,text=rank_buf_ex_changed[now][0])
             canvas_res.itemconfig(res_buf_ex2,text=rank_buf_ex_changed[now][1])
@@ -2931,16 +2696,29 @@ def change_rank(now,job_type,ele_skill):
             canvas_res.itemconfig(res_img41,image=image_changed['41'])
             canvas_res.itemconfig(res_img42,image=image_changed['42'])
             canvas_res.itemconfig(res_img43,image=image_changed['43'])
+            if image_gif_changed_tg[now][0]==1:
+                result_window.after(0,play_gif,0,now,0,res_img11,image_gif_changed,0,1,1)
+            if image_gif_changed_tg[now][1]==1:
+                result_window.after(0,play_gif,0,now,1,res_img21,image_gif_changed,0,1,1)
+            if image_gif_changed_tg[now][2]==1:
+                result_window.after(0,play_gif,0,now,2,res_img33,image_gif_changed,0,1,1)
+            if siroco_gif_changed_tg[now][0]==1:
+                result_window.after(0,play_gif,0,now,0,res_img41,siroco_gif_changed,0,1,1)
+            if siroco_gif_changed_tg[now][1]==1:
+                result_window.after(0,play_gif,0,now,1,res_img42,siroco_gif_changed,0,1,1)
+            if siroco_gif_changed_tg[now][2]==1:
+                result_window.after(0,play_gif,0,now,2,res_img43,siroco_gif_changed,0,1,1)
         except KeyError as error:
             c=1
 
 def show_set_name(job_type):
     global image_list,canvas_res,res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43, now_rank_num
-    global set_name_toggle, image_list_tag, result_image_on, result_image_tag
+    global set_name_toggle, image_list_tag, result_image_on, result_image_tag, pause_gif
     if job_type == "deal":
         global result_image_tag
         if set_name_toggle ==0:
             set_name_toggle=1
+            pause_gif=1
             canvas_res.itemconfig(res_img11,image=image_list_tag[result_image_tag[now_rank_num]['11']])
             canvas_res.itemconfig(res_img12,image=image_list_tag[result_image_tag[now_rank_num]['12']])
             canvas_res.itemconfig(res_img13,image=image_list_tag[result_image_tag[now_rank_num]['13']])
@@ -2957,6 +2735,7 @@ def show_set_name(job_type):
             canvas_res.itemconfig(res_img43,image=image_list_tag[result_image_tag[now_rank_num]['43']])
         elif set_name_toggle ==1:
             set_name_toggle=0
+            pause_gif=0
             canvas_res.itemconfig(res_img11,image=image_list[result_image_tag[now_rank_num]['11']])
             canvas_res.itemconfig(res_img12,image=image_list[result_image_tag[now_rank_num]['12']])
             canvas_res.itemconfig(res_img13,image=image_list[result_image_tag[now_rank_num]['13']])
@@ -2981,6 +2760,7 @@ def show_set_name(job_type):
             temp_image_tag=result_image_on3_tag
         if set_name_toggle ==0:
             set_name_toggle=1
+            pause_gif=1
             canvas_res.itemconfig(res_img11,image=image_list_tag[temp_image_tag[now_rank_num]['11']])
             canvas_res.itemconfig(res_img12,image=image_list_tag[temp_image_tag[now_rank_num]['12']])
             canvas_res.itemconfig(res_img13,image=image_list_tag[temp_image_tag[now_rank_num]['13']])
@@ -2997,6 +2777,7 @@ def show_set_name(job_type):
             canvas_res.itemconfig(res_img43,image=image_list_tag[temp_image_tag[now_rank_num]['43']])
         elif set_name_toggle ==1:
             set_name_toggle=0
+            pause_gif=0
             canvas_res.itemconfig(res_img11,image=image_list[temp_image_tag[now_rank_num]['11']])
             canvas_res.itemconfig(res_img12,image=image_list[temp_image_tag[now_rank_num]['12']])
             canvas_res.itemconfig(res_img13,image=image_list[temp_image_tag[now_rank_num]['13']])
@@ -3013,9 +2794,12 @@ def show_set_name(job_type):
             canvas_res.itemconfig(res_img43,image=image_list[temp_image_tag[now_rank_num]['43']])
 
         
-def change_rank_type(in_type):
+def change_rank_type2(in_type):
     global image_list,canvas_res, res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43
     global result_image_on1,result_image_on2,result_image_on3,rank_buf1,rank_buf2,rank_buf3, rank_type_buf, res_img_list, res_buf_list, res_buf_ex1, res_buf_ex2, res_buf_ex3, rank_buf_ex1, rank_buf_ex2, rank_buf_ex3, res_buf_type_what
+    global result_image_gif1, result_image_gif1_tg,result_image_gif2, result_image_gif2_tg,result_image_gif3, result_image_gif3_tg
+    global result_siroco_gif1,result_siroco_gif2,result_siroco_gif3,result_siroco_gif1_tg,result_siroco_gif2_tg,result_siroco_gif3_tg
+    global stop_gif,stop_gif2, result_window
     if in_type==1:
         rank_type_buf=1
         image_changed=result_image_on1[0]
@@ -3023,6 +2807,10 @@ def change_rank_type(in_type):
         rank_changed=rank_buf1
         rank_buf_ex_changed=rank_buf_ex1
         type_changed="축복 기준"
+        image_gif_changed=result_image_gif1
+        image_gif_changed_tg=result_image_gif1_tg
+        siroco_gif_changed=result_siroco_gif1
+        siroco_gif_changed_tg=result_siroco_gif1_tg
     elif in_type==2:
         rank_type_buf=2
         image_changed=result_image_on2[0]
@@ -3030,6 +2818,10 @@ def change_rank_type(in_type):
         rank_changed=rank_buf2
         rank_buf_ex_changed=rank_buf_ex2
         type_changed="1각 기준"
+        image_gif_changed=result_image_gif2
+        image_gif_changed_tg=result_image_gif2_tg
+        siroco_gif_changed=result_siroco_gif2
+        siroco_gif_changed_tg=result_siroco_gif2_tg
     elif in_type==3:
         rank_type_buf=3
         image_changed=result_image_on3[0]
@@ -3037,6 +2829,10 @@ def change_rank_type(in_type):
         rank_changed=rank_buf3
         rank_buf_ex_changed=rank_buf_ex3
         type_changed="총합 기준"
+        image_gif_changed=result_image_gif3
+        image_gif_changed_tg=result_image_gif3_tg
+        siroco_gif_changed=result_siroco_gif3
+        siroco_gif_changed_tg=result_siroco_gif3_tg
     canvas_res.itemconfig(res_buf_type_what,text=type_changed)
     canvas_res.itemconfig(res_buf_ex1,text=rank_buf_ex_changed[0][0])
     canvas_res.itemconfig(res_buf_ex2,text=rank_buf_ex_changed[0][1])
@@ -3056,6 +2852,21 @@ def change_rank_type(in_type):
     canvas_res.itemconfig(res_img41,image=image_changed['41'])
     canvas_res.itemconfig(res_img42,image=image_changed['42'])
     canvas_res.itemconfig(res_img43,image=image_changed['43'])
+    stop_gif=1;stop_gif2=1
+    time.sleep(0.2)
+    stop_gif=0;stop_gif2=0
+    if image_gif_changed_tg[0][0]==1:
+        result_window.after(0,play_gif,0,0,0,res_img11,image_gif_changed,0,1,1)
+    if image_gif_changed_tg[0][1]==1:
+        result_window.after(0,play_gif,0,0,1,res_img21,image_gif_changed,0,1,1)
+    if image_gif_changed_tg[0][2]==1:
+        result_window.after(0,play_gif,0,0,2,res_img33,image_gif_changed,0,1,1)
+    if siroco_gif_changed_tg[0][0]==1:
+        result_window.after(0,play_gif,0,0,0,res_img41,siroco_gif_changed,0,1,1)
+    if siroco_gif_changed_tg[0][1]==1:
+        result_window.after(0,play_gif,0,0,1,res_img42,siroco_gif_changed,0,1,1)
+    if siroco_gif_changed_tg[0][2]==1:
+        result_window.after(0,play_gif,0,0,2,res_img43,siroco_gif_changed,0,1,1)
     cn2=0
     for j in range(0,5):
             try:
@@ -3066,6 +2877,16 @@ def change_rank_type(in_type):
                 canvas_res.itemconfig(res_buf_list[j],text=rank_changed[j],font=mid_font,fill='white')
             except KeyError as error:
                 c=1
+    for i in range(0,5):
+        for j in [11,21,33]:
+            temp=int(j/10)-1
+            if image_gif_changed_tg[i][temp]==1:
+                result_window.after(0,play_gif,0,i,temp,res_img_list[str(i)+str(j)],image_gif_changed,1,0,1)
+        for j in [41,42,43]:
+            temp=j-41
+            if siroco_gif_changed_tg[i][temp]==1:
+                result_window.after(0,play_gif,0,i,temp,res_img_list[str(i)+str(j)],siroco_gif_changed,1,0,1)
+    
    
 def costum(auto):
     global custom_window
@@ -3299,12 +3120,43 @@ def load_checklist():
             check_set(i)
         for i in range(151,156):
             check_set(i)
+        def load_inv():
+            if inv_select3_1.get()=="축스탯%/1각":
+                inv_select3_2['values']=['3%/60(상)','3%/40(중)','3%/20(하)']
+            elif inv_select3_1.get()=="축스탯%/1각%":
+                inv_select3_2['values']=['4%/3%(상)','3%/3%(중)','2%/3%(하)']
+            elif inv_select3_1.get()=="축앞뎀%/1각":
+                inv_select3_2['values']=['4%/25(상)','3%/25(중)','2%/25(하)']
+            elif inv_select3_1.get()=="축앞뎀%/1각%":
+                inv_select3_2['values']=['3%/3%(상)','3%/2%(중)','3%/1%(하)']
+            elif inv_select3_1.get()=="전직패":
+                inv_select3_2['values']=['+185(상)','+155(중)','+125(하)']
+            elif inv_select3_1.get()=="축스탯%/1각+1":
+                inv_select3_2['values']=['3%/+1(상)','2%/+1(중)','1%/+1(하)']
+        def load_inv2():
+            if inv_select4_1.get()=="축스탯%/1각":
+                inv_select4_2['values']=['3%/40(상)','3%/30(중)','3%/20(하)']
+            elif inv_select4_1.get()=="축스탯%/1각%":
+                inv_select4_2['values']=['4%/2%(상)','3%/2%(중)','2%/2%(하)']
+            elif inv_select4_1.get()=="축앞뎀%/1각":
+                inv_select4_2['values']=['3%/25(상)','2%/25(중)','1%/25(하)']
+            elif inv_select4_1.get()=="축앞뎀%/1각%":
+                inv_select4_2['values']=['2%/3%(상)','2%/2%(중)','2%/1%(하)']
+            elif inv_select4_1.get()=="전직패":
+                inv_select4_2['values']=['+145(상)','+115(중)','+85(하)']
+            elif inv_select4_1.get()=="축+1/1각":
+                inv_select4_2['values']=['+1/30(상)','+1/20(중)','+1/10(하)']
         update_inv(0)
-        update_inv_buf(0)
-        update_inv_buf2(0)
-        wep_job_selected(0)
-        wep_job_selected2(0)
-        job_type_selected(0)
+        def load_wep():
+            wep_type_select["values"]=list(calc_list_wep.DNF_wep_list[str(wep_job_select.get())].keys())
+            wep_select["values"]=list(calc_list_wep.DNF_wep_list[str(wep_job_select.get())][str(wep_type_select.get())])
+        try:
+            load_inv()
+            load_inv2()
+            load_wep()
+        except:
+            pass
+        jobup_select["values"]=list(calc_list_job.DNF_job_list[jobtype_select.get()])
         tkinter.messagebox.showinfo("알림","불러오기 완료")
         
 
@@ -3404,15 +3256,15 @@ def change_savelist(in1,in2,in3,in4,in5,in6,in7,in8,in9,in10):
         tkinter.messagebox.showerror("에러","엑셀을 닫고 다시 시도해주세요.")
 
 def update_count():
-    global count_num, count_all, show_number
-    global showcon,all_list_list_num
+    global count_num, count_all, show_number, all_list_list_num
+    global showcon
     while True:
         showcon(text=str(count_num)+"유효/"+str(count_all)+"무효\n"+str(all_list_list_num)+"전체")
         time.sleep(0.1)
 
 def update_count2():
     while True:
-        global select_item
+        global select_item,a_num_all
         a_num_all=0
         a_num=[0,0,0,0,0,0,0,0,0,0,0]
         for i in range(101,136):
@@ -3599,7 +3451,9 @@ def show_timeline(name,server):
         for i in range(101,136):
             check_set(i)
         timeline_window.destroy()
-        tkinter.messagebox.showinfo("주의","과거 메타몽했던 에픽도 전부 불러와집니다.\n알아서 빼주세요.\n\n초월한 에픽은 뜨지않습니다.\n알아서 넣으세요.")
+        tkinter.messagebox.showinfo("주의","과거 메타몽했던 에픽도 전부 불러와집니다.\n"+
+                                    "알아서 빼주세요.\n\n초월한 에픽은 뜨지않습니다.\n알아서 넣으세요.\n\n"+
+                                    "현재 시로코 에픽은 불러오지 않습니다")
     except urllib.error.HTTPError as error:
         tkinter.messagebox.showerror("에러","API 접근 실패(네트워크 오류)")
 
@@ -3904,7 +3758,7 @@ tkinter.Label(self,fg="white",bg=dark_main, text="4. 자기 직업에 템 관련
 tkinter.Label(self,fg="white",bg=dark_main, text="5. 이래도 뭔가 이상하면 꼴리는데로 한다 (책임안짐)").place(x=296,y=495)
 
     
-select_perfect=tkinter.ttk.Combobox(self,values=['풀셋모드(매우빠름)','단품제외(빠름)','단품포함(중간)','세트필터↓(느림)'],width=15)
+select_perfect=tkinter.ttk.Combobox(self,values=['풀셋모드(매우빠름)','메타몽풀셋모드','단품제외(빠름)','단품포함(중간)','세트필터↓(느림)'],width=15)
 select_perfect.place(x=145+470,y=11+15)
 select_perfect.set('단품포함(중간)')
 select_speed_img=PhotoImage(file="ext_img/select_speed.png")
@@ -3934,17 +3788,17 @@ wep_g.place(x=29,y=30)
 wep_job_type=list(calc_list_wep.DNF_wep_list.keys())
 wep_job_select=tkinter.ttk.Combobox(self,width=12,values=wep_job_type)
 wep_job_select.place(x=110,y=30)
-wep_job_select.set('공통')
+wep_job_select.set('귀검/나이트')
 wep_job_select.bind("<<ComboboxSelected>>",wep_job_selected)
-wep_type=list(calc_list_wep.DNF_wep_list['공통'].keys())
+wep_type=list(calc_list_wep.DNF_wep_list['귀검/나이트'].keys())
 wep_type_select=tkinter.ttk.Combobox(self,width=12,values=wep_type)
 wep_type_select.place(x=236,y=30)
-wep_type_select.set('무기타입 선택')
+wep_type_select.set('광검')
 wep_type_select.bind("<<ComboboxSelected>>",wep_job_selected2)
-wep_default=list(calc_list_wep.DNF_wep_list['공통']['무기타입 선택'])
+wep_default=list(calc_list_wep.DNF_wep_list['귀검/나이트']['광검'])
 wep_select=tkinter.ttk.Combobox(self,width=30,values=wep_default)
 wep_select.place(x=110,y=58)
-wep_select.set('(공통)흑천의 주인')
+wep_select.set('(광검)별의 바다 : 바드나후')
 
 def job_type_selected(event):
     jobup_select["values"]=list(calc_list_job.DNF_job_list[jobtype_select.get()])
@@ -4781,6 +4635,4 @@ if __name__ == "__main__":
 self.mainloop()
 
 
-
-self.quit()
 

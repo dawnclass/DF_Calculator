@@ -3,6 +3,7 @@
 
 now_version="3.0.0"
 ver_time='200516'
+lang="english"
 
 ## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
 ## Copyright ⓒ 2020 Dawnclass(새벽반) dawnclass16@naver.com
@@ -27,6 +28,13 @@ from math import floor
 import webbrowser
 import calc_update
 import calc_list_wep,calc_list_job,calc_fullset
+from lang import lang_text, lang_class, lang_wep
+
+
+### LANGUAGE CONFIGURATION ###
+txt = lang_text.texts[lang]
+cls_index = lang_class.classes[lang]
+wep_index = lang_wep.weps[lang]
 
 #print(calc_list_wep.DNF_wep_list.keys())
 
@@ -61,7 +69,7 @@ self.title("에픽 조합 자동 계산기")
 self.geometry("910x720+0+0")
 self.resizable(False, False)
 
-self.iconbitmap(r'ext_img/icon.ico')
+# self.iconbitmap(r'ext_img/icon.ico')
 guide_font=tkinter.font.Font(family="맑은 고딕", size=10, weight='bold')
 small_font=tkinter.font.Font(family="맑은 고딕", size=8, weight='bold')
 mid_font=tkinter.font.Font(family="맑은 고딕", size=14, weight='bold')

@@ -1,6 +1,7 @@
 DATA.xlsx
 ext_img/
 image/
-preset.XLSX
+preset.xlsx
 set_name/
 venv/
+__pycache__/

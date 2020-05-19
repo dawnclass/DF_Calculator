@@ -1,3 +1,4 @@
+
 def making_cases(case_list,god,mode):
     ##모드
     ##1: 표준533
@@ -424,3 +425,122 @@ def making_cases(case_list,god,mode):
 
 
     return result_list
+
+
+def meta_ful(set_num_dict,evert_list,bang_on_dict,list40_0):
+    all_of_cases=[]
+    ec=evert_list.count
+    for i in range(101,136):
+        if set_num_dict.get(str(i))==None:
+            set_num_dict[str(i)]=0
+
+    for case in [[4,3,3],[5,3,2],[5,2,3]]:
+        for i in range(101,116):
+            if set_num_dict.get(str(i))==case[0]:
+                for j in range(116,120):
+                    if set_num_dict.get(str(j))==case[1]:
+                        for k in range(120,124):
+                            if set_num_dict.get(str(k))==case[2]:
+                                for sin in range(0,4):
+                                    all_of_cases=all_of_cases+making_cases([(str(i),str(j),str(k))],sin,1)
+    for mode in range(2,6):
+        if mode==2:
+            case_list=[[2,3,3,2],[3,2,3,2],[3,3,2,2],[3,3,3,1]]
+        if mode==3:
+            case_list=[[2,2,3,3],[3,1,3,3],[3,2,2,3],[3,2,3,2]]
+        if mode==4:
+            case_list=[[1,3,3,3],[2,2,3,3],[2,3,2,3],[2,3,3,2]]
+        if mode==5:
+            case_list=[[2,3,2,3],[3,2,2,3],[3,3,1,3],[3,3,2,2]]
+        for case in case_list:
+            for i in range(124,128):
+                    
+                for j in range(128,132):
+                    for k in range(132,136):
+                        for l in range(101,116):
+                            if set_num_dict.get(str(i))==case[0]:
+                                if set_num_dict.get(str(j))==case[1]:
+                                    if set_num_dict.get(str(k))==case[2]:
+                                        if set_num_dict.get(str(l))>=case[3]:
+                                            for sin in range(0,4):
+                                                all_of_cases=all_of_cases+making_cases([(str(i),str(j),str(k),str(l))],sin,mode)
+                            if set_num_dict.get(str(i))==3:
+                                if set_num_dict.get(str(j))==3:
+                                    if set_num_dict.get(str(k))==3:
+                                        if bang_on_dict[str(l)][2]+bang_on_dict[str(l)][3]==2:
+                                            for sin in range(0,4):
+                                                all_of_cases=all_of_cases+making_cases([(str(i),str(j),str(k),str(l))],sin,mode)
+
+
+    for case in [[4,3,3],[5,2,3],[5,3,2]]:                
+        for i in range(101,116):
+            stri=str(i)
+            for j in range(101,116):
+                if i!=j:
+                    strj=str(j)
+                    for cases in [[0,1],[0,2],[0,3],[0,4],[1,2],[1,3],[1,4],[2,3],[2,4],[3,4]]:
+                        not_cases=[0,1,2,3,4]
+                        not_cases.remove(cases[0]);not_cases.remove(cases[1])
+                        aa=bang_on_dict.get(stri)[cases[0]]+bang_on_dict.get(stri)[cases[1]]
+                        bb=bang_on_dict.get(strj)[not_cases[0]]+bang_on_dict.get(strj)[not_cases[1]]+bang_on_dict.get(strj)[not_cases[2]]
+                        temp=[0,0,0,0,0]
+                        if case[0]==4:
+                            if aa==1 and bb==3:
+                                for x in cases:
+                                    temp[x]=stri
+                                for y in not_cases:
+                                    temp[y]=strj
+                            if aa==2 and bb==2:
+                                for x in cases:
+                                    temp[x]=stri
+                                for y in not_cases:
+                                    temp[y]=strj
+                        elif case[0]==5:
+                            if aa==2 and bb==3:
+                                for x in cases:
+                                    temp[x]=stri
+                                for y in not_cases:
+                                    temp[y]=strj
+                        if temp!=[0,0,0,0,0]:
+                            ssgg=''.join(temp)
+                            for k in range(116,120):
+                                if set_num_dict.get(str(k))==case[1]:
+                                    for l in range(120,124):
+                                        if set_num_dict.get(str(l))==case[2]:
+                                            for sin in range(0,4):
+                                                all_of_cases=all_of_cases+making_cases([(ssgg,str(k),str(l))],sin,6)
+    temp_list=[]
+    temp_list_god=[]
+    
+    for now_list in all_of_cases:
+        tem=0
+        god=0
+        for now_item in now_list:
+            if ec(now_item)==0:
+                if now_item[-1]=='1' or now_item[2:4]=='15' or now_item[2:4]=='19' or now_item[2:4]=='23':
+                    break
+            if ec(now_item)==1:
+                tem=tem+1
+                if now_item[-1]=='1':
+                    god=1
+        if tem==10:
+            if god==0:
+                temp_list.append(now_list)
+            elif god==1:
+                temp_list_god.append(now_list)
+    all_list=[]
+    all_list_god=[]
+    for i in list40_0:
+        for j in temp_list:
+           tempx=list(j)
+           tempx.append(i)
+           all_list.append(tuple(tempx))
+        for j in temp_list_god:
+           tempx=list(j)
+           tempx.append(i)
+           all_list_god.append(tuple(tempx))
+        
+    all_list_num=len(all_list)+len(all_list_god)
+    return [all_list,all_list_god,all_list_num]
+
+

@@ -1,5 +1,5 @@
-now_version="3.1.1"
-ver_time='200519'
+now_version="3.2.0"
+ver_time='200521'
 
 ## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
 ## Copyright ⓒ 2020 Dawnclass(새벽반) dawnclass16@naver.com
@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 import urllib.request
 from urllib import parse
 from json import loads
+import json
 import tkinter.ttk
 import tkinter.font
 import tkinter.messagebox
@@ -41,6 +42,14 @@ dark_main=_from_rgb((32, 34, 37))
 dark_sub=_from_rgb((46, 49, 52))
 dark_blue=_from_rgb((29, 30, 36))
 
+def place_center(toplevel,move_x):
+    toplevel.update_idletasks()
+    w = toplevel.winfo_screenwidth()
+    h = toplevel.winfo_screenheight()
+    size = tuple(int(_) for _ in toplevel.geometry().split('+')[0].split('x'))
+    x = w/2 - size[0]/2
+    y = h/2 - size[1]/2
+    toplevel.geometry("%dx%d+%d+%d" % (size + (x+move_x, y)))
     
 apikey = "TQS79U4MT11jswCLHq7G260XzXU0JhGC" ##api 코드
 
@@ -60,6 +69,7 @@ self = tkinter.Tk()
 self.title("에픽 조합 자동 계산기")
 self.geometry("910x720+0+0")
 self.resizable(False, False)
+place_center(self,0)
 
 self.iconbitmap(r'ext_img/icon.ico')
 guide_font=tkinter.font.Font(family="맑은 고딕", size=10, weight='bold')
@@ -105,7 +115,15 @@ del opt_job["empty"]
 del opt_job["직업명"]
 jobs=list(opt_job.keys())
 
-    
+level_db=load_excel1["leveling"]
+jk=1;opt_leveling={}
+for row in level_db.rows:
+    row_value=[]
+    for cell in row:
+        row_value.append(cell.value)
+    row_value_cut = row_value[2:]
+    opt_leveling[level_db.cell(jk,1).value]=row_value_cut ## DB 불러오기 ##
+    jk=jk+1
     
 load_preset0=load_workbook("preset.xlsx", data_only=True)
 db_custom=load_preset0["custom"]
@@ -124,11 +142,13 @@ def update_log():
         load_show.close()
         update_window.destroy()
     update_window=tkinter.Toplevel(self)
-    update_window.attributes("-topmost", True) 
+    update_window.attributes("-topmost", True)
+    update_window.geometry("200x316+0+0")
     update_window.resizable(False, False)
+    place_center(update_window,0)
     update_window.configure(bg=dark_main)
-    tkinter.Label(update_window,bg=dark_main,font=mid_font,fg='white',text="< 3.1.1 업데이트>").pack()
-    tkinter.Label(update_window,bg=dark_main,font=guide_font,fg='white',text="1. 메타몽 풀셋모드 버그픽스",anchor='w').pack()
+    tkinter.Label(update_window,bg=dark_main,font=mid_font,fg='white',text="< 3.2.0 업데이트>").pack()
+    tkinter.Label(update_window,bg=dark_main,font=guide_font,fg='white',text="1. 일부직업 계수 환산표 추가",anchor='w').pack()
     tkinter.Label(update_window,bg=dark_main).pack()
     tkinter.Label(update_window,bg=dark_main,font=mid_font,fg='white',text="< 3.1.0 업데이트>").pack()
     tkinter.Label(update_window,bg=dark_main,font=guide_font,fg='white',text="1. 메타몽 풀셋모드 추가",anchor='w').pack()
@@ -163,14 +183,17 @@ load_excel1.close()
     
 ## 계산 함수 ##
 def calc():
-    global result_window, all_list_list_num, a_num_all
+    global result_window,result_window2, all_list_list_num, a_num_all
     try:
         result_window.after(0,result_window.destroy)
         result_window.after(50,time_delay2)
         result_window.after(50,time_delay4)
         result_window.after(500,time_delay1)
         result_window.after(500,time_delay3)
-        
+    except NameError as error:
+        pass
+    try:
+        result_window2.after(0,result_window2.destroy)
     except NameError as error:
         pass
     if select_perfect.get() == '세트필터↓(느림)' or select_perfect.get() == '풀셋모드(매우빠름)' or select_perfect.get() == '메타몽풀셋모드':
@@ -178,7 +201,7 @@ def calc():
     else:
         set_perfect=0
     if a_num_all>100000000:
-        if select_perfect.get() != "풀셋모드(빠름)" or select_perfect.get() != "메타몽풀셋모드":
+        if select_perfect.get() != "풀셋모드(빠름)" and select_perfect.get() != "메타몽풀셋모드":
             ask_really=tkinter.messagebox.askquestion('확인',"1억가지가 넘는 경우의 수는 풀셋/메타몽풀셋 모드를 권장합니다.\n그냥 진행하시겠습니까?")
             if ask_really == 'yes':
                 pass
@@ -1990,7 +2013,8 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
     global result_window
     result_window=tkinter.Toplevel(self)
     result_window.attributes("-topmost", True)
-    result_window.geometry("585x402+800+400")
+    result_window.geometry("585x402")
+    place_center(result_window,0)
     result_window.title("결과값")
     result_window.resizable(False,False)
     global canvas_res
@@ -2018,7 +2042,8 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                    '31400850','31400950','31401050','31401150','32401240','32401340','32401440']
 
     ele_change_toggle=0
-    
+    rank_setting=[0,0,0,0,0]
+    rank_ult=[0,0,0,0,0]
     if job_type=='deal': ###########################
         global tagkgum_exist,tagk_tg
         tagkgum_exist=0
@@ -2034,7 +2059,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
             tagkgum.command=change_tagk
             
         global result_image_on,result_image_tag,rank_dam,rank_stat,rank_stat2,rank_stat3,req_cool,res_dam,res_stat,res_stat2, res_stat3, rank_dam_tagk,rank_dam_noele, res_ele, rank_inv, res_inv, rank_dam_tagk_noele
-        global result_image_gif, result_image_gif_tg,result_siroco_gif,result_siroco_gif_tg
+        global result_image_gif, result_image_gif_tg,result_siroco_gif,result_siroco_gif_tg,rank_dam_nolv,rank_dam_tagk_nolv
         cool_check=req_cool.get()[2:6]
         canvas_res.create_text(122,114,text=cool_check,font=small_font,fill='white')
         if cool_check=='쿨감보정':
@@ -2047,10 +2072,8 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         rank_dam_nolv=[0,0,0,0,0]
         rank_dam_noele=[0,0,0,0,0]
         rank_inv=[0,0,0,0,0]
-        rank_ult=[0,0,0,0,0]
         rank_dam_tagk_nolv=[0,0,0,0,0]
         rank_dam_tagk_noele=[0,0,0,0,0]
-        rank_setting=[0,0,0,0,0]
         rss=[0,0,0,0,0]
         result_image_gif=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
         result_image_gif_tg=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
@@ -2260,7 +2283,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                     play_gif(0,i,temp,res_item_list[i][str(j)],result_siroco_gif,1,0,0)
                     
                     
-        
+        result_skill(rank_setting,rank_ult,ele_skill)
         canvas_res.create_text(217,361,text="계산기\n버전=\n "+str(now_version),fill='white', anchor='c')
 
     elif job_type=='buf': ##########################
@@ -2477,11 +2500,11 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
     
     show_detail_img=tkinter.PhotoImage(file='ext_img/show_detail.png')
     
-    res_bt1=tkinter.Button(result_window,command=lambda:change_rank(0,job_type,ele_skill),image=show_detail_img,bg=dark_blue,borderwidth=0,activebackground=dark_blue);res_bt1.place(x=486,y=20+78*0)
-    res_bt2=tkinter.Button(result_window,command=lambda:change_rank(1,job_type,ele_skill),image=show_detail_img,bg=dark_blue,borderwidth=0,activebackground=dark_blue)
-    res_bt3=tkinter.Button(result_window,command=lambda:change_rank(2,job_type,ele_skill),image=show_detail_img,bg=dark_blue,borderwidth=0,activebackground=dark_blue)
-    res_bt4=tkinter.Button(result_window,command=lambda:change_rank(3,job_type,ele_skill),image=show_detail_img,bg=dark_blue,borderwidth=0,activebackground=dark_blue)
-    res_bt5=tkinter.Button(result_window,command=lambda:change_rank(4,job_type,ele_skill),image=show_detail_img,bg=dark_blue,borderwidth=0,activebackground=dark_blue)
+    res_bt1=tkinter.Button(result_window,command=lambda:change_rank(0,job_type,ele_skill,rank_setting,rank_ult),image=show_detail_img,bg=dark_blue,borderwidth=0,activebackground=dark_blue);res_bt1.place(x=486,y=20+78*0)
+    res_bt2=tkinter.Button(result_window,command=lambda:change_rank(1,job_type,ele_skill,rank_setting,rank_ult),image=show_detail_img,bg=dark_blue,borderwidth=0,activebackground=dark_blue)
+    res_bt3=tkinter.Button(result_window,command=lambda:change_rank(2,job_type,ele_skill,rank_setting,rank_ult),image=show_detail_img,bg=dark_blue,borderwidth=0,activebackground=dark_blue)
+    res_bt4=tkinter.Button(result_window,command=lambda:change_rank(3,job_type,ele_skill,rank_setting,rank_ult),image=show_detail_img,bg=dark_blue,borderwidth=0,activebackground=dark_blue)
+    res_bt5=tkinter.Button(result_window,command=lambda:change_rank(4,job_type,ele_skill,rank_setting,rank_ult),image=show_detail_img,bg=dark_blue,borderwidth=0,activebackground=dark_blue)
     if length>1:
         res_bt2.place(x=486,y=20+78*1)
     if length>2:
@@ -2498,6 +2521,133 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
 
     canvas_res.image=result_bg
     res_bt1.image=show_detail_img
+
+    
+
+def result_skill(rank_setting,rank_ult,ele_skill):
+    global rank_dam_nolv,jobup_select,now_rank_num,wep_select
+    global result_window2
+    try:
+        result_window2.destroy()
+    except:
+        pass
+    now_setting=rank_setting[now_rank_num]
+    final_lvl=[];final_damage=[]
+    base_array=np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+    job_str=str(jobup_select.get())[:-4]
+    if str(jobup_select.get())[-4:]=="(진각)":
+        silmari=0
+    else:
+        silmari=1
+    with open('skillDB/save/job_code.json','r', encoding='utf-8') as code:
+        job_code_list=json.load(code)
+    for aaa in range(len(job_code_list)):
+        if job_code_list[aaa]['name']==job_str:
+            job_file=job_code_list[aaa]['file']
+            with open('skillDB/save/'+job_file+'.json','r', encoding='utf-8') as jobfile:
+                json_skill=json.load(jobfile)
+            ## 레벨링 계산 ##
+            seton=["1"+str(rank_setting[now_rank_num][x][2:4]) for x in range(1,12)]
+            setopt=[]
+            for i in range(101,136):
+                if seton.count(str(i))==2:
+                    setopt.append(str(i)+"1")
+                if 4>=seton.count(str(i))>=3:
+                    setopt.append(str(i)+"2")
+                if seton.count(str(i))==5:
+                    setopt.append(str(i)+"3")
+            for i in range(141,144):
+                if seton.count(str(i))==2:
+                    setopt.append(str(i)+"1")
+                if 4>=seton.count(str(i))>=3:
+                    setopt.append(str(i)+"2")
+                if seton.count(str(i))==5:
+                    setopt.append(str(i)+"3")
+            for i in [136,137,138,144,145,146,147,148,149]:
+                if seton.count(str(i))==2:
+                    setopt.append(str(i)+"0")
+                if 4>=seton.count(str(i))>=3:
+                    setopt.append(str(i)+"1")
+                if seton.count(str(i))==5:
+                    setopt.append(str(i)+"2")
+            all_option=setopt+now_setting
+            for now_item in all_option:
+                if now_item[0]!='4':
+                    base_array=base_array+np.array(opt_leveling.get(now_item))
+            save_leveling=base_array
+                
+            
+            ##1차 추가식:노레벨 장비% 기입
+            damage_ratio=rank_dam_nolv[now_rank_num]/int(json_skill['common']['common_damage'])
+            
+            for j in range(len(json_skill['skill'])):
+                final_damage.append(int(json_skill['skill'][j]['damage'])*damage_ratio)
+                final_lvl.append(' ')
+            ##2차 추가식:액티브 레벨링 계산
+            leveling_dict={0:'1',1:'5',2:'10',3:'15',4:'20',5:'25',6:'30',7:'35',8:'40',9:'45',10:'50',11:'60',12:'70',13:'75',14:'80',15:'85',16:'95',17:'100'};dict_leveling={}
+            for ll in range(0,18):
+                dict_leveling[leveling_dict.get(ll)]=ll
+            for i in range(len(json_skill['skill'])):
+                for j in list(leveling_dict.keys()):
+                    if json_skill['skill'][i]['reqlvl']==leveling_dict[j]:
+                        if json_skill['skill'][i]['lvl_interval']=='2':
+                            up_value=0.1014953549605047
+                        elif json_skill['skill'][i]['lvl_interval']=='3':
+                            up_value=0.159328188833409
+                        elif json_skill['skill'][i]['lvl_interval']=='5':
+                            up_value=0.2318898690189789
+                        skill_lvl=int(json_skill['skill'][i]['maxlvl'])
+                        final_damage[i]=final_damage[i]*(1+up_value*(save_leveling[j]+skill_lvl-1))/(1+up_value*(skill_lvl-1))
+                        final_lvl[i]=str(save_leveling[j]+skill_lvl)
+                ##3차 추가식:탈리스만 선택
+                if json_skill['skill'][i].get('talisman')==True:
+                    if rank_setting[now_rank_num].count('15140')==1:
+                        final_damage[i]=final_damage[i]*1.5
+                ##4차 추가식:각성 스증
+                if json_skill['skill'][i]['reqlvl']=='50':
+                    final_damage[i]=final_damage[i]*(1+rank_ult[now_rank_num][0]/100)
+                elif json_skill['skill'][i]['reqlvl']=='85':
+                    final_damage[i]=final_damage[i]*(1+rank_ult[now_rank_num][1]/100)
+                elif json_skill['skill'][i]['reqlvl']=='100':
+                    final_damage[i]=final_damage[i]*(1+rank_ult[now_rank_num][2]/100)
+                ##5차 추가식:각성의 실마리
+                if silmari==1:
+                    if json_skill['skill'][i].get('silmari')==True:
+                        final_damage[i]=final_damage[i]*((save_leveling[17]+1)*0.05+1.15)/1.2
+                ##6차 추가식:이중 적용 레벨링
+                if json_skill['skill'][i].get('synergy')!=None:
+                    for j in list(leveling_dict.values()): ##j='40'
+                        if json_skill['skill'][i]['synergy'].get(str(j))!=None:
+                            final_damage[i]=final_damage[i]*(1+float(json_skill['skill'][i]['synergy'][str(j)])*save_leveling[dict_leveling[j]])
+                        
+                
+            
+            result_window2=tkinter.Toplevel(self)
+            result_window2.attributes("-topmost", True)
+            result_window2.title("스킬 계수")
+            result_window2.geometry("310x402")
+            result_window2.configure(bg=dark_main)
+            place_center(result_window2,-450)
+            tkinter.Label(result_window2,text='스킬명',font=guide_font,bg=dark_main,fg='white').grid(row=0,column=1)
+            tkinter.Label(result_window2,text='req\nlvl',font=guide_font,bg=dark_main,fg='white').grid(row=0,column=2)
+            tkinter.Label(result_window2,text='sp\nlvl',font=guide_font,bg=dark_main,fg='white').grid(row=0,column=3)
+            tkinter.Label(result_window2,text='원계수',font=guide_font,bg=dark_main,fg='white').grid(row=0,column=4)
+            tkinter.Label(result_window2,text='환산계수',font=guide_font,bg=dark_main,fg='white').grid(row=0,column=5)
+            for i in range(len(json_skill['skill'])):
+                if json_skill['skill'][i].get('talisman')==True:
+                    skill_color='pink'
+                else:
+                    skill_color='white'
+                temp_image=PhotoImage(file="skillDB/skill_img/"+json_skill['skill'][i]['skillname']+'.png')
+                now_image=tkinter.Label(result_window2,image=temp_image,bg=dark_main);now_image.grid(row=50-i,column=0)
+                now_image.image=temp_image
+                tkinter.Label(result_window2,text=json_skill['skill'][i]['skillname'],anchor='w',width=12,font=small_font,fg=skill_color,bg=dark_main,wraplength=105).grid(row=50-i,column=1, sticky="w")
+                tkinter.Label(result_window2,text=json_skill['skill'][i]['reqlvl'],fg='white',bg=dark_main).grid(row=50-i,column=2)
+                tkinter.Label(result_window2,text=final_lvl[i],fg='white',bg=dark_main).grid(row=50-i,column=3)
+                tkinter.Label(result_window2,text=json_skill['skill'][i]['damage'],fg='white',bg=dark_main).grid(row=50-i,column=4)
+                tkinter.Label(result_window2,text=str(int(final_damage[i])),width=10,font=guide_font,fg='white',bg=dark_main).grid(row=50-i,column=5)
+            tkinter.Label(result_window2,text='액티브 레벨링 제외 기준계수 대비 '+str(round(damage_ratio,2))+'배',fg='white',bg=dark_main).grid(row=98,column=0,columnspan=6)
+            tkinter.Label(result_window2,text='정밀 계수가 아니라 환산 가계산 계수임',font=guide_font,fg='red',bg=dark_main).grid(row=99,column=0,columnspan=6)
 
 def play_gif(count_frame,now_rank,now_pc,show_res,gif_list,mode,mode2,mode3):
     #now_rank:순위
@@ -2584,10 +2734,11 @@ def time_delay4():
 def time_delayy():
     threading.Timer(0, time_delay4).start()
 
-
-def change_rank(now,job_type,ele_skill):
-    threading.Timer(0.05, change_rank2,args=(now,job_type,ele_skill)).start()
+def change_rank(rank_number,job_type,ele_skill,rank_setting,rank_ult):
+    threading.Timer(0.05, change_rank2,args=(rank_number,job_type,ele_skill)).start()
     threading.Timer(0, time_delay).start()
+    if job_type=='deal':
+        threading.Timer(0.07, result_skill,args=(rank_setting,rank_ult,ele_skill)).start()
 
 def change_rank_type(in_type):
     threading.Timer(0.05, change_rank_type2,args=(in_type,)).start()

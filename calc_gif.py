@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import os
 from PIL import Image
 from PIL import ImageTk
 from PIL import ImageEnhance
@@ -27,3 +28,31 @@ def img_gif(item_code,value):
         imgtk.append(ImageTk.PhotoImage(image=enhancer))
 
     return imgtk
+
+def make_skill_tag(fillname):
+    img = Image.open('skillDB/skill_img/'+str(fillname))
+    img = img.convert("RGBA")
+    datas = img.getdata()
+
+    newData = []
+    for item in datas:
+        if item[0] > 253 and item[1] > 253 and item[2] > 253:
+            newData.append((item[0], item[1], item[2], 0))
+        else:
+            newData.append(item)
+    img.putdata(newData)
+    print(type(img))
+    img.save('skillDB/skill_img/'+str(fillname))
+
+def auto_run():
+    path = "skillDB/skill_img"
+    file_list = os.listdir(path)
+
+    print (file_list)
+    for now in file_list:
+        make_skill_tag(now)
+
+
+if __name__ == "__main__":
+    #make_skill_tag('블러드 앤 체인')
+    auto_run()

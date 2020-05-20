@@ -4754,28 +4754,31 @@ def hamjung():
     tkinter.messagebox.showinfo("제작자 크레딧","총제작자=Dawnclass(새벽반)\n이미지/그래픽=경철부동산\n직업/버퍼DB=대략볼록할철\n서버제공=던파오프\n기타조언=히든 도비 4,5,6호\n\n오류 제보는 블로그 덧글이나 던조 쪽지로")
 maker_image=PhotoImage(file='ext_img/maker.png')
 maker=tkinter.Button(self,image=maker_image, command=hamjung,borderwidth=0,bg=dark_main,activebackground=dark_main)
-version=tkinter.Label(self,text='V '+str(now_version)+'\n'+ver_time,font=guide_font,fg="white",bg=dark_main)
+def check_update():
+    try:
+        now_version_num=int(now_version[0]+now_version[2]+now_version[4])
+        html = urllib.request.urlopen("https://drive.google.com/open?id=1p8ZdzW_NzGKHHOtfPTuZSr1YgSEVtYCj")
+        bsObject = BeautifulSoup(html, "html.parser")
+        for meta in bsObject.head.find_all('meta'):
+            if meta.get('content').count('zip')==1:
+                net_version=str(meta.get('content'))[-9:-4]
+                print('최신 업데이트 버전='+net_version)
+        net_version_num=int(net_version[0]+net_version[2]+net_version[4])
+        if now_version_num < net_version_num:
+            ask_update=tkinter.messagebox.askquestion('업데이트',"최신버전이 존재합니다. 이동하시겠습니까?")
+            if ask_update == 'yes':
+                webbrowser.open('https://drive.google.com/open?id=1p8ZdzW_NzGKHHOtfPTuZSr1YgSEVtYCj')
+            else:
+                pass
+        else:
+            tkinter.messagebox.showinfo('버전확인',"최신버전입니다.")
+    except:
+        tkinter.messagebox.showerror('에러',"업데이트 체크 실패(네트워크 오류)")
 
+version=tkinter.Button(self,text='V '+str(now_version)+'\n버전확인',font=guide_font, command=check_update)
 maker.place(x=625,y=590)
-version.place(x=630,y=650)
+version.place(x=630-3,y=650+3)
 
-try:
-    now_version_num=int(now_version[0]+now_version[2]+now_version[4])
-    html = urllib.request.urlopen("https://drive.google.com/open?id=1p8ZdzW_NzGKHHOtfPTuZSr1YgSEVtYCj")
-    bsObject = BeautifulSoup(html, "html.parser")
-    for meta in bsObject.head.find_all('meta'):
-        if meta.get('content').count('zip')==1:
-            net_version=str(meta.get('content'))[-9:-4]
-            print('최신 업데이트 버전='+net_version)
-    net_version_num=int(net_version[0]+net_version[2]+net_version[4])
-    if now_version_num < net_version_num:
-        ask_update=tkinter.messagebox.askquestion('업데이트',"최신버전이 존재합니다. 이동하시겠습니까?")
-        if ask_update == 'yes':
-            webbrowser.open('https://drive.google.com/open?id=1p8ZdzW_NzGKHHOtfPTuZSr1YgSEVtYCj')
-    else:
-        pass
-except:
-    print("업데이트 체크 실패(네트워크 오류)")
 
 if auto_custom==1:
     costum(1)

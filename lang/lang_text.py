@@ -3,7 +3,7 @@ texts = {
         "title": "에픽 조합 자동 계산기",
         "error": "에러",
         "confirm": "확인",
-        "error_msg": "업데이트 실패. 엑셀을 닫고 다시 실행해주세요.",
+        "update_error_msg": "업데이트 실패. 엑셀을 닫고 다시 실행해주세요.",
         "set_filter": "세트필터↓(느림)",
         "algo_prep": "조합 알고리즘 구동 준비중...",
         "always_amp": "항상증폭",

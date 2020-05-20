@@ -137,7 +137,7 @@ try:
 
 
 except PermissionError as error:
-    tkinter.messagebox.showerror("에러","업데이트 실패. 엑셀을 닫고 다시 실행해주세요.")
+    tkinter.messagebox.showerror(txt["error"],txt["update_error_msg"])
     self.destroy()
 load_excel1.close()
 
@@ -154,7 +154,7 @@ def calc():
         set_perfect=1
     else:
         set_perfect=0
-    showsta(text="조합 알고리즘 구동 준비중...")
+    showsta(text=txt["algo_prep"])
     start_time = time.time()
     load_excel=load_workbook("DATA.xlsx",data_only=True)
 
@@ -3269,7 +3269,7 @@ def save_custom(ele_type,cool_con,cus1,cus2,cus3,cus4,cus6,cus7,cus8,cus9,cus10,
         if auto_saved!=1:
             tkinter.messagebox.showinfo("알림","저장 완료")
     except PermissionError as error:
-        tkinter.messagebox.showerror("에러","엑셀을 닫고 다시 시도해주세요.")
+        tkinter.messagebox.showerror(txt["error"],"엑셀을 닫고 다시 시도해주세요.")
 
 
 def load_checklist():
@@ -3362,7 +3362,7 @@ def save_checklist():
             load_preset4.close()
             tkinter.messagebox.showinfo("알림","저장 완료")
     except PermissionError as error:
-        tkinter.messagebox.showerror("에러","엑셀을 닫고 다시 시도해주세요.")
+        tkinter.messagebox.showerror(txt["error"],"엑셀을 닫고 다시 시도해주세요.")
 
 def change_list_name():
     global change_window
@@ -3412,7 +3412,7 @@ def change_savelist(in1,in2,in3,in4,in5,in6,in7,in8,in9,in10):
         change_window.destroy()
         tkinter.messagebox.showinfo("알림","저장 완료")
     except PermissionError as error:
-        tkinter.messagebox.showerror("에러","엑셀을 닫고 다시 시도해주세요.")
+        tkinter.messagebox.showerror(txt["error"],"엑셀을 닫고 다시 시도해주세요.")
 
 def update_count():
     global count_num, count_all, show_number
@@ -3612,7 +3612,7 @@ def show_timeline(name,server):
         timeline_window.destroy()
         tkinter.messagebox.showinfo("주의","과거 메타몽했던 에픽도 전부 불러와집니다.\n알아서 빼주세요.\n\n초월한 에픽은 뜨지않습니다.\n알아서 넣으세요.")
     except urllib.error.HTTPError as error:
-        tkinter.messagebox.showerror("에러","API 접근 실패(네트워크 오류)")
+        tkinter.messagebox.showerror(txt["error"],"API 접근 실패(네트워크 오류)")
 
 def reset():
     know_list2=['13390150','22390240','23390450','33390750','21390340','31390540','32390650',

@@ -68,7 +68,7 @@ inv_tg=0
 
 
 self = tkinter.Tk()
-self.title("에픽 조합 자동 계산기")
+self.title(txt["title"])
 self.geometry("910x720+0+0")
 self.resizable(False, False)
 

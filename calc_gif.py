@@ -4,6 +4,7 @@ import os
 from PIL import Image
 from PIL import ImageTk
 from PIL import ImageEnhance
+import time
 
 def img_gif(item_code,value):
     imgtk=[]
@@ -30,13 +31,16 @@ def img_gif(item_code,value):
     return imgtk
 
 def make_skill_tag(fillname):
-    img = Image.open('skillDB/skill_img/'+str(fillname))
+    try:
+        img = Image.open('skillDB/skill_img/'+str(fillname))
+    except:
+        img = Image.open('skillDB/skill_talisman/'+str(fillname))
     img = img.convert("RGBA")
     datas = img.getdata()
 
     newData = []
     for item in datas:
-        if item[0] > 253 and item[1] > 253 and item[2] > 253:
+        if item[0] > 245 and item[1] > 245 and item[2] > 245:
             newData.append((item[0], item[1], item[2], 0))
         else:
             newData.append(item)
@@ -44,15 +48,71 @@ def make_skill_tag(fillname):
     print(type(img))
     img.save('skillDB/skill_img/'+str(fillname))
 
+def make_skill_bling(fillname,value):
+    print(fillname)
+    # ff = np.fromfile(imagePath, np.uint8)
+    # img = cv2.imdecode(ff, cv2.IMREAD_UNCHANGED)
+    if value=="normal":
+        file_path='skillDB/skill_img/'+str(fillname)
+        ff = np.fromfile(file_path, np.uint8)
+        item = cv2.imdecode(ff, 1)
+        effect = cv2.imread('skillDB/skill_normal.png', 1)
+        save_path='skillDB/skill_img/'
+    elif value=="talisman":
+        file_path='skillDB/skill_talisman/'+str(fillname)
+        ff = np.fromfile(file_path, np.uint8)
+        item = cv2.imdecode(ff, 1)
+        effect = cv2.imread('skillDB/skill_talisman.png', 1)
+        save_path='skillDB/skill_talisman/'
+    for i in range(1,27):
+        for j in range(1,27):
+            effect[i,j]=item[i,j]
+
+    imwrite(file_path,effect)
+
+def imwrite(filename, img, params=None):
+    try:
+        ext = os.path.splitext(filename)[1]
+        result, n = cv2.imencode(ext, img, params)
+        if result:
+            with open(filename, mode='w+b') as f:
+                n.tofile(f)
+                return True
+        else:
+            return False
+    except Exception as e:
+        print(e)
+        return False
+
+
 def auto_run():
     path = "skillDB/skill_img"
     file_list = os.listdir(path)
 
-    print (file_list)
     for now in file_list:
         make_skill_tag(now)
 
+    path = "skillDB/skill_talisman"
+    file_list = os.listdir(path)
+
+    for now in file_list:
+        make_skill_tag(now)
+
+def auto_run2():
+    path = "skillDB/skill_img"
+    file_list = os.listdir(path)
+
+    for now in file_list:
+        make_skill_bling(now,'normal')
+
+    path = "skillDB/skill_talisman"
+    file_list = os.listdir(path)
+
+    for now in file_list:
+        make_skill_bling(now,'talisman')
+
 
 if __name__ == "__main__":
-    #make_skill_tag('블러드 앤 체인')
+    auto_run2()
     auto_run()
+    

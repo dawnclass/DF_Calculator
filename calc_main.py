@@ -174,7 +174,7 @@ def update_log():
     update_canvas=tkinter.Canvas(update_window,width=276,height=250,bg=dark_main,bd=0)
     update_canvas.pack()
     update_canvas.create_text(5,0,text=update_text,fill='white',font=guide_font,anchor='nw',width=280)
-    update_canvas.bind_all("<MouseWheel>", _on_mousewheel)
+    update_canvas.bind("<MouseWheel>", _on_mousewheel)
     tkinter.Label(update_window,bg=dark_main,font=guide_font,fg='red',text="2.X.X 버전이랑 계수 호환 X",anchor='w').pack()
     tkinter.Button(update_window,font=small_font,command=donotshow,text="업데이트 전까지 보지않기").pack()
 
@@ -2547,7 +2547,12 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
     
     result_skill(rank_setting,rank_ult,ele_skill,1)
 
-    canvas_res.image=result_bg,random_npc_img
+    
+    if job_type=='deal':
+        canvas_res.image=result_bg,random_npc_img
+    else:
+        canvas_res.image=result_bg
+
     res_bt1.image=show_detail_img
     place_center(result_window,0)
     

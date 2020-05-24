@@ -1,6 +1,7 @@
 now_version="3.2.1"
-ver_time='200522'
+ver_time='200524'
 
+#-*- coding: utf-8 -*-
 ## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
 ## Copyright ⓒ 2020 Dawnclass(새벽반) dawnclass16@naver.com
 
@@ -24,9 +25,7 @@ from collections import Counter
 from math import floor
 import webbrowser
 import cv2
-from PIL import Image
-from PIL import ImageTk
-from PIL import ImageEnhance
+from PIL import Image,ImageTk,ImageEnhance,ImageGrab
 import random
 import calc_update
 import calc_list_wep,calc_list_job,calc_fullset,calc_setlist,calc_gif
@@ -52,6 +51,15 @@ def place_center(toplevel,move_x):
     x = w/2 - size[0]/2
     y = h/2 - size[1]/2
     toplevel.geometry("%dx%d+%d+%d" % (size + (x+move_x, y)))
+
+def capture_screen(toplevel):
+    nowx=toplevel.winfo_x()+8
+    nowy=toplevel.winfo_y()
+    xsize=int(toplevel.geometry().split('+')[0][:3])
+    ysize=int(toplevel.geometry().split('+')[0][4:])+32
+    #im=grab(bbox=(nowx, nowy, nowx+xsize, nowy+ysize))
+    im=ImageGrab.grab((nowx, nowy, nowx+xsize, nowy+ysize))
+    im.save('Screenshots/'+str(time.strftime('%y%m%d%H%M%S', time.localtime(time.time())))+'.png')
     
 apikey = "TQS79U4MT11jswCLHq7G260XzXU0JhGC" ##api 코드
 
@@ -145,22 +153,34 @@ def update_log():
         update_window.destroy()
     update_window=tkinter.Toplevel(self)
     update_window.attributes("-topmost", True)
-    update_window.geometry("200x316+0+0")
+    update_window.geometry("300x320+0+0")
     update_window.resizable(False, False)
     place_center(update_window,0)
     update_window.configure(bg=dark_main)
-    tkinter.Label(update_window,bg=dark_main,font=mid_font,fg='white',text="< 3.2.0 업데이트>").pack()
-    tkinter.Label(update_window,bg=dark_main,font=guide_font,fg='white',text="1. 일부직업 계수 환산표 추가",anchor='w').pack()
-    tkinter.Label(update_window,bg=dark_main).pack()
-    tkinter.Label(update_window,bg=dark_main,font=mid_font,fg='white',text="< 3.1.0 업데이트>").pack()
-    tkinter.Label(update_window,bg=dark_main,font=guide_font,fg='white',text="1. 메타몽 풀셋모드 추가",anchor='w').pack()
-    tkinter.Label(update_window,bg=dark_main,font=guide_font,fg='white',text="2. 결과창 신화/융합 이펙트 추가",anchor='w').pack()
-    tkinter.Label(update_window,bg=dark_main,font=guide_font,fg='white',text="3. 세이브/로드 버그 픽스",anchor='w').pack()
-    tkinter.Label(update_window,bg=dark_main).pack()
+    def _on_mousewheel(event):
+        update_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+    scrollbar=Scrollbar(update_window)
+    scrollbar.pack(side=RIGHT,fill=Y)
+    update_text=''
+    try:
+        update_file = open(now_version+" 패치노트.txt", 'r', encoding='UTF8')
+        lines = update_file.readlines() 
+        for line in lines:
+            update_text=update_text+'\n'+line
+        update_file.close()
+    except:
+        update_text='업데이트 텍스트 파일 누락'
+      
+    update_canvas=tkinter.Canvas(update_window,width=276,height=250,bg=dark_main,bd=0)
+    update_canvas.pack()
+    update_canvas.create_text(5,0,text=update_text,fill='white',font=guide_font,anchor='nw',width=280)
+    update_canvas.bind_all("<MouseWheel>", _on_mousewheel)
     tkinter.Label(update_window,bg=dark_main,font=guide_font,fg='red',text="2.X.X 버전이랑 계수 호환 X",anchor='w').pack()
-    tkinter.Label(update_window,bg=dark_main).pack()
     tkinter.Button(update_window,font=small_font,command=donotshow,text="업데이트 전까지 보지않기").pack()
-    tkinter.Label(update_window,bg=dark_main).pack()
+
+    
+    scrollbar.config(command=update_canvas.yview)
+    
 try:
     if str(db_custom['K2'].value) != '1':
         update_log()
@@ -194,17 +214,13 @@ def calc():
         result_window.after(500,time_delay3)
     except NameError as error:
         pass
-    try:
-        result_window2.after(0,result_window2.destroy)
-    except NameError as error:
-        pass
     if select_perfect.get() == '세트필터↓(느림)' or select_perfect.get() == '풀셋모드(매우빠름)' or select_perfect.get() == '메타몽풀셋모드':
         set_perfect=1
     else:
         set_perfect=0
     if a_num_all>100000000:
-        if select_perfect.get() != "풀셋모드(빠름)" and select_perfect.get() != "메타몽풀셋모드":
-            ask_really=tkinter.messagebox.askquestion('확인',"1억가지가 넘는 경우의 수는 풀셋/메타몽풀셋 모드를 권장합니다.\n그냥 진행하시겠습니까?")
+        if select_perfect.get() != "풀셋모드(매우빠름)" and select_perfect.get() != "메타몽풀셋모드":
+            ask_really=tkinter.messagebox.askquestion('확인',"1억 가지가 넘는 경우의 수는 풀셋/메타몽풀셋 모드를 권장합니다.\n그냥 진행하시겠습니까?")
             if ask_really == 'yes':
                 pass
             elif ask_really == 'no':
@@ -537,8 +553,8 @@ def calc():
             elif i < 36:
                 set_max_list6.append(0)
 
-
-    ##산물
+    know_dict={}
+    ##단품산물:퍼컨방5셋(71), 무아방5셋(72), 
     for know_one in know_list:
         if eval('select_item["tg{}"]'.format(know_one)) == 1:
             eval('list{}.append(str({}))'.format(know_one[0:2],know_one))
@@ -2030,6 +2046,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
     random_npc_img=tkinter.PhotoImage(file='ext_img/bg_result_'+random.choice(['1','2'])+'.png')
     random_npc=canvas_res.create_image(313-210,370,image=random_npc_img,anchor='nw')
     
+    
     global image_list, set_name_toggle, image_list_tag, now_version,pause_gif,stop_gif,stop_gif2
     global res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43,wep_select,jobup_select, now_rank_num, res_wep
     now_rank_num=0
@@ -2287,7 +2304,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                     play_gif(0,i,temp,res_item_list[i][str(j)],result_siroco_gif,1,0,0)
                     
                     
-        result_skill(rank_setting,rank_ult,ele_skill)
+        
         canvas_res.create_text(217,361,text="계산기\n버전=\n "+str(now_version),fill='white', anchor='c')
 
     elif job_type=='buf': ##########################
@@ -2523,25 +2540,38 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
     show_tag_but.place(x=173,y=158-26)
     show_tag_but.image=show_tag_img
 
+    capture_img=tkinter.PhotoImage(file='ext_img/capture_img.png')
+    capture_but=tkinter.Button(result_window,command=lambda:capture_screen(result_window),image=capture_img,bg=dark_sub,borderwidth=0,activebackground=dark_sub)
+    capture_but.place(x=173-164,y=158-26)
+    capture_but.image=capture_img
+    
+    result_skill(rank_setting,rank_ult,ele_skill,1)
+
     canvas_res.image=result_bg,random_npc_img
     res_bt1.image=show_detail_img
     place_center(result_window,0)
     
 
-def result_skill(rank_setting,rank_ult,ele_skill):
+def result_skill(rank_setting,rank_ult,ele_skill,first):
     global rank_dam_nolv,rank_dam_tagk_nolv,jobup_select,now_rank_num,wep_select,tagk_tg
-    global result_window,result_window2
-    try:
-        result_window2.destroy()
-    except:
-        pass
+    global result_window
+    global show_name,show_damage,skill_but,show_lvl
+    for i in range(0,12):
+        try:
+            show_name[i].configure(text='')
+            show_damage[i].configure(text='')
+            skill_but[i].configure(image=None,command=None)
+        except:
+            pass
     if tagk_tg==0:
         damage_nolv=rank_dam_nolv
     elif tagk_tg==1:
         damage_nolv=rank_dam_tagk_nolv
     now_setting=rank_setting[now_rank_num]
     final_lvl=[];final_damage=[];talisman_damage=[];talisman_name=[];skill_name=[];up_lvl=[]
-    skill_img=[];talisman_img=[];skill_but=[];show_name=[];show_damage=[];show_lvl=[]
+    skill_img=[];talisman_img=[]
+    show_name=[0,0,0,0,0,0,0,0,0,0,0,0];show_damage=[0,0,0,0,0,0,0,0,0,0,0,0]
+    skill_but=[0,0,0,0,0,0,0,0,0,0,0,0];show_lvl=[0,0,0,0,0,0,0,0,0,0,0,0]
     base_array=np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
     job_str=str(jobup_select.get())[:-4]
     if str(jobup_select.get())[-4:]=="(진각)":
@@ -2550,7 +2580,6 @@ def result_skill(rank_setting,rank_ult,ele_skill):
         silmari=1
     with open('skillDB/save/job_code.json','r', encoding='utf-8') as code:
         job_code_list=json.load(code)
-    
     for aaa in range(len(job_code_list)):
         if job_code_list[aaa]['name']==job_str:
             job_file=job_code_list[aaa]['file']
@@ -2705,31 +2734,6 @@ def result_skill(rank_setting,rank_ult,ele_skill):
             except:
                 pass
             
-            #result_window2=tkinter.Toplevel(self)
-            #result_window2.attributes("-topmost", True)
-            #result_window2.title("스킬 계수")
-            #result_window2.geometry("310x402")
-            #result_window2.configure(bg=dark_main)
-            #place_center(result_window2,-450)
-            #tkinter.Label(result_window2,text='스킬명',font=guide_font,bg=dark_main,fg='white').grid(row=0,column=1)
-            #tkinter.Label(result_window2,text='req\nlvl',font=guide_font,bg=dark_main,fg='white').grid(row=0,column=2)
-            #tkinter.Label(result_window2,text='sp\nlvl',font=guide_font,bg=dark_main,fg='white').grid(row=0,column=3)
-            #tkinter.Label(result_window2,text='원계수',font=guide_font,bg=dark_main,fg='white').grid(row=0,column=4)
-            #tkinter.Label(result_window2,text='환산계수',font=guide_font,bg=dark_main,fg='white').grid(row=0,column=5)
-            #for i in range(skill_len):
-                #if json_skill['skill'][i].get('talisman')==True:
-                    #pass
-                #temp_image=PhotoImage(file="skillDB/skill_img/"+json_skill['skill'][i]['skillname']+'.png')
-                #now_image=tkinter.Label(result_window2,image=temp_image,bg=dark_main);now_image.grid(row=50-i,column=0)
-                #now_image.image=temp_image
-                #tkinter.Label(result_window2,text=json_skill['skill'][i]['skillname'],anchor='w',width=12,font=small_font,fg='white',bg=dark_main,wraplength=105).grid(row=50-i,column=1, sticky="w")
-                #tkinter.Label(result_window2,text=json_skill['skill'][i]['reqlvl'],fg='white',bg=dark_main).grid(row=50-i,column=2)
-                #tkinter.Label(result_window2,text=final_lvl[i],fg='white',bg=dark_main).grid(row=50-i,column=3)
-                #tkinter.Label(result_window2,text=json_skill['skill'][i]['damage'],fg='white',bg=dark_main).grid(row=50-i,column=4)
-                #tkinter.Label(result_window2,text=str(int(final_damage[i])),width=10,font=guide_font,fg='white',bg=dark_main).grid(row=50-i,column=5)
-            #tkinter.Label(result_window2,text='액티브 레벨링 제외 기준계수 대비 '+str(round(damage_ratio,2))+'배',fg='white',bg=dark_main).grid(row=98,column=0,columnspan=6)
-            #tkinter.Label(result_window2,text='정밀 계수가 아니라 환산 가계산 계수임',font=guide_font,fg='red',bg=dark_main).grid(row=99,column=0,columnspan=6)
-
 def play_gif(count_frame,now_rank,now_pc,show_res,gif_list,mode,mode2,mode3):
     #now_rank:순위
     #now_pc:0(상의,하의),1(팔찌,반지),2(귀걸,보장)
@@ -2755,7 +2759,7 @@ def play_gif(count_frame,now_rank,now_pc,show_res,gif_list,mode,mode2,mode3):
         
 def change_tagk(rank_setting,rank_ult,ele_skill):
     change_tagk2(ele_skill)
-    self.after(50,result_skill,rank_setting,rank_ult,ele_skill)
+    self.after(50,result_skill,rank_setting,rank_ult,ele_skill,0)
   
 def change_tagk2(ele_skill):
     global tagk_tg, tagkgum
@@ -2822,7 +2826,7 @@ def change_rank(rank_number,job_type,ele_skill,rank_setting,rank_ult):
     threading.Timer(0.05, change_rank2,args=(rank_number,job_type,ele_skill)).start()
     threading.Timer(0, time_delay).start()
     if job_type=='deal':
-        threading.Timer(0.07, result_skill,args=(rank_setting,rank_ult,ele_skill)).start()
+        threading.Timer(0.07, result_skill,args=(rank_setting,rank_ult,ele_skill,0)).start()
 
 def change_rank_type(in_type):
     threading.Timer(0.05, change_rank_type2,args=(in_type,)).start()
@@ -2948,7 +2952,7 @@ def change_rank2(now,job_type,ele_skill):
 
 def show_set_name(job_type):
     global image_list,canvas_res,res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43, now_rank_num
-    global set_name_toggle, image_list_tag, result_image_on, result_image_tag, pause_gif
+    global set_name_toggle, image_list_tag, result_image_on, result_image_tag, pause_gif, result_window
     if job_type == "deal":
         global result_image_tag
         if set_name_toggle ==0:

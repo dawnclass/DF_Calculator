@@ -33,42 +33,55 @@ def img_gif(item_code,value):
 def make_skill_tag(fillname):
     try:
         img = Image.open('skillDB/skill_img/'+str(fillname))
+        save_path='skillDB/skill_img/'
     except:
         img = Image.open('skillDB/skill_talisman/'+str(fillname))
+        save_path='skillDB/skill_talisman/'
     img = img.convert("RGBA")
     datas = img.getdata()
 
     newData = []
     for item in datas:
-        if item[0] > 245 and item[1] > 245 and item[2] > 245:
+        if item[0] > 250 and item[1] > 250 and item[2] > 250:
             newData.append((item[0], item[1], item[2], 0))
         else:
             newData.append(item)
     img.putdata(newData)
     print(type(img))
-    img.save('skillDB/skill_img/'+str(fillname))
+    img.save(save_path+str(fillname))
 
 def make_skill_bling(fillname,value):
     print(fillname)
     # ff = np.fromfile(imagePath, np.uint8)
     # img = cv2.imdecode(ff, cv2.IMREAD_UNCHANGED)
     if value=="normal":
-        file_path='skillDB/skill_img/'+str(fillname)
+        file_path='skillDB/img_normal_original/'+str(fillname)
+        save_path='skillDB/skill_img/'+str(fillname)
         ff = np.fromfile(file_path, np.uint8)
         item = cv2.imdecode(ff, 1)
         effect = cv2.imread('skillDB/skill_normal.png', 1)
-        save_path='skillDB/skill_img/'
     elif value=="talisman":
-        file_path='skillDB/skill_talisman/'+str(fillname)
+        file_path='skillDB/img_talisman_original/'+str(fillname)
+        save_path='skillDB/skill_talisman/'+str(fillname)
         ff = np.fromfile(file_path, np.uint8)
         item = cv2.imdecode(ff, 1)
         effect = cv2.imread('skillDB/skill_talisman.png', 1)
-        save_path='skillDB/skill_talisman/'
-    for i in range(1,27):
-        for j in range(1,27):
-            effect[i,j]=item[i,j]
+    make_img=effect
+    item_cut=item[2:26,2:26]
+    effect1=effect[1:27,1:27]
+    item1=item[1:27,1:27]
+    temp_img = cv2.addWeighted(effect1, 40/100, item1, 60/100, 0)
+            
+    make_img[1:27,1:27]=temp_img
+    make_img[2:26,2:26]=item_cut
 
-    imwrite(file_path,effect)
+    #cvt_img = cv2.cvtColor(make_img, cv2.COLOR_BGR2RGB)
+    #cvt_img = Image.fromarray(cvt_img)
+    #cvt_img.save()
+
+    #cv2.imwrite(save_path,make_img)
+
+    imwrite(save_path,make_img)
 
 def imwrite(filename, img, params=None):
     try:
@@ -99,13 +112,13 @@ def auto_run():
         make_skill_tag(now)
 
 def auto_run2():
-    path = "skillDB/skill_img"
+    path = "skillDB/img_normal_original"
     file_list = os.listdir(path)
 
     for now in file_list:
         make_skill_bling(now,'normal')
 
-    path = "skillDB/skill_talisman"
+    path = "skillDB/img_talisman_original"
     file_list = os.listdir(path)
 
     for now in file_list:
@@ -115,4 +128,5 @@ def auto_run2():
 if __name__ == "__main__":
     auto_run2()
     auto_run()
+    
     

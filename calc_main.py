@@ -2548,10 +2548,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
     result_skill(rank_setting,rank_ult,ele_skill,1)
 
     
-    if job_type=='deal':
-        canvas_res.image=result_bg,random_npc_img
-    else:
-        canvas_res.image=result_bg
+    canvas_res.image=result_bg,random_npc_img
 
     res_bt1.image=show_detail_img
     place_center(result_window,0)
@@ -2568,10 +2565,13 @@ def result_skill(rank_setting,rank_ult,ele_skill,first):
             skill_but[i].configure(image=None,command=None)
         except:
             pass
-    if tagk_tg==0:
-        damage_nolv=rank_dam_nolv
-    elif tagk_tg==1:
-        damage_nolv=rank_dam_tagk_nolv
+    try:
+        if tagk_tg==0:
+            damage_nolv=rank_dam_nolv
+        elif tagk_tg==1:
+            damage_nolv=rank_dam_tagk_nolv
+    except:
+        pass
     now_setting=rank_setting[now_rank_num]
     final_lvl=[];final_damage=[];talisman_damage=[];talisman_name=[];skill_name=[];up_lvl=[]
     skill_img=[];talisman_img=[]

@@ -6,6 +6,7 @@ ver_time='200524'
 ## Copyright ⓒ 2020 Dawnclass(새벽반) dawnclass16@naver.com
 
 import requests
+import os
 from bs4 import BeautifulSoup
 import urllib.request
 from urllib import parse
@@ -3923,6 +3924,7 @@ def stop_calc():
     exit_calc=0
 
 
+
     
 ## 내부 구조 ##
 know_list=['13390150','22390240','23390450','33390750','21390340','31390540','32390650',
@@ -3937,51 +3939,21 @@ image_list2={}
 image_list_tag={}
 image_list_set={}
 image_list_set2={}
-for i in know_list:
-    image_list[i]=eval('PhotoImage(file="image/{}n.png")'.format(i))
-    image_list2[i]=eval('PhotoImage(file="image/{}f.png")'.format(i))
-    image_list_tag[i]=eval('PhotoImage(file="image/{}t.png")'.format(i))
-for i in know_set_list:
-    image_list[i]=eval('PhotoImage(file="image/{}n.png")'.format(i))
-    image_list2[i]=eval('PhotoImage(file="image/{}f.png")'.format(i))
-    image_list_tag[i]=eval('PhotoImage(file="image/{}t.png")'.format(i))
-    for j in range(11,34):
-        try:
-            image_list['n'+str(j)+i[4:6]]=eval('PhotoImage(file="image/{}.png")'.format('n'+str(j)+i[4:6]))
-            image_list_tag['n'+str(j)+i[4:6]]=eval('PhotoImage(file="image/{}.png")'.format('n'+str(j)+i[4:6]+'t'))
-        except:
-            pass
-for i in know_jin_list:
-    image_list[i]=eval('PhotoImage(file="image/{}n.png")'.format(i))
-    image_list2[i]=eval('PhotoImage(file="image/{}f.png")'.format(i))
-    image_list_tag[i]=eval('PhotoImage(file="image/{}t.png")'.format(i))
-           
-for i in range(1101,3350):
-    try:
-        image_list[str(i)+"0"]=eval('PhotoImage(file="image/{}0n.png")'.format(i))
-        image_list_tag[str(i)+"0"]=eval('PhotoImage(file="image/{}0t.png")'.format(i))
-    except TclError as error:
-        passss=1
-    try:
-        image_list2[str(i)+"0"]=eval('PhotoImage(file="image/{}0f.png")'.format(i))
-    except TclError as error:
-        passss=1
-    try:
-        image_list[str(i)+"1"]=eval('PhotoImage(file="image/{}1n.gif")'.format(i))
-        image_list2[str(i)+"1"]=eval('PhotoImage(file="image/{}1f.png")'.format(i))
-        image_list_tag[str(i)+"1"]=eval('PhotoImage(file="image/{}1t.png")'.format(i))
-    except TclError as error:
-        passss=1
-for i in range(4001,4356):
-    try:
-        image_list[str(i)+"0"]=eval('PhotoImage(file="image/{}0n.png")'.format(i))
-        image_list_tag[str(i)+"0"]=eval('PhotoImage(file="image/{}0t.png")'.format(i))
-    except TclError as error:
-        passss=1
-    try:
-        image_list2[str(i)+"0"]=eval('PhotoImage(file="image/{}0f.png")'.format(i))
-    except TclError as error:
-        passss=1
+
+file_list = os.listdir("image")
+for i in file_list:
+    if i[-3:]!='gif':
+        if i[-5]=='n':
+            image_list[i[:-5]]=eval('PhotoImage(file="image/{}")'.format(i))
+        elif i[-5]=='f':
+            image_list2[i[:-5]]=eval('PhotoImage(file="image/{}")'.format(i))
+        elif i[-5]=='t':
+            image_list_tag[i[:-5]]=eval('PhotoImage(file="image/{}")'.format(i))
+        if i[0]=='n' and i[-5]=='t':
+            image_list_tag[i[:-5]]=eval('PhotoImage(file="image/{}")'.format(i))
+        elif i[0]=='n':
+            image_list[i[:-4]]=eval('PhotoImage(file="image/{}")'.format(i))
+
 for i in range(1,56):
     try:
         image_list_set[str(100+i)]=eval('PhotoImage(file="set_name/{}.png")'.format(i+100))

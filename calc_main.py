@@ -1,5 +1,5 @@
-now_version="3.2.1"
-ver_time='200524'
+now_version="3.3.0"
+ver_time='200601'
 
 #-*- coding: utf-8 -*-
 ## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
@@ -29,7 +29,7 @@ import cv2
 from PIL import Image,ImageTk,ImageEnhance,ImageGrab
 import random
 import calc_update
-import calc_list_wep,calc_list_job,calc_fullset,calc_setlist,calc_gif
+import calc_list_wep,calc_list_job,calc_fullset,calc_setlist,calc_gif,calc_profile
 
 
 #https://dunfaoff.com/DawnClass.df
@@ -40,7 +40,7 @@ def _from_rgb(rgb):
     return "#%02x%02x%02x" % rgb
 
 dark_main=_from_rgb((32, 34, 37))
-dark_sub=_from_rgb((46, 49, 52))
+dark_sub=_from_rgb((50, 46, 52))
 dark_blue=_from_rgb((29, 30, 36))
 result_sub=_from_rgb((31, 28, 31))
 
@@ -205,7 +205,7 @@ load_excel1.close()
 
     
 ## 계산 함수 ##
-def calc():
+def calc(mode):
     global result_window,result_window2, all_list_list_num, a_num_all
     try:
         result_window.after(0,result_window.destroy)
@@ -244,18 +244,6 @@ def calc():
         opt_one[db_one.cell(a,1).value]=row_value_cut
         name_one[db_one.cell(a,1).value]=row_value
         a=a+1
-
-    b=1        
-    db_set=load_excel["set"]
-    opt_set={}
-    for row in db_set.rows:
-        row_value=[]
-        row_value_cut=[]
-        for cell in row:
-            row_value.append(cell.value)
-            row_value_cut = row_value[2:]
-        opt_set[db_set.cell(b,1).value]=row_value_cut ## DB 불러오기 ##
-        b=b+1
 
     c=1        
     db_buf=load_excel["buf"]
@@ -2022,7 +2010,7 @@ def calc():
     print("걸린 시간 = "+str(time.time() - start_time)+"초")
     
 def calc_thread():
-    threading.Thread(target=calc,daemon=True).start()
+    threading.Thread(target=calc,args=(0,),daemon=True).start()
 
 pause_gif=0
 stop_gif=0
@@ -3925,7 +3913,178 @@ def stop_calc():
 
 
 
+def show_profile2(name,server):
+    try:
+        def_result=calc_profile.make_profile(name,server)
+    except:
+        tkinter.messagebox.showerror('에러',"API조회 에러(네트워크 오류)")
+        return
+    if def_result=={'error':'Not found'}:
+        tkinter.messagebox.showerror('에러',"서버/캐릭명을 확인하세요.")
+        return
+    if def_result=={'error':'buffer'}:
+        tkinter.messagebox.showerror('에러',"버퍼는 지원하지 않습니다.")
+        return
+    setting_str=def_result[0]
+    setting_dict=def_result[1]
+
+    profile_window=tkinter.Toplevel(self)
+    profile_window.geometry("415x277")
+    profile_window.resizable(False,False)
+    canvas = Canvas(profile_window, width=417, height=297, bd=0)
+    canvas.place(x=-2,y=-2)
+    cha_bg=tkinter.PhotoImage(file='ext_img/bg_info.png')
+    canvas.create_image(0,0,image=cha_bg,anchor='nw')
+    cha_img=tkinter.PhotoImage(file='my_cha.png')
+    canvas.create_image(123,70,image=cha_img)
+    image_on={}
+    def play_gif_cha(count_frame,now_pc,show_res,gif_list):
+        #now_pc:0(상의,하의),1(팔찌,반지),2(귀걸,보장)
+        #show_res:이미지 재생될 canvas 객체
+        now_frame=gif_list[now_pc][int(count_frame)]
+        count_frame += 1
+        canvas.itemconfig(show_res,image=now_frame)
+        if count_frame >=len(gif_list[now_pc]):
+            profile_window.after(100, play_gif_cha, 0,now_pc,show_res,gif_list)
+        else:
+            profile_window.after(100, play_gif_cha, count_frame,now_pc,show_res,gif_list)
+    global image_list
+    cha_god_gif=[None,None,None]
+    for i in [11,12,13,14,15,21,22,23,31,32,33]:
+        for j in setting_dict['장비']:
+            if len(j)!=6:
+                if j[0:2] == str(i):
+                    image_on[str(i)]=image_list[j]
+                if len(j)==5 and j[4]=='1':
+                    cha_god_gif[int(j[0])-1]=calc_gif.img_gif(j,0)
+    cha_siroco_gif=[None,None,None]
+    for i in setting_dict['장비']:
+        if len(i)==4 and i[0]=='4':
+            image_on['41']=image_list['415'+i[1]+'0']
+            image_on['42']=image_list['425'+i[2]+'0']
+            image_on['43']=image_list['435'+i[3]+'0']
+            if i[1]!='0':
+                cha_siroco_gif[0]=calc_gif.img_gif('415'+i[1]+'0',1)
+            if i[2]!='0':
+                cha_siroco_gif[1]=calc_gif.img_gif('425'+i[2]+'0',1)
+            if i[3]!='0':
+                cha_siroco_gif[2]=calc_gif.img_gif('435'+i[3]+'0',1)
+    img11=canvas.create_image(57,52,image=image_on['11'])
+    img12=canvas.create_image(27,82,image=image_on['12'])
+    img13=canvas.create_image(27,52,image=image_on['13'])
+    img14=canvas.create_image(57,82,image=image_on['14'])
+    img15=canvas.create_image(27,112,image=image_on['15'])
+    img21=canvas.create_image(189,52,image=image_on['21'])
+    img22=canvas.create_image(219,52,image=image_on['22'])
+    img23=canvas.create_image(219,82,image=image_on['23'])
+    img31=canvas.create_image(189,82,image=image_on['31'])
+    img32=canvas.create_image(219,112,image=image_on['32'])
+    img33=canvas.create_image(189,112,image=image_on['33'])
+    img41=canvas.create_image(27,82,image=image_on['41'])
+    img42=canvas.create_image(219,82,image=image_on['42'])
+    img43=canvas.create_image(189,82,image=image_on['43'])
+    for i in range(0,3):
+        if i==0: show_res1=img11;show_res2=img41
+        elif i==1: show_res1=img21;show_res2=img42
+        elif i==2: show_res1=img33;show_res2=img43
+        if cha_god_gif[i]!=None: play_gif_cha(0,i,show_res1,cha_god_gif)
+        if cha_siroco_gif[i]!=None: play_gif_cha(0,i,show_res2,cha_siroco_gif)
     
+
+    canvas.create_text(233,17,text=setting_dict['무기명'],font=guide_font,fill='white',anchor='e')
+    canvas.create_text(10,170,text=setting_dict['캐릭명'],fill='white',anchor='w')
+    canvas.create_text(10,185,text=setting_dict['직업명'],fill='white',anchor='w')
+    canvas.create_text(233,170,text=setting_dict['모험단'],fill='white',anchor='e')
+    canvas.create_text(233,185,text=server,fill='white',anchor='e')
+    
+    show_font=tkinter.font.Font(family="맑은 고딕", size=15, weight='bold')
+
+    if float(setting_dict['종합점수'][:-1]) >=110: rank_color='gold2'
+    elif float(setting_dict['종합점수'][:-1]) >=100: rank_color='deep sky blue'
+    elif float(setting_dict['종합점수'][:-1]) >=80: rank_color='white'
+    else: rank_color='silver'
+        
+    
+    canvas.create_text(18,217,text='장비%=',font=show_font,fill='white',anchor='w')
+    canvas.create_text(18+73,217,text=setting_dict['장비딜'],font=show_font,fill='white',anchor='w')
+    canvas.create_text(20+189,220,text='쿨감기대값\n='+setting_dict['쿨감'],font=small_font,fill='white', anchor='c')
+    canvas.create_text(18,252,text='세팅%=',font=show_font,fill='white',anchor='w')
+    canvas.create_text(18+73,252,text=setting_dict['종합점수'],font=show_font,fill=rank_color,anchor='w')
+
+    canvas.create_text(254,22,text='강화/스탯\n',font=guide_font,fill='white',anchor='w')
+    canvas.create_text(254,6+25,text=setting_dict['스탯'],font=mid_font,fill='white',anchor='w')
+    canvas.create_text(254+83,14,text='무기='+setting_dict['무기강화'],font=guide_font,fill='white',anchor='w')
+    canvas.create_text(254+83,33,text='스탯='+setting_dict['스탯상세'],font=guide_font,fill='white',anchor='w')
+    
+    canvas.create_text(254,22+50,text='속강작\n',font=guide_font,fill='white',anchor='w')
+    canvas.create_text(254,6+75,text=setting_dict['속강'],font=mid_font,fill='white',anchor='w')
+    if setting_dict['속강종류']=='화': ele_type='火'; ele_color='red'
+    elif setting_dict['속강종류']=='수': ele_type='水'; ele_color='blue'
+    elif setting_dict['속강종류']=='명': ele_type='明'; ele_color='yellow'
+    elif setting_dict['속강종류']=='암': ele_type='暗'; ele_color='purple'
+    elif setting_dict['속강종류']=='모': ele_type='某'; ele_color='white'
+    canvas.create_text(254+83,22+50,text=ele_type,font=mid_font,fill=ele_color,anchor='w')
+    canvas.create_text(254+83+23,22+50,text='+'+setting_dict['속강상세'],font=mid_font,fill='white',anchor='w')
+    
+    canvas.create_text(254,22+100,text='딜플티\n',font=guide_font,fill='white',anchor='w')
+    canvas.create_text(254,6+125,text=setting_dict['플티'],font=mid_font,fill='white',anchor='w')
+    plt_img=[0,0]
+    for i in [0,1]:
+        if setting_dict['플티상세'][i]=='S': plt_img[i]=tkinter.PhotoImage(file='ext_img/plt_best.png')
+        elif setting_dict['플티상세'][i]=='A': plt_img[i]=tkinter.PhotoImage(file='ext_img/plt_good.png')
+        elif setting_dict['플티상세'][i]=='B': plt_img[i]=tkinter.PhotoImage(file='ext_img/plt_active.png')
+        elif setting_dict['플티상세'][i]=='C': plt_img[i]=tkinter.PhotoImage(file='ext_img/plt_common.png')
+        else: plt_img[i]=tkinter.PhotoImage(file='ext_img/plt_nope.png')
+    img_plt1=canvas.create_image(350,124,image=plt_img[0]);img_plt2=canvas.create_image(390,124,image=plt_img[1])
+    
+    canvas.create_text(254,22+150,text='룬/탈리\n',font=guide_font,fill='white',anchor='w')
+    canvas.create_text(254,6+175,text=setting_dict['탈리'],font=mid_font,fill='white',anchor='w')
+    tal_img=[0,0]
+    for i in [0,1]:
+        if setting_dict['탈리상세'][i]=='S': tal_img[i]=tkinter.PhotoImage(file='ext_img/talisman_unique.png')
+        elif setting_dict['탈리상세'][i]=='A': tal_img[i]=tkinter.PhotoImage(file='ext_img/talisman_rare.png')
+        elif setting_dict['탈리상세'][i]=='B': tal_img[i]=tkinter.PhotoImage(file='ext_img/talisman_common.png')
+        else: tal_img[i]=tkinter.PhotoImage(file='ext_img/talisman_nope.png')
+    img_tal1=canvas.create_image(350,170,image=tal_img[0]);img_tal2=canvas.create_image(390,170,image=tal_img[1])
+    rune_img=[0,0,0,0,0,0]
+    for i in range(0,6):
+        if i>=3: shift=8
+        else: shift=0
+        if setting_dict['룬상세'][i]=='S': rune_color='purple'
+        elif setting_dict['룬상세'][i]=='A': rune_color='deep sky blue'
+        elif setting_dict['룬상세'][i]=='B': rune_color='silver'
+        else: rune_color='black'
+        rune_img[i]=canvas.create_rectangle(336+i*11+shift,184,336+6+i*11+shift,184+7,fill=rune_color,width=0)
+    
+    canvas.create_text(254,22+200,text='스위칭\n',font=guide_font,fill='white',anchor='w')
+    canvas.create_text(254,6+225,text=setting_dict['스위칭'],font=mid_font,fill='white',anchor='w')
+    canvas.create_text(254+83,22+191,text=setting_dict['스위칭상세'],font=guide_font,fill='white',anchor='w')
+    canvas.create_text(254+83+30,22+210,text=setting_dict['스위칭최대'],font=guide_font,fill='white',anchor='w')
+
+
+    capture_img=tkinter.PhotoImage(file='ext_img/capture_img.png')
+    capture_but=tkinter.Button(profile_window,command=lambda:capture_screen(profile_window),image=capture_img,bg=dark_sub,borderwidth=0,activebackground=dark_sub,anchor='nw')
+    capture_but.place(x=378,y=248)
+    def profile_detail():
+        tkinter.messagebox.showinfo('세부보기',setting_str,parent=profile_window)
+    show_detail_img=tkinter.PhotoImage(file='ext_img/show_detail2.png')
+    show_detail=tkinter.Button(profile_window,command=profile_detail,image=show_detail_img,bg=dark_sub,borderwidth=0,activebackground=dark_sub,anchor='nw')
+    show_detail.place(x=179,y=239)
+
+    canvas.create_text(255,262,text='[ESC키로 닫기 가능]',font=guide_font,fill='white',anchor='w')
+    
+    capture_but.image=capture_img
+    show_detail.image=show_detail_img
+    canvas.image=cha_bg,cha_img,plt_img[0],plt_img[1],tal_img[0],tal_img[1]
+    place_center(profile_window,0)
+    def exit_p(e):
+        profile_window.destroy()
+    profile_window.focus_set()
+    profile_window.bind("<Escape>", exit_p)
+
+def show_profile(name,server):
+    threading.Thread(target=show_profile2,args=(name,server),daemon=True).start()
+
 ## 내부 구조 ##
 know_list=['13390150','22390240','23390450','33390750','21390340','31390540','32390650',
            '11390850','12390950','13391050','14391150','15391250']
@@ -3966,14 +4125,28 @@ image_list['99990']=PhotoImage(file="image/99990.png")
 image_list2['99990']=PhotoImage(file="image/99990.png")
 image_list_tag['99990']=PhotoImage(file="image/99990.png")
 
-tkinter.Label(self,font=mid_font,fg="white",bg=dark_main, text="<던파오프 검증법>").place(x=296,y=398)
-tkinter.Label(self,fg="white",bg=dark_main, text="1. 계산기의 <레벨 구간별 장비%>와 던옵의 스킬별 데미지 증감%를 본다").place(x=296,y=425)
-tkinter.Label(self,fg="white",bg=dark_main, text="2. 총합딜만 보고 판단하지 않는다 (제발 타직업간 총합딜 비교X)").place(x=296,y=442)
-tkinter.Label(self,fg="white",bg=dark_main, text="3. 둘이 값이 다르면 증뎀/크증/추뎀... 등 옵션 합이 같은지 본다").place(x=296,y=460)
-tkinter.Label(self,fg="white",bg=dark_main, text="4. 자기 직업에 템 관련해서 특수한 케이스가 있는지 생각해본다").place(x=296,y=477)
-tkinter.Label(self,fg="white",bg=dark_main, text="5. 이래도 뭔가 이상하면 꼴리는데로 한다 (책임안짐)").place(x=296,y=495)
+sever_list=['카인','디레지에','바칼','힐더','안톤','카시야스','프레이','시로코']
+tkinter.Label(self,font=mid_font,fg="white",bg=dark_sub, text="<딜러 프로필 생성기>").place(x=301,y=401)
+tkinter.Label(self,fg="white",bg=dark_sub, text="서버명=").place(x=296,y=433)
+tkinter.Label(self,fg="white",bg=dark_sub, text="캐릭명=").place(x=296,y=460)
+sever_in=tkinter.ttk.Combobox(self,width=9,values=sever_list);sever_in.place(x=346,y=435)
+sever_in.set('카인')
+cha_Entry=tkinter.Entry(self,width=12);cha_Entry.place(x=346,y=462)
+sever_in.bind('<Return>',lambda e:show_profile(cha_Entry.get(),sever_in.get()))
+cha_Entry.bind('<Return>',lambda e:show_profile(cha_Entry.get(),sever_in.get()))
+generate_cha=PhotoImage(file="ext_img/generate_cha.png")
+tkinter.Button(self,image=generate_cha,command=lambda:show_profile(cha_Entry.get(),sever_in.get()),borderwidth=0,activebackground=dark_sub,bg=dark_sub).place(x=440,y=434)
 
-    
+tkinter.Label(self,text='엔터로도 조회됩니다',font=guide_font,fg='white',bg=dark_sub).place(x=332,y=482)
+cha_caution_text="""장비%:  12부위장비+칭호클쳐의
+           수준을 표현한 % (쿨감O)
+           (계산기 값과 유사)
+          
+세팅%:  위를 제외한 나머지의
+           투자/세팅 실효율%
+           (노증극세팅이 100%)"""
+tkinter.Label(self,text=cha_caution_text,font=small_font,fg='white',bg=dark_sub,anchor='nw',justify='left').place(x=512,y=405)
+
 select_perfect=tkinter.ttk.Combobox(self,values=['풀셋모드(매우빠름)','메타몽풀셋모드','단품제외(빠름)','단품포함(중간)','세트필터↓(느림)'],width=15)
 select_perfect.place(x=145+470,y=11+15)
 select_perfect.set('단품포함(중간)')
@@ -4844,13 +5017,13 @@ version=tkinter.Button(self,text='V '+str(now_version)+'\n버전확인',font=gui
 maker.place(x=625,y=590)
 version.place(x=630-3,y=650+3)
 
-
 if auto_custom==1:
     costum(1)
 
 if __name__ == "__main__":
     update_thread()
     update_thread2()
+    
 self.mainloop()
 
 

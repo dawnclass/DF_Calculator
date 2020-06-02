@@ -1,5 +1,5 @@
-now_version="3.3.0"
-ver_time='200601'
+now_version="3.3.1"
+ver_time='200602'
 
 #-*- coding: utf-8 -*-
 ## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
@@ -4132,10 +4132,10 @@ tkinter.Label(self,fg="white",bg=dark_sub, text="캐릭명=").place(x=296,y=460)
 sever_in=tkinter.ttk.Combobox(self,width=9,values=sever_list);sever_in.place(x=346,y=435)
 sever_in.set('카인')
 cha_Entry=tkinter.Entry(self,width=12);cha_Entry.place(x=346,y=462)
-sever_in.bind('<Return>',lambda e:show_profile(cha_Entry.get(),sever_in.get()))
-cha_Entry.bind('<Return>',lambda e:show_profile(cha_Entry.get(),sever_in.get()))
+sever_in.bind('<Return>',lambda e:show_profile(str(cha_Entry.get()),str(sever_in.get())))
+cha_Entry.bind('<Return>',lambda e:show_profile(str(cha_Entry.get()),str(sever_in.get())))
 generate_cha=PhotoImage(file="ext_img/generate_cha.png")
-tkinter.Button(self,image=generate_cha,command=lambda:show_profile(cha_Entry.get(),sever_in.get()),borderwidth=0,activebackground=dark_sub,bg=dark_sub).place(x=440,y=434)
+tkinter.Button(self,image=generate_cha,command=lambda:show_profile(str(cha_Entry.get()),str(sever_in.get())),borderwidth=0,activebackground=dark_sub,bg=dark_sub).place(x=440,y=434)
 
 tkinter.Label(self,text='엔터로도 조회됩니다',font=guide_font,fg='white',bg=dark_sub).place(x=332,y=482)
 cha_caution_text="""장비%:  12부위장비+칭호클쳐의

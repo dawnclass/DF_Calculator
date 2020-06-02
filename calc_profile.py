@@ -69,7 +69,7 @@ def make_profile(name,server):
         return {'error':'Not found'}
     else:
         stat_dic=load_api('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/status?apikey=' + apikey)
-        #print('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/equip/avatar?apikey='+ apikey)
+        #print('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/equip/equipment?apikey='+ apikey)
         equipment_dic=load_api('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/equip/equipment?apikey='+ apikey)
         avatar_dic=load_api('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/equip/avatar?apikey='+ apikey)
         pet_dic=load_api('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/equip/creature?apikey='+ apikey)
@@ -87,6 +87,7 @@ def make_profile(name,server):
         if job_name[0]=='眞': job_calc_name=job_calc_name+'(진각)'
         else: job_calc_name=job_calc_name+'(2각)'
         now_ele=int(stat_dic["status"][27]["value"])
+        no_enchant_ele=200
         swi_skillname=swiequ_dic['skill']['buff']['skillInfo']['name']
         swi_skilllvl=swiequ_dic['skill']['buff']['skillInfo']['option']['level']
         swiper_list=swiequ_dic['skill']['buff']['skillInfo']['option']['values']
@@ -132,9 +133,11 @@ def make_profile(name,server):
             
         
         ##2번 스탯
-        ear_score=0.99
+        ear_score=0.99;patt_enchant=0;matt_enchant=0;iatt_enchant=0
         for now_equ in equipment_dic["equipment"]:
             if now_equ.get("slotName")=="무기":
+                wep_name=now_equ.get("itemName")
+                wep_type=now_equ.get("itemTypeDetail").replace(" ", "")
                 wep_rein=str(now_equ.get("reinforce"))
                 if wep_rein==None:
                     wep_rein='0'
@@ -143,26 +146,38 @@ def make_profile(name,server):
                     wep_refi='0'
                 if job_detail[class_name][job_name][2]==0:
                     if now_equ.get("remodelInfo")!=None:
-                        wep_score=reinforce_eff['산물'][wep_rein]
+                        wep_score=float(reinforce_eff['산물'][wep_rein])
                         wep_show=wep_rein+'개조'
                     else:
-                        wep_score=reinforce_eff['무기'][wep_rein]
+                        wep_score=float(reinforce_eff['무기'][wep_rein])
                         wep_show=wep_rein+'강'
                 elif job_detail[class_name][job_name][2]==1:
                     if now_equ.get("remodelInfo")!=None:
-                        wep_score=refine_eff['산물'][wep_rein]
+                        wep_score=float(refine_eff['산물'][wep_rein])
                         wep_show=wep_rein+'개조'
                     else:
-                        wep_score=refine_eff['무기'][wep_refi]
+                        wep_score=float(refine_eff['무기'][wep_refi])
                         wep_show=wep_refi+'재련'
+                if wep_name[0:5]=='검은 성전' or wep_name[0:6]=='흑천의 주인' or wep_name[5:11]=='흑천의 주인':
+                    wep_score=wep_score-70/4800
             elif now_equ.get("slotName")=="귀걸이":
                 ear_rein=str(now_equ.get("reinforce"))
                 if ear_rein==None:
                     ear_rein='0'
-                ear_score=reinforce_eff['귀걸이'][ear_rein]
-        final_rein_score=float(wep_score)*float(ear_score)
+                ear_score=float(reinforce_eff['귀걸이'][ear_rein])
+        final_rein_score=(float(wep_score)-1)+(float(ear_score)-1)+1
 
-        api_stat=max([stat_dic["status"][2]["value"],stat_dic["status"][3]["value"]])
+        api_stat=0
+        god_parts=['상의','팔찌','귀걸이']
+        for now_equ in equipment_dic["equipment"]:
+            if god_parts.count(now_equ.get("slotName"))!=0:
+                if now_equ.get("mythologyInfo")!=None:
+                    god_option=now_equ.get("mythologyInfo").get("options")
+                    for now_opt in god_option:
+                        if now_opt["explain"][0:5]=="힘, 지능" and list(now_opt["explain"]).count('%')==0:
+                            god_stat=now_opt["explain"][6:];god_stat=god_stat[:-3]
+                            api_stat=api_stat-int(god_stat)
+        api_stat=api_stat+max([stat_dic["status"][2]["value"],stat_dic["status"][3]["value"]])
         max_stat=job_detail[class_name][job_name][3]
         stat_dif=api_stat-max_stat
         stat_score=1+stat_dif/100*0.0078
@@ -172,7 +187,6 @@ def make_profile(name,server):
     
         ##3번 속강
         fire_enchant=0;ice_enchant=0;light_enchant=0;dark_enchant=0;all_enchant=0;enchant_show='';
-        patt_enchant=0;matt_enchant=0;iatt_enchant=0
         ele_enchant_parts=['무기','칭호','목걸이','팔찌','반지','마법석']
         att_enchant_parts=['무기','상의','하의','보조장비']
         for now_equ in equipment_dic["equipment"]:
@@ -254,7 +268,7 @@ def make_profile(name,server):
         if final_enchant==dark_enchant: enchant_show=enchant_show+'암';main_ele='암'
         if final_enchant==all_enchant: enchant_show='모';main_ele='모'
         enchant_show=enchant_show+'속작'
-        enchant_score=((now_ele+final_enchant)*0.0045+1.05)/((now_ele+158)*0.0045+1.05)
+        enchant_score=((no_enchant_ele+final_enchant)*0.0045+1.05)/((no_enchant_ele+158)*0.0045+1.05) ##no_enchant_ele=200
 
         if final_enchant==158: enchant_rank='S' # 15 30 30 30 20 6 / 20 7
         elif final_enchant>=158-23: enchant_rank='A' # 12 25 25 25 15 6 / 20 7
@@ -263,31 +277,67 @@ def make_profile(name,server):
         else: enchant_rank='D'
 
 
-        
+        ##4번 패시브 레벨링작/스킬칭호 분석
         eff_list=[]
         plt_now=plt_dict[job_calc_name[:-4]]
         plt_now_dict={}
+        plt_for_title=[]
         for i in range(len(plt_now)):
             temp_eff=1/(1+2*float(plt_now[i]["up_value"]))
+            if plt_now[i]["tier"]=='1': plt_for_title.append(plt_now[i]["name"])
             eff_list.append(temp_eff)
             plt_now_dict[plt_now[i]["name"]]=[float(plt_now[i]["up_value"]),plt_now[i]["tier"],plt_now[i]["reqlvl"]]
         plt_score=min(eff_list)
+        if job_calc_name[:-4]=='패황': plt_for_title.append('화염의 각')
+        if job_calc_name[:-4]=='마제스티':
+            if wep_type=='소검':
+                plt_score=1/(1+2*0.018996786042240643);del plt_now_dict['견고의 대검 마스터리'],plt_now_dict['파쇄의 둔기 마스터리'],plt_now_dict['쾌속의 도 마스터리']
+            elif wep_type=='둔기':
+                plt_score=1/(1+2*0.01908396946564883);del plt_now_dict['견고의 대검 마스터리'],plt_now_dict['쾌속의 도 마스터리'],plt_now_dict['속성의 소검 마스터리']
+            elif wep_type=='도':
+                plt_score=1/(1+2*0.01911288457089988);del plt_now_dict['견고의 대검 마스터리'],plt_now_dict['파쇄의 둔기 마스터리'],plt_now_dict['속성의 소검 마스터리']
+            elif wep_type=='대검':
+                del plt_now_dict['쾌속의 도 마스터리'],plt_now_dict['파쇄의 둔기 마스터리'],plt_now_dict['속성의 소검 마스터리']
+        elif job_calc_name[:-4]=='알키오네':
+            if wep_type=='쌍검':
+                del plt_now_dict['단검 마스터리']
+            elif wep_type=='단검':
+                plt_score=1/(1+2*0.02208466696783562);del plt_now_dict['쌍검 마스터리']
+        elif job_calc_name[:-4]=='다크나이트':
+            if wep_type=='소검':
+                plt_score=1/(1+2*0.00929235167977116)
+                del plt_now_dict['어둠의 대검 마스터리'],plt_now_dict['어둠의 광검 마스터리'],plt_now_dict['어둠의 둔기 마스터리'],plt_now_dict['어둠의 도 마스터리']
+            elif wep_type=='둔기':
+                plt_score=1/(1+2*0.008746355685131268)
+                del plt_now_dict['어둠의 대검 마스터리'],plt_now_dict['어둠의 광검 마스터리'],plt_now_dict['어둠의 소검 마스터리'],plt_now_dict['어둠의 도 마스터리']
+            elif wep_type=='도':
+                plt_score=1/(1+2*0.008746355685131268)
+                del plt_now_dict['어둠의 대검 마스터리'],plt_now_dict['어둠의 광검 마스터리'],plt_now_dict['어둠의 둔기 마스터리'],plt_now_dict['어둠의 소검 마스터리']
+            elif wep_type=='대검':
+                plt_score=1/(1+2*0.008746355685131268)
+                del plt_now_dict['어둠의 소검 마스터리'],plt_now_dict['어둠의 광검 마스터리'],plt_now_dict['어둠의 둔기 마스터리'],plt_now_dict['어둠의 도 마스터리']
+            elif wep_type=='광검':
+                plt_score=1/(1+2*0.009845288326300938)
+                del plt_now_dict['어둠의 대검 마스터리'],plt_now_dict['어둠의 소검 마스터리'],plt_now_dict['어둠의 둔기 마스터리'],plt_now_dict['어둠의 도 마스터리']
         plt_list=list(plt_now_dict.keys())
 
-        ##4번 패시브 레벨링작/스킬칭호 분석
+        
         title_up=0;plt_name_list=['없음','없음'];tgtg=0
         passive_list=job_detail[class_name][job_name][4]
         passive_up=job_detail[class_name][job_name][5]
-        plt_score_up=0
+        plt_score_up=0;enchant_bonus=1
         for now_equ in equipment_dic["equipment"]:
             if now_equ.get("slotName")=="칭호":
                 if now_equ.get("enchant")!=None:
                     if now_equ.get("enchant").get("reinforceSkill")!=None:
                         skill_name=now_equ["enchant"]["reinforceSkill"][0]["skills"][0]["name"]
                         skill_up=now_equ["enchant"]["reinforceSkill"][0]["skills"][0]["value"]
-                        if passive_list.count(skill_name)!=0 and skill_up==2:
-                            title_in='스킬칭호'  #스킬칭호
-                            title_up=passive_up   #스킬칭호효율 X.XX
+                        if plt_for_title.count(skill_name)!=0 and skill_up==2:
+                            title_in="스킬칭호"
+                            title_up=passive_up
+                            enchant_bonus=1.0102505694760821 ## 속강 6 보정해주는거임
+                            enchant_score=enchant_score*enchant_bonus
+                            
         avatar_list=avatar_dic.get("avatar")
         plt_rank_list=['D','D']
         for i in range(len(avatar_list)):
@@ -305,26 +355,28 @@ def make_profile(name,server):
                                 else:
                                     plt_rank_list[tgtg]='B'
                             else:
-                                plt_score_up=plt_score_up+0.5
+                                plt_score_up=plt_score_up+0.005
                                 plt_rank_list[tgtg]='B'
-                        elif now_emb.get("itemRarity")=="언커먼":
+                        elif now_emb.get("slotColor")=="플래티넘" and now_emb.get("itemRarity")=="언커먼":
                             plt_name_list[tgtg]='언커먼'
                             plt_rank_list[tgtg]='C'
                 except: pass
                 if job_calc_name[:-4]=='다크나이트':
                     if avatar_list[i].get("optionAbility")=="차원일치 스킬Lv +1":
                         dark_knight_pas2+=1
-                    
                 tgtg+=1
+                
         plt_score=plt_score*(1+plt_score_up)
         plt_rank_str=''.join(plt_rank_list)
         if plt_rank_str=='SS': plt_rank='S'
         elif plt_rank_str=='SA' or plt_rank_str=='AS' or plt_rank_str=='AA': plt_rank='A'
         elif plt_rank_str=='BA' or plt_rank_str=='AB' or plt_rank_str=='BB': plt_rank='B'
         elif plt_rank_str=='BC' or plt_rank_str=='CB' or plt_rank_str=='CC': plt_rank='C'
-        elif plt_rank_str=='DD': plt_rank='D'
+        else: plt_rank='D'
+        
         ##5번 룬/탈리스만
-        cha_tal=['없음','없음'];ttgg=0;tal_score=1/1.03/1.03/1.003/1.003/1.003/1.003/1.003/1.003
+        cha_tal=['없음','없음'];ttgg=0
+        tal_score=1/1.03/1.03;rune_score=1/1.003/1.003/1.003/1.003/1.003/1.003
         tal_rarity=['C','C'];rune_rarity=['C','C','C','C','C','C'];ttgg2=0
         talisman_list=talisman_dic.get("talismans")
         if talisman_list!=None:
@@ -341,22 +393,24 @@ def make_profile(name,server):
                         tal_rarity[ttgg]='S'
                     for k in range(0,3):
                         try:
-                            if now_tal.get("runes")[k].get("itemName")[0:3]=='선명한': tal_score=tal_score*1.003;rune_rarity[ttgg2]='S'
-                            if now_tal.get("runes")[k].get("itemName")[0:3]=='빛바랜': tal_score=tal_score*1.002;rune_rarity[ttgg2]='A'
-                            if now_tal.get("runes")[k].get("itemName")[0:3]=='갈라진': tal_score=tal_score*1.001;rune_rarity[ttgg2]='B'
+                            if now_tal.get("runes")[k].get("itemName")[0:3]=='선명한': rune_score=rune_score*1.003;rune_rarity[ttgg2]='S'
+                            if now_tal.get("runes")[k].get("itemName")[0:3]=='빛바랜': rune_score=rune_score*1.002;rune_rarity[ttgg2]='A'
+                            if now_tal.get("runes")[k].get("itemName")[0:3]=='갈라진': rune_score=rune_score*1.001;rune_rarity[ttgg2]='B'
                         except:pass
                         ttgg2=ttgg2+1
                     ttgg=ttgg+1
                 except: pass
+        if rune_rarity.count('S')>=4: rune_score=1
+        tal_score=tal_score*rune_score
         if tal_score==1: tal_rank='S'
         elif tal_score>=1/1.003/1.003/1.003/1.003/1.003/1.003: tal_rank='A'
         elif tal_score>=1/1.003/1.003/1.003/1.003/1.003/1.003/1.03/1.03*1.02*1.02: tal_rank='B'
         elif tal_score>=1/1.003/1.003/1.003/1.003/1.003/1.003/1.03/1.03*1.02: tal_rank='C'
         else: tal_rank='D'
-        if rune_rarity.count('S')>=4: tal_score=1
+                
         att_enchant=max([patt_enchant,matt_enchant,iatt_enchant])
         att_score=(4800+att_enchant-245)/4800
-        final_stat_score=stat_score*final_rein_score*att_score
+        final_stat_score=stat_score*((final_rein_score-1)+(att_score-1)+1)
 
         
         ##계산 영역
@@ -364,7 +418,7 @@ def make_profile(name,server):
         extra_dam=0;extra_cri=0;extra_bon=0;extra_all=0;extra_att=0;extra_sta=0;extra_pas2=0;extra_final=0
         fixed_dam=0;fixed_cri=0
         
-        ele_skill=int(opt_job_ele[job_calc_name][1])
+        ele_skill=0
         ele_in=158+10+13
         betterang=34
         cool_eff=0.5
@@ -409,8 +463,7 @@ def make_profile(name,server):
                 else: siroco_equ.append('0')
         for now_equ in equipment_dic["equipment"]:
             if now_equ.get("slotName")=='무기':
-                wep_name=now_equ.get("itemName")
-                wep_type=now_equ.get("itemTypeDetail").replace(" ", "")
+                
                 if now_equ.get("sirocoInfo")!=None:
                     smell1=now_equ["sirocoInfo"]["options"][0]["explain"]
                     smell2=now_equ["sirocoInfo"]["options"][1]["explain"]
@@ -500,7 +553,7 @@ def make_profile(name,server):
         for code in ['31','32','33']:
             if equ_exist.count(code)==0: cha_equ.append(code+'380')
         if wep_exist==0:
-            wep_name='검은 성전의 기억'
+            wep_name='검은 성전/흑천'
             cha_equ.append('111001')
 
         if len(siroco_equ)!=4:
@@ -546,11 +599,6 @@ def make_profile(name,server):
                 setapp(str(i)+"1")
             if setcount(str(i))==5:
                 setapp(str(i)+"2")
-        if onecount('32390650')==1:
-            if onecount('21390340')==1:
-                setapp('1401')
-            elif onecount('31390540')==1:
-                setapp('1401')
         base_array=np.array([0,0,extra_dam,extra_cri,extra_bon,0,extra_all,extra_att,extra_sta,ele_in,0,1,0,0,0,0,0,0,extra_pas2,0,0,0,0,0,0,0,0,0])
         ult_1=0;ult_2=0;ult_3=0;ult_skiper=0
         skiper=0
@@ -635,6 +683,11 @@ def make_profile(name,server):
                     if onecount(nature)==1:
                         base_array[9]=base_array[9]+24
                         break
+        if onecount('32390650')==1:
+            if onecount('21390340')==1:
+                base_array[5]=base_array[5]+7
+            elif onecount('31390540')==1:
+                base_array[5]=base_array[5]+7
         
         base_array[11]=skiper
         base_array[2]=max_damper+base_array[2]
@@ -656,12 +709,10 @@ def make_profile(name,server):
                 paslvl*((54500+3.31*base_array[0])/54500)*((4800+base_array[1])/4800)/(1.05+0.0045*int(ele_skill)))*(1+extra_final/100)
         final_damage=damage*((base_array[12]+(actlvl-1)*100+ult_skiper)/100+1)
         final_damage_cool=final_damage*((100/(100-coolper)-1)*cool_eff+1)
-        damage_not_ele=final_damage*(1.05+0.0045*int(ele_skill))/(base_array[9]*0.0045+1.05)*((base_array[9]-int(ele_skill))*0.0045+1.05)/1.05*(real_bon_not_ele/100+1)/(base_array[4]/100+1)
-        cool_damage_not_ele=final_damage_cool*(1.05+0.0045*int(ele_skill))/(base_array[9]*0.0045+1.05)*((base_array[9]-int(ele_skill))*0.0045+1.05)/1.05*(real_bon_not_ele/100+1)/(base_array[4]/100+1)
 
         if job_calc_name[:-4]=='다크나이트': ## 닼나 특수식
             base_array[18]=base_array[18]+dark_knight_pas2
-            for pas2_in_dungeon in ['14060','15320','23170','23330','1102','1103','1212','1282','1282']:
+            for pas2_in_dungeon in ['15320','23170','23330','1102','1103','1212','1282','1282']:
                 if onecount(pas2_in_dungeon)==1 or set_oncount(pas2_in_dungeon)==1:
                     base_array[18]=base_array[18]-1
                    
@@ -675,7 +726,7 @@ def make_profile(name,server):
         final_score=swi_score*final_stat_score*enchant_score*plt_score*tal_score
         str_result=(name+' / '+class_name+' / '+job_name+'\n'
                     '스위칭 점수= '+swi_skillname+' ('+show_swi+str(swi_skilllvl)+'렙)'+' ['+str(round(swi_score*100,2))+' %]\n'
-                    '스탯 점수= '+wep_show+' / '+stat_show+' ['+str(round(final_stat_score*100,2))+'%]\n'
+                    '스탯 점수= '+wep_show+' (마부-'+str(int(245-att_enchant))+') / '+stat_show+' ['+str(round(final_stat_score*100,2))+'%]\n'
                     '속강 점수= '+enchant_show+'+'+str(final_enchant)+' ['+str(round(enchant_score*100,2))+'%]\n'
                     '플티= '+plt_name_list[0]+' / '+plt_name_list[1]+' ['+str(round(plt_score*100,2))+'%]\n'
                     '탈리스만= '+cha_tal[0]+' / '+cha_tal[1]+' ['+str(round(tal_score*100,2))+'%]\n'
@@ -693,7 +744,7 @@ def make_profile(name,server):
         elif final_stat_score>=0.94: stat_rank='B'
         elif final_stat_score>=0.91: stat_rank='C'
         else: stat_rank='D'
-        #print(str_result)
+        #print(cha_equ)
         result_dict={'캐릭명':name,
                      '모험단':adventure_name,
                      '직업군':class_name,
@@ -722,7 +773,7 @@ def make_profile(name,server):
                      '룬상세':rune_rarity,
                      '종합점수':str(round(float(final_score*100),2))+'%',
                      '장비':cha_equ,
-                     '장비딜':str(int(cool_damage_not_ele*100))+'%',
+                     '장비딜':str(int(final_damage_cool*100))+'%',
                      '쿨감':str(round(float(coolper),1))+'%',}
         """
         for i in range(len(result_dict.keys())):
@@ -741,97 +792,97 @@ def make_profile(name,server):
 """
 job_detail={
     '귀검사(남)':{
-        '眞 웨펀마스터':[2,82,0,4192,['검기상인'],6.66,'검신',['검기상인'],['무기의 극의'],3.57],
-        '眞 버서커':[2,116,1,4067,[''],0,'블러드이블',['혈십자','프렌지'],['갈증'],2.73],
-        '眞 소울브링어':[3,69,0,4144,[''],0,'다크로드',['달의 커튼','몽롱한 눈의 브레멘'],['도 마스터리'],1.6],
-        '眞 아수라':[6,58,1,4201,[''],0,'인다라천',['파동각인','정신이 번쩍!'],[''],3.01],
-        '眞 검귀':[2,100,0,4056,[''],0,'악귀나찰',['청혈투귀','검귀의 도 마스터리'],[''],3.28]
+        '眞 웨펀마스터':[2,82,0,4192,[''],6.66,'검신',[''],[''],3.57],
+        '眞 버서커':[2,116,1,4067,[''],5.28,'블러드이블',[''],[''],2.73],
+        '眞 소울브링어':[3,69,0,4144,[''],4.86,'다크로드',[''],[''],1.6],
+        '眞 아수라':[6,58,1,4201,[''],4.38,'인다라천',[''],[''],3.01],
+        '眞 검귀':[2,100,0,4056,[''],6.37,'악귀나찰',[''],[''],3.28]
         },
     '귀검사(여)':{
-        '眞 소드마스터':[2,71,0,4189,[''],0,'마제스티',['견고의 대검 마스터리','속성의 소검 마스터리','쾌속의 도 마스터리','파쇄의 둔기 마스터리'],['마검일체'],3.92],
-        '眞 데몬슬레이어':[1,100,0,4013,[''],0,'디어사이드',['마검제어'],['파천세'],3.77],
-        '眞 다크템플러':[1,65,0,4071,[''],0,'네메시스',['우시르의 저주','이보브'],[''],3.51],
-        '眞 베가본드':[3,25,0,4003,['삼화취정'],9.09,'검제',['삼화취정'],[''],6.45]  #5중첩
+        '眞 소드마스터':[2,71,0,4189,[''],5.76,'마제스티',[''],[''],3.92],
+        '眞 데몬슬레이어':[1,100,0,4013,[''],5.45,'디어사이드',[''],3.77],
+        '眞 다크템플러':[1,65,0,4071,[''],5.08,'네메시스',[''],[''],3.51],
+        '眞 베가본드':[3,25,0,4003,[''],9.09,'검제',[''],[''],6.45]  #5중첩
         },
     '격투가(남)':{
-        '眞 스트라이커':[3,104,0,4163,['화염의 각'],6.77,'패황',['머슬 시프트'],[''],2.5],
-        '眞 스트리트파이터':[7,79,0,4002,[''],0,'명왕',['클로 마스터리','도발'],[''],3.15],
-        '眞 그래플러':[2,108,0,4186,['강렬한 테이크 다운'],6.31,'그랜드마스터',['강렬한 테이크 다운','임팩트 콤비네이션'],[''],3.28],
-        '眞 넨마스터':[3,43,0,4201,[''],0,'염황광풍제월',['나선의 넨'],['뇌명 : 사나운 빛의 넨수'],3.53] #2번 속강(86)도 있음
+        '眞 스트라이커':[3,104,0,4163,['화염의 각'],6.77,'패황',[''],[''],2.5],
+        '眞 스트리트파이터':[7,79,0,4002,[''],4.58,'명왕',[''],[''],3.15],
+        '眞 그래플러':[2,108,0,4186,[''],6.31,'그랜드마스터',[''],[''],3.28],
+        '眞 넨마스터':[3,43,0,4201,[''],5.15,'염황광풍제월',[''],[''],3.53] #2번 속강(86)도 있음
         },
     '격투가(여)':{
-        '염제 폐월수화':[3,57,0,4126,[''],0,'염제폐월수화',['나선의 넨'],['뇌명 : 사나운 빛의 넨수'],3.51], #4번 속강(86)도 있음
-        '카이저':[4,113,0,4188,['급소 지정'],6.44,'카이저',['급소 지정'],['머슬 시프트'],3.54],
-        '용독문주':[5,850,0,4127,[''],0,'용독문주',['클로 마스터리','도발'],[''],1.6], #독 바르기 공격력 변화율 (증가율이 아님,독비중 50% 기준 평균산출 필요)
-        '얼티밋 디바':[2,107,1,4095,[''],0,'얼티밋디바',['강렬한 테이크 다운','파워 슬램'],[''],3.57]
+        '염제 폐월수화':[3,57,0,4126,[''],5.15,'염제폐월수화',[''],[''],3.51], #4번 속강(86)도 있음
+        '카이저':[4,113,0,4188,[''],6.44,'카이저',[''],[''],3.54],
+        '용독문주':[5,850,0,4127,[''],2.36,'용독문주',[''],[''],1.6], #독 바르기 공격력 변화율 (증가율이 아님,독비중 50% 기준 평균산출 필요)
+        '얼티밋 디바':[2,107,1,4095,[''],6.93,'얼티밋디바',[''],[''],3.57]
         },
     '거너(남)':{
-        '眞 스핏파이어':[1,84,0,3926,[''],0,'커맨더',['병기 숙련'],['매거진 드럼','G-35L 섬광류탄'],3.57],
-        '眞 메카닉':[4,85,0,4084,[''],0,'프라임',['아크리액터'],['로봇 엔지니어링'],3.15],
-        '眞 런처':[3,95,0,4203,['중화기 마스터리'],7.54,'디스트로이어',['중화기 마스터리'],['오버부스트 팩'],5.14],
-        '眞 레인저':[2,125,0,4144,['스타일리쉬','리볼버 강화'],6.93,'레이븐',['스타일리쉬','리볼버 강화'],[''],3.57]
+        '眞 스핏파이어':[1,84,0,3926,[''],6.05,'커맨더',[''],[''],3.57],
+        '眞 메카닉':[4,85,0,4084,[''],4.58,'프라임',[''],[''],3.15],
+        '眞 런처':[3,95,0,4203,[''],7.54,'디스트로이어',[''],[''],5.14],
+        '眞 레인저':[2,125,0,4144,[''],6.93,'레이븐',[''],[''],3.57]
         },
     '거너(여)':{
-        '크림슨 로제':[2,125,0,3994,['스타일리쉬','리볼버 강화'],6.93,'크림슨로제',['스타일리쉬','리볼버 강화'],[''],3.57],
-        '스톰 트루퍼':[3,95,0,4078,['중화기 마스터리'],7.54,'스톰트루퍼',['중화기 마스터리'],['APG-63'],5.14],
-        '프레이야':[1,84,1,3941,[''],0,'프레이야',['병기 숙련'],['매거진 드럼','G-35L 섬광류탄'],3.57],
-        '옵티머스':[4,85,0,4084,[''],0,'옵티머스',['트랜스포메이션','하이테크놀로지'],[''],2.73]
+        '크림슨 로제':[2,125,0,3994,[''],6.93,'크림슨로제',[''],[''],3.57],
+        '스톰 트루퍼':[3,95,0,4078,[''],7.54,'스톰트루퍼',[''],[''],5.14],
+        '프레이야':[1,84,1,3941,[''],6.05,'프레이야',[''],[''],3.57],
+        '옵티머스':[4,85,0,4084,[''],4.15,'옵티머스',[''],[''],2.73]
         },
     '마법사(남)':{
-        '어센션':[2,85,1,4200,[''],0,'어센션',['도그마 디바이스'],['괴리 : 디멘션 할로우'],3.42],
-        '아이올로스':[1,111,0,3977,[''],0,'아이올로스',['태풍의 전조','휘몰아치는 질풍의 봉 마스터리'],[''],3.3],
-        '뱀파이어 로드':[2,97,0,4018,['블러드','블러드 혼'],7.21,'뱀파이어로드',['블러드','블러드 혼'],[''],3.64],
-        '이터널':[2,80,0,4105,[''],0,'이터널',['발현'],['프로즌웨폰 마스터리','아이스 로드'],3.57],
-        '오블리비언':[1,107,0,4100,[''],0,'오블리비언',['원소의 이해'],['원소 융합','엘레멘탈 실드'],3.33]
+        '어센션':[2,85,1,4200,[''],5.84,'어센션',[''],[''],3.42],
+        '아이올로스':[1,111,0,3977,[''],4.76,'아이올로스',[''],[''],3.3],
+        '뱀파이어 로드':[2,97,0,4018,[''],7.21,'뱀파이어로드',[''],[''],3.64],
+        '이터널':[2,80,0,4105,[''],5.73,'이터널',[''],[''],3.57],
+        '오블리비언':[1,107,0,4100,[''],5.18,'오블리비언',[''],[''],3.33]
         },
     '마법사(여)':{
-        '지니위즈':[2,92,1,4056,[''],0,'지니위즈',['퍼밀리어와 친하게 지내기'],['쇼타임','스위트 캔디바'],3.57],
-        '아슈타르테':[2,79,0,4283,['창 마스터리','봉 마스터리','니우의 전투술'],6.77,'아슈타르테',['창 마스터리','봉 마스터리','니우의 전투술'],[''],3.33],
-        '오버마인드':[5,85,0,4193,[''],0,'오버마인드',['속성 마스터리'],['쇼타임'],3.07],
-        '이클립스':[2,79,0,4076,[''],0,'이클립스',['교감','환수 강화 오라'],['정령소환 : 융합정령 헤일롬'],3.42],
+        '지니위즈':[2,92,1,4056,[''],6.11,'지니위즈',[''],[''],3.57],
+        '아슈타르테':[2,79,0,4283,[''],6.77,'아슈타르테',[''],[''],3.33],
+        '오버마인드':[5,85,0,4193,[''],4.46,'오버마인드',[''],[''],3.07],
+        '이클립스':[2,79,0,4076,[''],6.23,'이클립스',[''],[''],3.42],
         '헤카테':[0,0,1,4060,[''],0,'(버프)헤카테',[''],[''],0] # 조회 불가 직업
         },
     '프리스트(남)':{
-        '태을선인':[2,76,0,4079,[''],0,'태을선인',['퇴마의 서'],['거병 마스터리'],2.35],
-        '이모탈':[1,90,0,4048,['환청'],6.47,'이모탈',['환청'],['낫 마스터리'],4.51],
-        '저스티스':[2,66,0,4073,[''],0,'저스티스',['윌 드라이버'],['테크니컬 마스터리'],3.24], #api의 1.5배가 실적용 수치
-        '세인트':[2,97,1,3906,[''],0,'세인트',['용기의 은총'],['굳건한 의지'],3.42] # 배크만 조회가능, 리스트 갯수 18번까지 있음
+        '태을선인':[2,76,0,4079,[''],3.43,'태을선인',[''],[''],2.35],
+        '이모탈':[1,90,0,4048,[''],6.47,'이모탈',[''],[''],4.51],
+        '저스티스':[2,66,0,4073,[''],6.14,'저스티스',[''],[''],3.24], #api의 1.5배가 실적용 수치
+        '세인트':[2,97,1,3906,[''],5.06,'세인트',[''],[''],3.42] # 배크만 조회가능, 리스트 갯수 18번까지 있음
         },
     '프리스트(여)':{
         '세라핌':[0,0,1,4093,[''],0,'(버프)세라핌',[''],[''],0], # 조회 불가 직업
-        '인페르노':[3,93,0,4064,['성화'],7.76,'인페르노',['성화','배틀액스 마스터리'],[],4.14],
-        '천선낭랑':[1,108,0,4167,['법력 강화','천녀기우제'],6.61,'천선낭랑',['법력 강화','천녀기우제'],[''],3.33],
-        '리디머':[12,87.5,0,4098,['죄업에 짓눌린 육신'],6.95,'리디머',['짊어진 자의 낫 마스터리','죄업에 짓눌린 육신'],[''],3.57] # 시너지 (투기에 가득찬 분노)
+        '인페르노':[3,93,0,4064,[''],7.76,'인페르노',[''],[''],4.14],
+        '천선낭랑':[1,108,0,4167,[''],6.61,'천선낭랑',[''],[''],3.33],
+        '리디머':[12,87.5,0,4098,[''],6.95,'리디머',[''],[''],3.57] # 시너지 (투기에 가득찬 분노)
         },
     '도적':{
-        '그림리퍼':[3,103,0,4302,['날카로운 단검'],6.77,'그림리퍼',['날카로운 단검'],['암살 기술'],3.77],
-        '시라누이':[2,104,0,4133,[''],0,'시라누이',['인법 : 잔영 남기기'],['차크라 웨펀 숙련','화염의 인','암영술'],3.92],
-        '타나토스':[1,114,0,4047,[''],0,'타나토스',['발라크르의 맹약'],['어둠의 고리'],2.57],
-        '알키오네':[2,77,0,4235,['쌍검 마스터리','단검 마스터리'],7.39,'알키오네',['쌍검 마스터리','단검 마스터리'],['히트앤드'],4.88]
+        '그림리퍼':[3,103,0,4302,[''],6.77,'그림리퍼',[''],[''],3.77],
+        '시라누이':[2,104,0,4133,[''],5.66,'시라누이',[''],[''],3.92],
+        '타나토스':[1,114,0,4047,[''],2.91,'타나토스',[''],[''],2.57],
+        '알키오네':[2,77,0,4235,[''],7.39,'알키오네',[''],[''],4.88]
         },
     '나이트':{
-        '세이비어':[2,89,0,4147,['세라픽 페더','세라픽 폴'],6.95,'세이비어',['세라픽 페더','세라픽 폴'],[''],3.57],
-        '드레드노트':[2,85,1,4142,[''],0,'드레드노트',['아스트라 소환','대식가'],[''],3.57],
-        '가이아':[2,102,0,3956,[''],0,'가이아',['체인러시','강인한 신념'],[''],3.08],
-        '마신':[3,100,1,4001,['혼혈'],6.39,'마신',['혼혈'],['힘의 논리'],3.57]
+        '세이비어':[2,89,0,4147,[''],6.95,'세이비어',[''],[''],3.57],
+        '드레드노트':[2,85,1,4142,[''],5.17,'드레드노트',[''],[''],3.57],
+        '가이아':[2,102,0,3956,[''],4.41,'가이아',[''],[''],3.08],
+        '마신':[3,100,1,4001,[''],6.39,'마신',[''],[''],3.57]
         },
     '다크나이트':{
-        '자각2':[2,54,0,4019,[''],0,'다크나이트',['어둠의 대검 마스터리','어둠의 광검 마스터리','어둠의 소검 마스터리','어둠의 도 마스터리','어둠의 둔기 마스터리'],[''],1.86]
+        '자각2':[2,54,0,4019,[''],2.74,'다크나이트',[''],[''],1.86]
         },
     '크리에이터':{
-        '자각2':[1,66,1,4089,['계열 강화'],6.89,'크리에이터',['계열 강화'],['상상력'],3.77]
+        '자각2':[1,66,1,4089,[''],6.89,'크리에이터',[''],[''],3.77]
         },
     '마창사':{
-        '제노사이더':[2,85,0,4071,['광창 마스터리','헌터즈 샤프니스'],6.52,'제노사이더',['광창 마스터리','헌터즈 샤프니스'],[''],3.15],
-        '에레보스':[2,93,0,4187,[''],0,'에레보스',['어둠의 투창 마스터리'],['잠식','마창 폭주'],3.28],
-        '듀란달':[1,100,0,4055,[''],0,'듀란달',['장창 숙련','미라지 부스트'],[''],3.42],
-        '워로드':[2,80,0,4183,[''],0,'워로드',['마창 제어','임팩트 스매쉬'],[''],4.16]
+        '제노사이더':[2,85,0,4071,[''],6.52,'제노사이더',[''],[''],3.15],
+        '에레보스':[2,93,0,4187,[''],5.32,'에레보스',[''],[''],3.28],
+        '듀란달':[1,100,0,4055,[''],4.96,'듀란달',[''],[''],3.42],
+        '워로드':[2,80,0,4183,[''],6.01,'워로드',[''],[''],4.16]
         },
     '총검사':{
-        '언터처블':[2,100,0,3988,[''],0,'언터처블',['중검 마스터리'],['화약 다루기'],3.92],
-        '갓파더':[2,85,0,4056,[''],0,'갓파더',['장도 마스터리','숙련된 전문가'],[''],3.15],
-        '패스파인더':[2,100,0,4182,['인젝션','코어 블레이드 마스터리'],6.35,'패스파인더',['인젝션','코어 블레이드 마스터리'],[''],3.2],
-        '레퀴엠':[2,100,0,4123,['소태도 마스터리'],6.57,'레퀴엠',['요원의 전투술','소태도 마스터리'],[''],3.42]
+        '언터처블':[2,100,0,3988,[''],5.66,'언터처블',[''],[''],3.92],
+        '갓파더':[2,85,0,4056,[''],4.58,'갓파더',[''],[''],3.15],
+        '패스파인더':[2,100,0,4182,[''],6.35,'패스파인더',[''],[''],3.2],
+        '레퀴엠':[2,100,0,4123,[''],6.57,'레퀴엠',[''],[''],3.42]
         }
     }
 """
@@ -919,11 +970,12 @@ refine_eff={
         '0':'0.880208333333333',
         '1':'0.904019083333333‬',
         '2':'0.927903625',
-        '3':'0.951861958333333',
-        '4':'0.975894083333333‬',
+        '3':'0.9518619583333',
+        '4':'0.9758940833333‬',
         '5':'1.0',
-        '6':'1.02417970833333‬',
-        '7':'1.04843320833333‬',
+        '6':'1.024179708',
+        '7':'1.048433208‬',
         '8':'1.0727605'
         }
     }
+

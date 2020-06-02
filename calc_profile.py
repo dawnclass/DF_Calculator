@@ -555,7 +555,6 @@ def make_profile(name,server):
         if wep_exist==0:
             wep_name='검은 성전/흑천'
             cha_equ.append('111001')
-
         if len(siroco_equ)!=4:
             siroco_equ=['4','0','0','0']
         cha_equ.append(''.join(siroco_equ))
@@ -563,7 +562,7 @@ def make_profile(name,server):
         getone=opt_one.get
         set_list=[]
         for item in cha_equ:
-            if len(item)!=6: set_list.append('1'+item[2:4])
+            if len(item)!=6 and len(item)!=4: set_list.append('1'+item[2:4])
         set_val=Counter(set_list)
         del set_val['136'],set_val['137'],set_val['138'],set_val['144'],set_val['145'],set_val['146'],set_val['147'],set_val['148'],set_val['149']
         setopt_num=sum([floor(x*0.7) for x in set_val.values()])
@@ -978,4 +977,3 @@ refine_eff={
         '8':'1.0727605'
         }
     }
-

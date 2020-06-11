@@ -1,5 +1,5 @@
-now_version="3.3.1"
-ver_time='200602'
+now_version="3.3.2"
+ver_time='200605'
 
 #-*- coding: utf-8 -*-
 ## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
@@ -26,7 +26,7 @@ from collections import Counter
 from math import floor
 import webbrowser
 import cv2
-from PIL import Image,ImageTk,ImageEnhance,ImageGrab
+from PIL import Image,ImageTk,ImageEnhance,ImageGrab,ImageDraw,ImageFont
 import random
 import calc_update
 import calc_list_wep,calc_list_job,calc_fullset,calc_setlist,calc_gif,calc_profile
@@ -769,8 +769,8 @@ def calc(mode):
     all_list_list_num=0
     all_list_list=[]
 
-##풀셋모드##
-##########################################################################################################################
+    ##풀셋모드##
+    ##########################################################################################################################
     if select_perfect.get() == '풀셋모드(매우빠름)' or select_perfect.get() == '메타몽풀셋모드':
         active_bang5_0=[];active_bang5_1=[]
         active_bang2_0=[];active_bang3_1_0=[];active_bang3_1_1=[];active_bang3_2=[];active_bang3_3=[] #1:상의(1_1:신화), 2:하의, 3:신발 / 포함 어벨
@@ -1046,8 +1046,8 @@ def calc(mode):
                 return
         
     else:
-##레전기본값##
-##########################################################################################################################
+    ##레전기본값##
+    ##########################################################################################################################
     
         global default_legend,default_chawon,default_old
         if default_legend==1:
@@ -1260,7 +1260,7 @@ def calc(mode):
 
         all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
 
-#########################################################################################################################
+    #########################################################################################################################
 
     for i in all_list_list:
         all_list_list_num=all_list_list_num+int(i[2])
@@ -1287,7 +1287,7 @@ def calc(mode):
         set_perfect=1
 
 
-#########################################################################################################################계산 시작
+    #########################################################################################################################계산 시작
 
     for i in range(0,76):  ## 무기 
         if wep_select.get() == wep_list[i]:
@@ -3911,6 +3911,185 @@ def stop_calc():
     time.sleep(1)
     exit_calc=0
 
+def add_image(bg_img,add_img,xtop,ytop,anchor):
+    xsize=len(add_img[0])
+    xsize_half=xsize/2
+    ysize=len(add_img)
+    ysize_half=ysize/2
+    bg_xsize=len(bg_img[0])
+    bg_ysize=len(bg_img)
+    ori_start_x=0;ori_end_x=xsize
+    ori_start_y=0;ori_end_y=ysize
+    if anchor=='nw':
+        start_x=xtop;end_x=xtop+xsize
+        start_y=ytop;end_y=ytop+ysize
+    elif anchor=='c':
+        start_x=int(xtop-xsize_half);end_x=int(xtop+xsize_half)
+        start_y=int(ytop-ysize_half);end_y=int(ytop+ysize_half)
+
+    if start_x<0: ori_start_x=-start_x;start_x=0
+    if start_y<0: ori_start_y=-start_y;start_y=0
+    if end_x>bg_xsize: ori_end_x=xsize-(end_x-bg_xsize);end_x=bg_xsize
+    if end_y>bg_ysize: ori_end_y=ysize-(end_y-bg_ysize);end_y=bg_ysize
+
+    
+    temp_add=add_img[ori_start_y:ori_end_y,ori_start_x:ori_end_x]
+    temp_gray=cv2.cvtColor(temp_add,cv2.COLOR_BGR2GRAY)
+    ret, mask=cv2.threshold(temp_gray,5,255,cv2.THRESH_BINARY)
+    mask_inv=cv2.bitwise_not(mask)
+    temp_bg=bg_img[start_y:end_y,start_x:end_x]
+    temp_bg=cv2.bitwise_and(temp_bg,temp_bg,mask=mask_inv)
+    temp_add=cv2.bitwise_and(temp_add,temp_add,mask=mask)
+    dst=cv2.add(temp_bg,temp_add)
+    bg_img[start_y:end_y,start_x:end_x]=dst
+    return bg_img
+
+def make_profile_image(name,server,def_result):
+    setting_str=def_result[0]
+    setting_dict=def_result[1]
+    cha_background=cv2.imread('ext_img/bg_info.png',-1)
+    cha_img=cv2.imread('my_cha.png',-1)
+    result_img=add_image(cha_background,cha_img,123,70,'c')
+
+    #####
+    image_on={}
+    for i in [11,12,13,14,15,21,22,23,31,32,33]:
+        for j in setting_dict['장비']:
+            if len(j)!=6:
+                if j[0:2] == str(i):
+                    image_on[str(i)]=cv2.imread('image/'+j+'n.png',-1)
+    for i in setting_dict['장비']:
+        if len(i)==4 and i[0]=='4':
+            image_on['41']=cv2.imread('image/415'+i[1]+'0n.png',-1)
+            image_on['42']=cv2.imread('image/425'+i[2]+'0n.png',-1)
+            image_on['43']=cv2.imread('image/435'+i[3]+'0n.png',-1)
+
+    result_img=add_image(result_img,image_on['11'],57,52,'c')
+    result_img=add_image(result_img,image_on['12'],27,82,'c')
+    result_img=add_image(result_img,image_on['13'],27,52,'c')
+    result_img=add_image(result_img,image_on['14'],57,82,'c')
+    result_img=add_image(result_img,image_on['15'],27,112,'c')
+    result_img=add_image(result_img,image_on['21'],189,52,'c')
+    result_img=add_image(result_img,image_on['22'],219,52,'c')
+    result_img=add_image(result_img,image_on['23'],219,82,'c')
+    result_img=add_image(result_img,image_on['31'],189,82,'c')
+    result_img=add_image(result_img,image_on['32'],219,112,'c')
+    result_img=add_image(result_img,image_on['33'],189,112,'c')
+    result_img=add_image(result_img,image_on['41'],27,82,'c')
+    result_img=add_image(result_img,image_on['42'],219,82,'c')
+    result_img=add_image(result_img,image_on['43'],189,82,'c')
+    
+    plt_img=[0,0]
+    for i in [0,1]:
+        if setting_dict['플티상세'][i]=='S': plt_img[i]=cv2.imread('ext_img/plt_best2.png',-1)
+        elif setting_dict['플티상세'][i]=='A': plt_img[i]=cv2.imread('ext_img/plt_good2.png',-1)
+        elif setting_dict['플티상세'][i]=='B': plt_img[i]=cv2.imread('ext_img/plt_active.png',-1)
+        elif setting_dict['플티상세'][i]=='C': plt_img[i]=cv2.imread('ext_img/plt_common.png',-1)
+        else: plt_img[i]=cv2.imread('ext_img/plt_nope.png',-1)
+    
+    result_img=add_image(result_img,plt_img[0],350,124,'c')
+    result_img=add_image(result_img,plt_img[1],390,124,'c')
+    
+    tal_img=[0,0]
+    for i in [0,1]:
+        if setting_dict['탈리상세'][i]=='S': tal_img[i]=cv2.imread('ext_img/talisman_unique.png',-1)
+        elif setting_dict['탈리상세'][i]=='A': tal_img[i]=cv2.imread('ext_img/talisman_rare.png',-1)
+        elif setting_dict['탈리상세'][i]=='B': tal_img[i]=cv2.imread('ext_img/talisman_common.png',-1)
+        else: tal_img[i]=cv2.imread('ext_img/talisman_nope.png',-1)
+    result_img=add_image(result_img,tal_img[0],350,170,'c')
+    result_img=add_image(result_img,tal_img[1],390,170,'c')
+
+    small_font=ImageFont.truetype("./malgun.ttf", 11)
+    guide_font=ImageFont.truetype("./malgunbd.ttf", 12)
+    show_font=ImageFont.truetype("./malgunbd.ttf", 20)
+    mid_font=ImageFont.truetype("./malgunbd.ttf", 22)
+
+    result_img = cv2.cvtColor(result_img, cv2.COLOR_BGRA2RGBA)
+    result_img = Image.fromarray(result_img)
+    draw = ImageDraw.Draw(result_img)
+    w, h = draw.textsize(setting_dict['무기명'],font=guide_font)
+    draw.text((int(233-w),int(17-h/2)),setting_dict['무기명'],font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['캐릭명'],font=guide_font)
+    draw.text((int(10),int(170-h/2)),setting_dict['캐릭명'],font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['직업명'],font=guide_font)
+    draw.text((int(10),int(185-h/2)),setting_dict['직업명'],font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['모험단'],font=guide_font)
+    draw.text((int(233-w),int(170-h/2)),setting_dict['모험단'],font=guide_font,fill='white')
+    w, h = draw.textsize(server,font=guide_font)
+    draw.text((int(233-w),int(185-h/2)),server,font=guide_font,fill='white')
+
+    if float(setting_dict['종합점수'][:-1]) >=110: rank_color=(238,201,0, 255)
+    elif float(setting_dict['종합점수'][:-1]) >=100: rank_color=(0,191,222, 255)
+    elif float(setting_dict['종합점수'][:-1]) >=80: rank_color='white'
+    else: rank_color=(192,192,192, 255)
+
+    w, h = draw.textsize('장비%=',font=show_font)
+    draw.text((int(18),int(215-h/2)),'장비%=',font=show_font,fill='white')
+    w, h = draw.textsize(setting_dict['장비딜'],font=show_font)
+    draw.text((int(18+73),int(215-h/2)),setting_dict['장비딜'],font=show_font,fill='white')
+    w, h = draw.textsize('쿨감기대값\n='+setting_dict['쿨감'],font=small_font)
+    draw.text((int(20+189-w/2),int(218-h/2)),'쿨감기대값\n='+setting_dict['쿨감'],font=small_font,fill='white')
+    w, h = draw.textsize('세팅%=',font=show_font)
+    draw.text((int(18),int(250-h/2)),'세팅%=',font=show_font,fill='white')
+    w, h = draw.textsize(setting_dict['종합점수'],font=show_font)
+    draw.text((int(18+73),int(250-h/2)),setting_dict['종합점수'],font=show_font,fill=rank_color)
+
+    w, h = draw.textsize('강화/스탯\n',font=guide_font)
+    draw.text((int(254),int(18-h/2)),'강화/스탯\n',font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['스탯'],font=mid_font)
+    draw.text((int(252),int(27-h/2)),setting_dict['스탯'],font=mid_font,fill='white')
+    w, h = draw.textsize('무기='+setting_dict['무기강화'],font=guide_font)
+    draw.text((int(254+83),int(13-h/2)),'무기='+setting_dict['무기강화'],font=guide_font,fill='white')
+    w, h = draw.textsize('스탯='+setting_dict['스탯상세'],font=guide_font)
+    draw.text((int(254+83),int(32-h/2)),'스탯='+setting_dict['스탯상세'],font=guide_font,fill='white')
+
+    w, h = draw.textsize('속강작\n',font=guide_font)
+    draw.text((int(254),int(68-h/2)),'속강작\n',font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['속강'],font=mid_font)
+    draw.text((int(252),int(77-h/2)),setting_dict['속강'],font=mid_font,fill='white')
+    if setting_dict['속강종류']=='화': ele_type='火'; ele_color='red'
+    elif setting_dict['속강종류']=='수': ele_type='水'; ele_color='blue'
+    elif setting_dict['속강종류']=='명': ele_type='明'; ele_color='yellow'
+    elif setting_dict['속강종류']=='암': ele_type='暗'; ele_color='purple'
+    elif setting_dict['속강종류']=='모': ele_type='某'; ele_color='white'
+    w, h = draw.textsize(ele_type,font=mid_font)
+    draw.text((int(257+75),int(70-h/2)),ele_type,font=mid_font,fill=ele_color)
+    w, h = draw.textsize('+'+setting_dict['속강상세'],font=mid_font)
+    draw.text((int(257+75+23),int(70-h/2)),'+'+setting_dict['속강상세'],font=mid_font,fill='white')
+
+    w, h = draw.textsize('딜플티\n',font=guide_font)
+    draw.text((int(254),int(118-h/2)),'딜플티\n',font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['플티'],font=mid_font)
+    draw.text((int(252),int(127-h/2)),setting_dict['플티'],font=mid_font,fill='white')
+
+    w, h = draw.textsize('룬/탈리\n',font=guide_font)
+    draw.text((int(254),int(168-h/2)),'룬/탈리\n',font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['탈리'],font=mid_font)
+    draw.text((int(252),int(177-h/2)),setting_dict['탈리'],font=mid_font,fill='white')
+    rune_img=[0,0,0,0,0,0]
+    for i in range(0,6):
+        if i>=3: shift=7
+        else: shift=0
+        if setting_dict['룬상세'][i]=='S': rune_color='purple'
+        elif setting_dict['룬상세'][i]=='A': rune_color=(0,191,222, 255)
+        elif setting_dict['룬상세'][i]=='B': rune_color=(192,192,192, 255)
+        else: rune_color='black'
+        draw.rectangle(((336+i*11+shift,184),(336+6+i*11+shift,184+7)),fill=rune_color,width=0)
+
+    w, h = draw.textsize('스위칭\n',font=guide_font)
+    draw.text((int(254),int(218-h/2)),'스위칭\n',font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['스위칭'],font=mid_font)
+    draw.text((int(252),int(227-h/2)),setting_dict['스위칭'],font=mid_font,fill='white')
+    w, h = draw.textsize(setting_dict['스위칭상세'],font=guide_font)
+    draw.text((int(254+83),int(22+190-h/2)),setting_dict['스위칭상세'],font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['스위칭최대'],font=guide_font)
+    draw.text((int(254+83+30),int(22+209-h/2)),setting_dict['스위칭최대'],font=guide_font,fill='white')
+
+    result_img = np.array(result_img)
+    result_img = cv2.cvtColor(result_img, cv2.COLOR_RGBA2BGRA)
+    result_img=result_img[0:276,0:422]
+
+    cv2.imwrite('Screenshots/'+str(time.strftime('%y%m%d%H%M%S', time.localtime(time.time())))+'.png',result_img)
 
 
 def show_profile2(name,server):
@@ -4063,7 +4242,7 @@ def show_profile2(name,server):
 
 
     capture_img=tkinter.PhotoImage(file='ext_img/capture_img.png')
-    capture_but=tkinter.Button(profile_window,command=lambda:capture_screen(profile_window),image=capture_img,bg=dark_sub,borderwidth=0,activebackground=dark_sub,anchor='nw')
+    capture_but=tkinter.Button(profile_window,command=lambda:make_profile_image(name,server,def_result),image=capture_img,bg=dark_sub,borderwidth=0,activebackground=dark_sub,anchor='nw')
     capture_but.place(x=378,y=248)
     def profile_detail():
         tkinter.messagebox.showinfo('세부보기',setting_str,parent=profile_window)

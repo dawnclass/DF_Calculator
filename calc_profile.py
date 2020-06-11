@@ -9,37 +9,24 @@ import openpyxl
 from collections import Counter
 import numpy as np
 from math import floor
+import random
 
-apikey='TQS79U4MT11jswCLHq7G260XzXU0JhGC'
+apikey_list=['TQS79U4MT11jswCLHq7G260XzXU0JhGC',
+             'TkbkrKVzWIC1eXRrzg18sghsEq5LRLyg',
+             'E76OXHxYMK3iizK0XQLZbvsNQGKpVtFY']
 
-load_excel1=openpyxl.load_workbook("DATA2.xlsx", data_only=True)
-db_one=load_excel1["one"]
-item_code_list={};opt_one={};item_name_list={}
-a=1
-for row in db_one.rows:
-    row_value=[]
-    for cell in row:
-        row_value.append(cell.value)
-    row_value_cut = row_value[0]
-    row_value_cut3 = row_value[1]
-    row_value_cut2 = row_value[2:]
-    item_code_list[db_one.cell(a,39).value]=row_value_cut
-    item_name_list[db_one.cell(a,39).value]=row_value_cut3
-    opt_one[db_one.cell(a,1).value]=row_value_cut2
-    a=a+1
-db_job=load_excel1["lvl"]
-opt_job={}
-opt_job_ele={}
-u=1
-for row in db_job.rows:
-    row_value=[]
-    for cell in row:
-        row_value.append(cell.value)
-    opt_job[db_job.cell(u,1).value]=row_value[3:]
-    opt_job_ele[db_job.cell(u,1).value]=row_value[:3]
-    u=u+1
-del opt_job["empty"]
-del opt_job["직업명"]
+apikey=random.choice(apikey_list)
+
+with open('skillDB/item_code_list.json','r', encoding='utf-8') as item_code_list:
+    item_code_list=json.load(item_code_list)
+with open('skillDB/opt_one.json','r', encoding='utf-8') as opt_one:
+    opt_one=json.load(opt_one)
+with open('skillDB/item_name_list.json','r', encoding='utf-8') as item_name_list:
+    item_name_list=json.load(item_name_list)
+with open('skillDB/opt_job.json','r', encoding='utf-8') as opt_job:
+    opt_job=json.load(opt_job)
+with open('skillDB/opt_job_ele.json','r', encoding='utf-8') as opt_job_ele:
+    opt_job_ele=json.load(opt_job_ele)
 
 with open('skillDB/pltDB.json','r', encoding='utf-8') as plt_json:
     plt_dict=json.load(plt_json)
@@ -60,8 +47,7 @@ def make_profile(name,server):
                 '디레지에':'diregie','힐더':'hilder','프레이':'prey','시로코':'siroco'}
     try:
         sever_code=server_dict[server]
-        cha_id_api=urllib.request.urlopen('https://api.neople.co.kr/df/servers/'+sever_code+'/characters?characterName='+parse.quote(name)+'&apikey=' + apikey)
-        cha_id_dic=loads(cha_id_api.read().decode("utf-8"))
+        cha_id_dic=load_api('https://api.neople.co.kr/df/servers/'+sever_code+'/characters?characterName='+parse.quote(name)+'&apikey=' + apikey)
         cha_id=cha_id_dic['rows'][0]['characterId']
         down_url='https://img-api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'?zoom=1?apikey='+apikey
         urllib.request.urlretrieve(down_url,'my_cha.png')
@@ -88,9 +74,14 @@ def make_profile(name,server):
         else: job_calc_name=job_calc_name+'(2각)'
         now_ele=int(stat_dic["status"][27]["value"])
         no_enchant_ele=200
-        swi_skillname=swiequ_dic['skill']['buff']['skillInfo']['name']
-        swi_skilllvl=swiequ_dic['skill']['buff']['skillInfo']['option']['level']
-        swiper_list=swiequ_dic['skill']['buff']['skillInfo']['option']['values']
+        try:
+            swi_skillname=swiequ_dic['skill']['buff']['skillInfo']['name']
+            swi_skilllvl=swiequ_dic['skill']['buff']['skillInfo']['option']['level']
+            swiper_list=swiequ_dic['skill']['buff']['skillInfo']['option']['values']
+        except TypeError as error:
+            swi_skillname='채택안됨'
+            swi_skilllvl='0'
+            swiper_list=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         swiper_value=job_detail[class_name][job_name][0]-1
         max_swiper=job_detail[class_name][job_name][1]
         if job_name=='세인트':
@@ -109,15 +100,14 @@ def make_profile(name,server):
             now_swiper=float(swiper_list[swiper_value])
             swi_score=(100+now_swiper)/(100+max_swiper)*now_ele_eff/max_ele_eff
             show_swi=str(round(now_swiper,1))+'% / +'+str(int(now_swiele))+' / '
-        elif class_name=='격투가(여)' and job_name=='염제 폐월수화':
-            
+        elif class_name=='격투가(여)' and job_name=='眞 넨마스터':
             now_swiele=int(swiper_list[3])
             max_ele_eff=((now_ele+86)*0.0045+1.05)/(now_ele*0.0045+1.05)
             now_ele_eff=((now_ele+now_swiele)*0.0045+1.05)/(now_ele*0.0045+1.05)
             now_swiper=float(swiper_list[swiper_value])
             swi_score=(100+now_swiper)/(100+max_swiper)*now_ele_eff/max_ele_eff
             show_swi=str(round(now_swiper,1))+'% / +'+str(int(now_swiele))+' / '
-        elif class_name=='격투가(여)' and job_name=='용독문주':
+        elif class_name=='격투가(여)' and job_name=='眞 스트리트파이터':
             now_swiper=50+5.882352941176470588235294117647*float(swiper_list[swiper_value])/100
             swi_score=now_swiper/100
             show_swi=str(round(float(swiper_list[swiper_value]),1))+'% / '
@@ -130,6 +120,7 @@ def make_profile(name,server):
             now_swiper=float(swiper_list[swiper_value])
             swi_score=(100+now_swiper)/(100+max_swiper)
             show_swi=str(round(now_swiper,1))+'% / '
+        
             
         
         ##2번 스탯
@@ -810,10 +801,10 @@ job_detail={
         '眞 넨마스터':[3,43,0,4201,[''],5.15,'염황광풍제월',[''],[''],3.53] #2번 속강(86)도 있음
         },
     '격투가(여)':{
-        '염제 폐월수화':[3,57,0,4126,[''],5.15,'염제폐월수화',[''],[''],3.51], #4번 속강(86)도 있음
-        '카이저':[4,113,0,4188,[''],6.44,'카이저',[''],[''],3.54],
-        '용독문주':[5,850,0,4127,[''],2.36,'용독문주',[''],[''],1.6], #독 바르기 공격력 변화율 (증가율이 아님,독비중 50% 기준 평균산출 필요)
-        '얼티밋 디바':[2,107,1,4095,[''],6.93,'얼티밋디바',[''],[''],3.57]
+        '眞 넨마스터':[3,57,0,4126,[''],5.15,'염제폐월수화',[''],[''],3.51], #4번 속강(86)도 있음
+        '眞 스트라이커':[4,113,0,4188,[''],6.44,'카이저',[''],[''],3.54],
+        '眞 스트리트파이터':[5,850,0,4127,[''],2.36,'용독문주',[''],[''],1.6], #독 바르기 공격력 변화율 (증가율이 아님,독비중 50% 기준 평균산출 필요)
+        '眞 그래플러':[2,107,1,4095,[''],6.93,'얼티밋디바',[''],[''],3.57]
         },
     '거너(남)':{
         '眞 스핏파이어':[1,84,0,3926,[''],6.05,'커맨더',[''],[''],3.57],
@@ -977,3 +968,4 @@ refine_eff={
         '8':'1.0727605'
         }
     }
+make_profile('쥬시o','카인')

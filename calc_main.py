@@ -1482,10 +1482,10 @@ def calc(mode):
                                 paslvl*((54500+3.31*base_array[0])/54500)*((4800+base_array[1])/4800)/(1.05+0.0045*int(ele_skill)))*wep_pre_calced
                         final_damage=damage*((100/(100-coolper)-1)*cool_eff*cool_on+1)*((base_array[12]+(actlvl-1)*100+ult_skiper)/100+1)*cool_pre_calced
                         damage_not_ele=final_damage*(1.05+0.0045*int(ele_skill))/(base_array[9]*0.0045+1.05)*((base_array[9]-int(ele_skill))*0.0045+1.05)/1.05*(real_bon_not_ele/100+1)/(base_array[4]/100+1)
-                        
+                        damage_only_equ=damage/paslvl/wep_pre_calced
                         
                         inv_string="잔향부여= "+inv1_opt+"("+str(inv1_val)+"%) / "+inv2_opt+"("+str(inv2_val)+"%)"
-                        save_list[final_damage]=[calc_wep,base_array,damage,damage_not_ele,inv_string,[ult_1,ult_2,ult_3,ult_skiper]]
+                        save_list[final_damage]=[calc_wep,base_array,damage,damage_not_ele,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ]
                         count_num=count_num+1
                     else:
                         count_all=count_all+1
@@ -1662,10 +1662,10 @@ def calc(mode):
                                 paslvl*((54500+3.31*base_array[0])/54500)*((4800+base_array[1])/4800)/(1.05+0.0045*int(ele_skill)))*wep_pre_calced
                         final_damage=damage*((100/(100-coolper)-1)*cool_eff*cool_on+1)*((base_array[12]+(actlvl-1)*100+ult_skiper)/100+1)*cool_pre_calced
                         damage_not_ele=final_damage*(1.05+0.0045*int(ele_skill))/(base_array[9]*0.0045+1.05)*((base_array[9]-int(ele_skill))*0.0045+1.05)/1.05*(real_bon_not_ele/100+1)/(base_array[4]/100+1)
-                        
+                        damage_only_equ=damage/paslvl/wep_pre_calced
                         
                         inv_string="잔향부여= "+inv1_opt+"("+str(inv1_val)+"%) / "+inv2_opt+"("+str(inv2_val)+"%)"
-                        save_list[final_damage]=[calc_wep,base_array,damage,damage_not_ele,inv_string,[ult_1,ult_2,ult_3,ult_skiper]]
+                        save_list[final_damage]=[calc_wep,base_array,damage,damage_not_ele,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ]
                         count_num=count_num+1
                     else:
                         count_all=count_all+1
@@ -2084,6 +2084,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         rank_inv=[0,0,0,0,0]
         rank_dam_tagk_nolv=[0,0,0,0,0]
         rank_dam_tagk_noele=[0,0,0,0,0]
+        rank_dam_onlyequ=[0,0,0,0,0]
         rss=[0,0,0,0,0]
         result_image_gif=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
         result_image_gif_tg=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
@@ -2098,7 +2099,8 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                 rank_dam_noele[temp_rank]=int(100*rank_list[temp_rank][1][3])
                 rank_inv[temp_rank]=rank_list[temp_rank][1][4]
                 rank_ult[temp_rank]=rank_list[temp_rank][1][5]
-                rank_setting[temp_rank]=list(rank_list[temp_rank][1][0]) ##0번이 랭킹이다
+                rank_setting[temp_rank]=list(rank_list[temp_rank][1][0])
+                rank_dam_onlyequ[temp_rank]=rank_list[temp_rank][1][6]
                 for i in rank_setting[temp_rank]:
                     if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
                         rank_setting[temp_rank].append('415'+i[1]+'0')
@@ -2167,6 +2169,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         else:
             simari=1
             jingakgi=0
+        print()
         rank_stat=[0,0,0,0,0]
         rank_stat2=[0,0,0,0,0]
         rank_stat3=[0,0,0,0,0]
@@ -2220,7 +2223,17 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                                "\n"+str(int(round(rss[i][17],0)))+
                                "\n"+str(int(round(rss[i][18],0)))+
                                "\n"+str(int(round(rss[i][19],0))))
-            except TypeError as error:
+                
+                print(str(i+1)+'등')
+                print('순장비계수')
+                print(str(int(rank_dam_onlyequ[i]*100))+'%')
+                print('패시브만반영')
+                print(str(rank_dam_nolv[i])+'%')
+                print('종합계수')
+                print(rank_dam[i])
+                print()
+                
+            except:
                 pass
 
         

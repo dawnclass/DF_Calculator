@@ -1,5 +1,5 @@
-now_version="3.3.2"
-ver_time='200605'
+now_version="3.3.9"
+ver_time='200630'
 
 #-*- coding: utf-8 -*-
 ## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
@@ -609,16 +609,23 @@ def calc(mode):
     extra_blvl=0;extra_batt=0;extra_cstat=0
     extra_stat=0
     
-    if style_select.get() == '증뎀칭호':
+    if style_select.get() == '증뎀10%':
         fixed_dam=10
-    if style_select.get() == '추뎀칭호':
+    if style_select.get() == '증뎀15%':
+        fixed_dam=15
+    if style_select.get() == '추뎀10%':
         extra_bon=10
-    if creature_select.get() == '모공크리쳐':
+    if style_select.get() == '속강32':
+        ele_in=ele_in+32
+    if creature_select.get() == '모공15%':
         extra_all=15
-    if creature_select.get() == '크증크리쳐':
+    if creature_select.get() == '크증18%':
         fixed_cri=18
         extra_pas2=1
-    if style_select.get() == '크증칭호' and creature_select.get() != '크증크리쳐':
+    if creature_select.get() == '물마독공18%':
+        extra_att=18
+        extra_pas2=1
+    if style_select.get() == '크증18%' and creature_select.get() != '크증18%':
         fixed_cri=10
 
     if inv_tg ==1:
@@ -4392,13 +4399,13 @@ jobtype_select.place(x=390-17,y=190+52)
 jobup_select=tkinter.ttk.Combobox(self,width=13,values=list(calc_list_job.DNF_job_list['귀검사(남)']))
 jobup_select.set('검신(진각)')
 jobup_select.place(x=390-17,y=220+52)
-style_list=['증뎀칭호','추뎀칭호','크증칭호','기타(직접비교)']
+style_list=['증뎀15%','속강32','증뎀10%','추뎀10%','크증10%','기타(직접비교)']
 style_select=tkinter.ttk.Combobox(self,width=13,values=style_list)
-style_select.set('추뎀칭호')
+style_select.set('증뎀15%')
 style_select.place(x=390-17,y=250+52)
-creature_list=['모공크리쳐','크증크리쳐','기타(직접비교)']
+creature_list=['모공15%','크증18%','물마독공18%','기타(직접비교)']
 creature_select=tkinter.ttk.Combobox(self,width=13,values=creature_list)
-creature_select.set('크증크리쳐')
+creature_select.set('크증18%')
 creature_select.place(x=390-17,y=280+52)
 req_cool=tkinter.ttk.Combobox(self,width=13,values=['X(순데미지)','O(쿨감보정)'])
 req_cool.set('X(순데미지)')

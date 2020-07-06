@@ -10,12 +10,19 @@ from collections import Counter
 import numpy as np
 from math import floor
 import random
+import calc_api_key
 
-apikey_list=['TQS79U4MT11jswCLHq7G260XzXU0JhGC',
-             'TkbkrKVzWIC1eXRrzg18sghsEq5LRLyg',
-             'E76OXHxYMK3iizK0XQLZbvsNQGKpVtFY']
-
-apikey=random.choice(apikey_list)
+try:
+    apikey=calc_api_key.get_api_key()
+except:
+    try:
+        api_txt_file=open("API_key.txt","r")
+        apikey = api_txt_file.readline()
+        if apikey=="":
+            pass
+        api_txt_file.close()
+    except:
+        pass
 
 with open('skillDB/item_code_list.json','r', encoding='utf-8') as item_code_list:
     item_code_list=json.load(item_code_list)
@@ -84,7 +91,7 @@ def make_profile(name,server):
             swiper_list=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         swiper_value=job_detail[class_name][job_name][0]-1
         max_swiper=job_detail[class_name][job_name][1]
-        if job_name=='세인트':
+        if class_name=='프리스트(남)' and job_name=='眞 크루세이더':
             if len(swiper_list)!=18:
                 return {'error':'buffer'}
         ##1번 스위칭박스
@@ -111,7 +118,7 @@ def make_profile(name,server):
             now_swiper=50+5.882352941176470588235294117647*float(swiper_list[swiper_value])/100
             swi_score=now_swiper/100
             show_swi=str(round(float(swiper_list[swiper_value]),1))+'% / '
-        elif class_name=='프리스트(남)' and job_name=='저스티스':
+        elif class_name=='프리스트(남)' and job_name=='眞 인파이터':
             max_swiper=max_swiper*1.5
             now_swiper=float(swiper_list[swiper_value])*1.5
             swi_score=(100+now_swiper)/(100+max_swiper)
@@ -486,6 +493,7 @@ def make_profile(name,server):
                 title_api=load_api('https://api.neople.co.kr/df/items/'+title_id+'?apikey=' + apikey)
                 title_opt=title_api.get("itemExplain")
                 if title_opt[0:15]=='공격 시 데미지 10% 증가': fixed_dam=10
+                elif title_opt[0:15]=='공격 시 데미지 15% 증가': fixed_dam=15
                 elif title_opt[0:20]=='크리티컬 공격 시 데미지 10% 증가': fixed_cri=10
                 elif title_opt[0:14]=='공격 시 10% 추가데미지': extra_bon=extra_bon+10
                 title_opt2=title_api.get("itemStatus")
@@ -493,17 +501,29 @@ def make_profile(name,server):
                     for now_opt in title_opt2:
                         if eleup_type.count(now_opt.get("name"))!=0:
                             ele_in=ele_in+now_opt.get("value")
+                            if now_opt.get("value")==27:
+                                ele_in=ele_in+5
                             break
         pet_info=pet_dic.get("creature")
         try:
             per_name=pet_info["itemName"]
-            if per_name[-5:]=='[노련한]': fixed_cri=18;extra_pas2=extra_pas2+1
-            if per_name[-5:]=='[강인한]': extra_all=extra_all+15
             if per_name=='서퍼 웰시코기': extra_all=extra_all+15
-            if per_name=='강인한 이그니스': extra_final=extra_final+10.7
-            if per_name=='명석한 아쿠아젤로': extra_final=extra_final+10.7
-            if per_name=='명석한 루메누스': extra_final=extra_final+10.7
-            if per_name=='강인한 테네브리스': extra_final=extra_final+10.7
+            elif per_name=='강인한 이그니스': extra_final=extra_final+10.7
+            elif per_name=='명석한 아쿠아젤로': extra_final=extra_final+10.7
+            elif per_name=='명석한 루메누스': extra_final=extra_final+10.7
+            elif per_name=='강인한 테네브리스': extra_final=extra_final+10.7
+            elif per_name=='초열의 주술사 미호': extra_final=extra_final+10.7
+            elif per_name=='빙설의 마법사 루나': extra_final=extra_final+10.7
+            elif per_name=='고대의 용사 리처드': extra_final=extra_final+10.7
+            elif per_name=='SD 팩': extra_final=extra_final+10.7
+            elif per_name=='쁘띠 바스테트': extra_final=extra_final+10.7
+            elif per_name=='쁘띠 샴': extra_final=extra_final+10.7
+            elif per_name=='SD 프레이-이시스': extra_att=extra_att+18;extra_pas2=extra_pas2+1
+            elif per_name=='SD 이시스-프레이': extra_att=extra_att+18;extra_pas2=extra_pas2+1
+            elif per_name=='뇌광의 사수 빅토리아': extra_att=extra_att+18;extra_pas2=extra_pas2+1
+            elif per_name=='폭풍을 부르는 성녀 글로리아': extra_att=extra_att+18;extra_pas2=extra_pas2+1
+            elif per_name[-5:]=='[노련한]': fixed_cri=18;extra_pas2=extra_pas2+1
+            elif per_name[-5:]=='[강인한]': extra_all=extra_all+15
         except: pass
         
         equ_exist=[];wep_exist=0
@@ -833,10 +853,10 @@ job_detail={
         '헤카테':[0,0,1,4060,[''],0,'(버프)헤카테',[''],[''],0] # 조회 불가 직업
         },
     '프리스트(남)':{
-        '태을선인':[2,76,0,4079,[''],3.43,'태을선인',[''],[''],2.35],
-        '이모탈':[1,90,0,4048,[''],6.47,'이모탈',[''],[''],4.51],
-        '저스티스':[2,66,0,4073,[''],6.14,'저스티스',[''],[''],3.24], #api의 1.5배가 실적용 수치
-        '세인트':[2,97,1,3906,[''],5.06,'세인트',[''],[''],3.42] # 배크만 조회가능, 리스트 갯수 18번까지 있음
+        '眞 퇴마사':[2,76,0,4079,[''],3.43,'태을선인',[''],[''],2.35],
+        '眞 어벤저':[1,90,0,4048,[''],6.47,'이모탈',[''],[''],4.51],
+        '眞 인파이터':[2,66,0,4073,[''],6.14,'저스티스',[''],[''],3.24], #api의 1.5배가 실적용 수치
+        '眞 크루세이더':[2,97,1,3906,[''],5.06,'세인트',[''],[''],3.42] # 배크만 조회가능, 리스트 갯수 18번까지 있음
         },
     '프리스트(여)':{
         '세라핌':[0,0,1,4093,[''],0,'(버프)세라핌',[''],[''],0], # 조회 불가 직업

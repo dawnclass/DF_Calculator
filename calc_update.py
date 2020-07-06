@@ -243,6 +243,22 @@ def update_preset():
             db_custom['A69']='inv_select4_2';db_custom[i+'69']='3%/40(상)'
             
         
+    if db_save['A70'].value!='cool_conv2': ## 4.0.0 지딜지표 분리, 수문장 모속 추가
+        print(12312312)
+        db_custom['A20']='cool_conv2';db_custom['B20']='70';
+        db_custom['A70']='cool_conv2'
+        db_custom['B2']='20'
+        db_custom['A21']='sumunjang_ele';db_custom['B21']='X';
+        db_custom['A71']='sumunjang_ele';
+        for i in ['C','D','E','F','G','H','I','J','K','B']:
+            db_custom[i+'27']='20'
+            db_custom[i+'70']='70'
+            db_custom[i+'71']='X'
+    if db_save['A71'].value!='wep_list': ## 4.0.0 무기 세이브 추가
+        db_save['A71']='wep_list'
+        for i in ['C','D','E','F','G','H','I','J','K','B']:
+            db_custom[i+'71']='[]'
+        
         
 
     
@@ -251,4 +267,3 @@ def update_preset():
     load_preset.close()
 
 
-        

@@ -10,9 +10,9 @@ from collections import Counter
 import numpy as np
 from math import floor
 import random
-import calc_api_key
 
 try:
+    import calc_api_key
     apikey=calc_api_key.get_api_key()
 except:
     try:

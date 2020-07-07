@@ -30,7 +30,7 @@ from PIL import Image,ImageTk,ImageEnhance,ImageGrab,ImageDraw,ImageFont
 import random
 import calc_update
 import calc_list_wep,calc_list_job,calc_fullset,calc_setlist,calc_gif,calc_profile,calc_result
-from calc_calc import make_setopt_num,make_set_list,hard_coding_dealer,inv_auto_dealer
+from calc_calc import make_setopt_num,make_set_list,hard_coding_dealer,inv_auto_dealer,make_all_equ_list
 
 
 
@@ -63,18 +63,18 @@ def capture_screen(toplevel):
 
 
 
-auto_saved=0
-exit_calc=0
-save_name_list=[]
-save_select=0
-count_num=0
-count_all=0
-show_number=0
-all_list_num=0
-all_list_list_num=0
-inv_tg=0
+auto_saved=0 #클라이언트 업데이트 시 preset 업데이트 변수
+exit_calc=0 #계산 종료 판정
+save_name_list=[] #프리셋 이름 리스트
+save_select=0 #세이브 드롭다운 리스트 변수 임시
+count_num=0 #유효 계산 카운터
+count_all=0 #전체 계산 카운터
+show_number=0 #숫자 갱신 여부
+all_list_num=0 #해당 사이클 당시 경우의 수
+all_list_list_num=0 #계산 전체 경우의 수
+inv_tg=0 #잔향 부여 선택(0:미부여,1:선택부여,2:최적부여)
 
-
+## GUI 메인
 self = tkinter.Tk()
 self.title("에픽 조합 자동 계산기")
 self.geometry("910x720+0+0")
@@ -91,6 +91,7 @@ bg_wall=tkinter.Label(self,image=bg_img)
 bg_wall.place(x=-2,y=0)
 self.configure(bg=dark_main)
 
+## API키 외부 모듈 (API_key.TXT 파일로도 기입 가능)
 try:
     import calc_api_key
     apikey=calc_api_key.get_api_key()
@@ -106,6 +107,7 @@ except:
 
 load_excel1=load_workbook("DATA.xlsx", data_only=True)
 
+## 초기 구동 엑셀
 db_one=load_excel1["one"]
 opt_one={}
 name_one={}
@@ -152,7 +154,8 @@ save_name_list=[]
 for i in range(1,11):
     save_name_list.append(db_custom.cell(i,5).value)
 
-auto_custom=0
+
+auto_custom=0 #클라이언트 업데이트 시 preset 업데이트 여부
 ########## 버전 최초 구동 프리셋 업데이트 ###########
 def update_log():
     def donotshow():
@@ -167,7 +170,7 @@ def update_log():
     update_window.resizable(False, False)
     place_center(update_window,0)
     update_window.configure(bg=dark_main)
-    def _on_mousewheel(event):
+    def _on_mousewheel(event): #마우스 휠 스크롤링
         update_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
     scrollbar=Scrollbar(update_window)
     scrollbar.pack(side=RIGHT,fill=Y)
@@ -201,7 +204,7 @@ try:
         auto_custom=1
         load_preset0.save("preset.xlsx")
         load_preset0.close()
-        calc_update.update_preset() ## 외부모듈
+        calc_update.update_preset() ## 업데이트: 외부모듈
 except PermissionError as error:
     tkinter.messagebox.showerror("에러","업데이트 실패. 엑셀을 닫고 다시 실행해주세요.")
     self.destroy()
@@ -238,7 +241,7 @@ load_excel1.close()
 def calc(mode):
     global result_window,result_window2, all_list_list_num, a_num_all
     try:
-        result_window.after(0,result_window.destroy)
+        result_window.after(0,result_window.destroy) #기존 GIF 재생 정지
         result_window.after(50,time_delay2)
         result_window.after(50,time_delay4)
         result_window.after(500,time_delay1)
@@ -246,12 +249,12 @@ def calc(mode):
     except NameError as error:
         pass
     if select_perfect.get() == '세트필터↓(매우느림)' or select_perfect.get() == '풀셋모드(매우빠름)' or select_perfect.get() == '메타몽풀셋모드':
-        set_perfect=1
+        set_perfect=1 #세트 필터 하락
     else:
         set_perfect=0
-    if a_num_all>10000000:
+    if a_num_all>20000000:
         if select_perfect.get() != "풀셋모드(매우빠름)" and select_perfect.get() != "메타몽풀셋모드":
-            ask_really=tkinter.messagebox.askquestion('확인',"천만 가지가 넘는 경우의 수는 풀셋/메타몽풀셋 모드를 권장합니다.\n그냥 진행하시겠습니까?")
+            ask_really=tkinter.messagebox.askquestion('확인',"2천만 가지가 넘는 경우의 수는 풀셋/메타몽풀셋 모드를 권장합니다.\n그냥 진행하시겠습니까?")
             if ask_really == 'yes':
                 pass
             elif ask_really == 'no':
@@ -261,6 +264,7 @@ def calc(mode):
     start_time = time.time()
     load_excel=load_workbook("DATA.xlsx",data_only=True)
 
+    ## 갱신된 DB 불러오기 ##
     db_one=load_excel["one"]
     opt_one={}
     name_one={}
@@ -285,7 +289,7 @@ def calc(mode):
         for cell in row:
             row_value.append(cell.value)
             row_value_cut = row_value[2:]
-        opt_buf[db_buf.cell(c,1).value]=row_value_cut ## DB 불러오기 ##
+        opt_buf[db_buf.cell(c,1).value]=row_value_cut 
         name_buf[db_buf.cell(c,1).value]=row_value
         c=c+1
 
@@ -301,6 +305,7 @@ def calc(mode):
         opt_buflvl[db_buflvl.cell(d,1).value]=row_value_cut
         d=d+1
 
+    #속강 커스텀 계산
     load_presetc=load_workbook("preset.xlsx", data_only=True)
     db_preset=load_presetc["custom"]
     ele_skill=int(opt_job_ele[jobup_select.get()][1])
@@ -315,6 +320,7 @@ def calc(mode):
 
     betterang=int(db_one["J86"].value)
 
+    #아리아 증폭 판정
     if db_preset["H7"].value == "항상증폭":
         aria_fix=0.3
         aria_dif=0
@@ -329,7 +335,7 @@ def calc(mode):
     global count_num, count_all, show_number, max_setopt, inv_tg
     count_num=0;count_all=0;show_number=0;metamong=0
     
-    
+    #진각/2각에 따른 실마리, 쿨감 효율 차이
     if jobup_select.get()[-4:] == "(진각)":
         silmari=0
         active_eff_one=15
@@ -341,6 +347,7 @@ def calc(mode):
         active_eff_set=27-3
         cool_eff_dictnum=27
 
+    # 직업별 레벨링 효율차
     job_lv1=opt_job[jobup_select.get()][11]
     job_lv2=opt_job[jobup_select.get()][12]
     job_lv3=opt_job[jobup_select.get()][13]
@@ -351,7 +358,7 @@ def calc(mode):
     job_pas1=opt_job[jobup_select.get()][1]
     job_pas2=opt_job[jobup_select.get()][2]
     job_pas3=opt_job[jobup_select.get()][3]
-
+    #직업별 각성기 스증 효율차이
     job_ult1=opt_job[jobup_select.get()][17]
     job_ult2=opt_job[jobup_select.get()][18]
     job_ult3=opt_job[jobup_select.get()][19]
@@ -390,171 +397,19 @@ def calc(mode):
             showsta(text='중지됨')
             return
 
+    ## 외부모듈: 경우의 수 만들기
+    result_all_equ_list=make_all_equ_list(select_item,select_perfect.get())
+    list11=result_all_equ_list[0][0];list11_0=result_all_equ_list[0][1];list11_1=result_all_equ_list[0][2]
+    list12=result_all_equ_list[0][3];list13=result_all_equ_list[0][4];list14=result_all_equ_list[0][5];list15=result_all_equ_list[0][6]
+    list21=result_all_equ_list[0][7];list21_0=result_all_equ_list[0][8];list21_1=result_all_equ_list[0][9]
+    list22=result_all_equ_list[0][10];list23=result_all_equ_list[0][11]
+    list31=result_all_equ_list[0][12];list32=result_all_equ_list[0][13]
+    list33=result_all_equ_list[0][14];list33_0=result_all_equ_list[0][15];list33_1=result_all_equ_list[0][16]
     
-    list11=[];list12=[];list13=[];list14=[];list15=[]
-    list21=[];list22=[];list23=[];list31=[];list32=[];list33=[]
-    list11_0=[];list11_1=[];list21_0=[];list21_1=[];list33_0=[];list33_1=[]
-    list_setnum=[];list_setnum1=[];list_setnum2=[];list_num=[]
-    ##에픽
-    for i in range(101,199):
-        try:
-            if eval('select_item["tg1{}0"]'.format(i)) == 1:
-                list11.append('1'+str(i)+'0')
-                list11_0.append('1'+str(i)+'0')
-                list_num.append(str(i)[1:]+'0')
-                list_setnum.append('1'+str(i)[1:3])
-                list_setnum1.append('1'+str(i)[1:3])
-        except KeyError as error:
-            c=1
+    set_num_dict=result_all_equ_list[1][0] ##전부
+    set_num_dict1=result_all_equ_list[1][1] ##에픽만
+    set_num_dict2=result_all_equ_list[1][2] ##신화만
     
-    for i in range(201,299):
-        try:
-            if eval('select_item["tg1{}0"]'.format(i)) == 1:
-                list12.append('1'+str(i)+'0')
-                list_num.append(str(i)[1:]+'0')
-                list_setnum.append('1'+str(i)[1:3])
-                list_setnum1.append('1'+str(i)[1:3])
-                list_setnum2.append('1'+str(i)[1:3])
-        except KeyError as error:
-            c=1
-    for i in range(301,399):
-        try:
-            if eval('select_item["tg1{}0"]'.format(i)) == 1:
-                list13.append('1'+str(i)+'0')
-                list_num.append(str(i)[1:]+'0')
-                list_setnum.append('1'+str(i)[1:3])
-                list_setnum1.append('1'+str(i)[1:3])
-                list_setnum2.append('1'+str(i)[1:3])
-        except KeyError as error:
-            c=1
-    for i in range(401,499):
-        try:
-            if eval('select_item["tg1{}0"]'.format(i)) == 1:
-                list14.append('1'+str(i)+'0')
-                list_num.append(str(i)[1:]+'0')
-                list_setnum.append('1'+str(i)[1:3])
-                list_setnum1.append('1'+str(i)[1:3])
-                list_setnum2.append('1'+str(i)[1:3])
-        except KeyError as error:
-            c=1
-    for i in range(501,599):
-        try:
-            if eval('select_item["tg1{}0"]'.format(i)) == 1:
-                list15.append('1'+str(i)+'0')
-                list_num.append(str(i)[1:]+'0')
-                list_setnum.append('1'+str(i)[1:3])
-                list_setnum1.append('1'+str(i)[1:3])
-                list_setnum2.append('1'+str(i)[1:3])
-        except KeyError as error:
-            c=1
-    for i in range(101,199):
-        try:
-            if eval('select_item["tg2{}0"]'.format(i)) == 1:
-                list21.append('2'+str(i)+'0')
-                list21_0.append('2'+str(i)+'0')
-                list_num.append(str(i)[1:]+'0')
-                list_setnum.append('1'+str(i)[1:3])
-                list_setnum1.append('1'+str(i)[1:3])
-        except KeyError as error:
-            c=1
-    for i in range(201,299):
-        try:
-            if eval('select_item["tg2{}0"]'.format(i)) == 1:
-                list22.append('2'+str(i)+'0')
-                list_num.append(str(i)[1:]+'0')
-                list_setnum.append('1'+str(i)[1:3])
-                list_setnum1.append('1'+str(i)[1:3])
-                list_setnum2.append('1'+str(i)[1:3])
-        except KeyError as error:
-            c=1
-    for i in range(301,399):
-        try:
-            if eval('select_item["tg2{}0"]'.format(i)) == 1:
-                list23.append('2'+str(i)+'0')
-                list_num.append(str(i)[1:]+'0')
-                list_setnum.append('1'+str(i)[1:3])
-                list_setnum1.append('1'+str(i)[1:3])
-                list_setnum2.append('1'+str(i)[1:3])
-        except KeyError as error:
-            c=1
-    for i in range(101,199):
-        try:
-            if eval('select_item["tg3{}0"]'.format(i)) == 1:
-                list31.append('3'+str(i)+'0')
-                list_num.append(str(i)[1:]+'0')
-                list_setnum.append('1'+str(i)[1:3])
-                list_setnum1.append('1'+str(i)[1:3])
-                list_setnum2.append('1'+str(i)[1:3])
-        except KeyError as error:
-            c=1
-    for i in range(201,299):
-        try:
-            if eval('select_item["tg3{}0"]'.format(i)) == 1:
-                list32.append('3'+str(i)+'0')
-                list_num.append(str(i)[1:]+'0')
-                list_setnum.append('1'+str(i)[1:3])
-                list_setnum1.append('1'+str(i)[1:3])
-                list_setnum2.append('1'+str(i)[1:3])
-        except KeyError as error:
-            c=1
-    for i in range(301,399):
-        try:
-            if eval('select_item["tg3{}0"]'.format(i)) == 1:
-                list33.append('3'+str(i)+'0')
-                list33_0.append('3'+str(i)+'0')
-                list_num.append(str(i)[1:]+'0')
-                list_setnum.append('1'+str(i)[1:3])
-                list_setnum1.append('1'+str(i)[1:3])
-        except KeyError as error:
-            c=1
-  
-    algo_list=['11','12','13','14','15','21','22','23','31','32','33']
-    if select_perfect.get() == '단품제외(빠름)':
-        for i in list_num:
-            if list_num.count(i)==1:
-                if i[-1]!='1':
-                    for ca in algo_list:
-                        try:
-                            eval("list{}.remove('{}{}')".format(ca,ca,i))
-                            eval("list{}_0.remove('{}{}')".format(ca,ca,i))
-                        except:
-                            c=1
-
-    ##신화                        
-    for i in range(101,199):
-        try:
-            if eval('select_item["tg1{}1"]'.format(i)) == 1:
-                list11.append('1'+str(i)+'1')
-                list11_1.append('1'+str(i)+'1')
-                if list11.count('1'+str(i)+'0')==0:
-                    list_setnum.append('1'+str(i)[1:3])
-                list_setnum2.append('1'+str(i)[1:3])
-        except KeyError as error:
-            c=1
-    for i in range(101,199):
-        try:
-            if eval('select_item["tg2{}1"]'.format(i)) == 1:
-                list21.append('2'+str(i)+'1')
-                list21_1.append('2'+str(i)+'1')
-                if list21.count('2'+str(i)+'0')==0:
-                    list_setnum.append('1'+str(i)[1:3])
-                list_setnum2.append('1'+str(i)[1:3])
-        except KeyError as error:
-            c=1
-    for i in range(301,399):
-        try:
-            if eval('select_item["tg3{}1"]'.format(i)) == 1:
-                list33.append('3'+str(i)+'1')
-                list33_1.append('3'+str(i)+'1')
-                if list33.count('3'+str(i)+'0')==0:
-                    list_setnum.append('1'+str(i)[1:3])
-                list_setnum2.append('1'+str(i)[1:3])
-        except KeyError as error:
-            c=1
-
-    set_num_dict=Counter(list_setnum) ##전부
-    set_num_dict1=Counter(list_setnum1) ##에픽만
-    set_num_dict2=Counter(list_setnum2) ##신화만
     set_max_list1=[] ##세트 갯수 리스트
     set_max_list2=[]
     set_max_list3=[]
@@ -590,7 +445,7 @@ def calc(mode):
                 set_max_list6.append(0)
 
     know_dict={}
-    ##단품산물:퍼컨방5셋(71), 무아방5셋(72), 
+    ##단품산물
     for know_one in know_list:
         if eval('select_item["tg{}"]'.format(know_one)) == 1:
             eval('list{}.append(str({}))'.format(know_one[0:2],know_one))
@@ -602,7 +457,7 @@ def calc(mode):
                 eval('list{}_0.append(str({}))'.format(know_one[0:2],know_one))
                 
     list41=[];list42=[];list43=[]
-    ##융합
+    ##시로코: 융합
     for i in ['41','42','43']:
         for j in ['51','52','53','54','55']:
             if select_item['tg{}{}0'.format(i,j)] == 1:
@@ -612,7 +467,7 @@ def calc(mode):
                     list42.append(j[1])
                 elif i=='43':
                     list43.append(j[1])
-    inv2_on_tg=0
+    inv2_on_tg=0 #잔향 2부여 세트옵션 발동 여부
     if len(list41)!=0 and len(list42)!=0 and len(list43)!=0:
         inv2_on_tg=1
     if len(list41)==0:
@@ -647,21 +502,24 @@ def calc(mode):
         if now_div_set >= max_div_set:
             list40_0.append(i)
 
-    ##딜러
+    ##딜러 선입력 데미지 옵션
     fixed_dam=0;fixed_cri=0;extra_dam=0;extra_cri=0;extra_bon=0
     extra_all=0;extra_att=0;extra_sta=0;extra_pas2=0
-    ##버퍼
+    ##버퍼 선입력 버프 옵션
     extra_cper=0;extra_bstat=0;extra_clvl=0
     extra_blvl=0;extra_batt=0;extra_cstat=0
     extra_stat=0
-    
-    if style_select.get() == '증뎀10%':
+
+    #칭호
+    global style_calced
+    style_calced=style_select.get()
+    if style_calced == '증뎀10%':
         fixed_dam=10
-    if style_select.get() == '증뎀15%':
+    if style_calced == '증뎀15%':
         fixed_dam=15
-    if style_select.get() == '추뎀10%':
+    if style_calced == '추뎀10%':
         extra_bon=10
-    if style_select.get() == '속강32':
+    if style_calced == '속강32':
         ele_in=ele_in+32
     if creature_select.get() == '모공15%':
         extra_all=15
@@ -671,9 +529,10 @@ def calc(mode):
     if creature_select.get() == '물마독공18%':
         extra_att=18
         extra_pas2=1
-    if style_select.get() == '크증10%':
+    if style_calced == '크증10%':
         fixed_cri=10
 
+    #잔향 부여 선기입 (직접 선택)
     if inv_tg ==1:
         inv1_opt=inv_select1_1.get()
         inv1_val=int(inv_select1_2.get())
@@ -1309,11 +1168,11 @@ def calc(mode):
             
     global exit_calc
     showsta(text='계산 시작')
-    save_list={}
-    save_list0={}
-    save_list1={}
-    save_list2={}
-    save_list3={}
+    save_list={} #딜러1번
+    save_list0={} #딜러2번
+    save_list1={} #버퍼1번
+    save_list2={} #버퍼2번
+    save_list3={} #버퍼3번
     max_setopt=0
     loop_counter=0
 
@@ -1726,6 +1585,7 @@ def calc(mode):
 
 
 
+    ###### 결과 순위 매기기 #######################################################################################
     if jobup_select.get()[4:7] != "세인트" and jobup_select.get()[4:7] != "세라핌" and jobup_select.get()[4:7] != "헤카테":
                     
         show_number=0
@@ -1864,7 +1724,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
     rank_setting=[0,0,0,0,0];rank0_setting=[0,0,0,0,0]
     rank_wep_name=[0,0,0,0,0];rank0_wep_name=[0,0,0,0,0]
     rank_ult=[0,0,0,0,0];rank0_ult=[0,0,0,0,0]
-    if job_type=='deal': ###########################
+    if job_type=='deal': ########################### 딜러 ###########################
   
         global result_image_on,result_image_tag,rank_dam,rank_stat,rank_stat2,rank_stat3,req_cool,res_dam,res_stat,res_stat2, res_stat3, rank_dam_tagk,rank_dam_noele, res_ele, rank_inv, res_inv, rank_dam_tagk_noele
         global result0_image_on,result0_image_tag,rank0_dam,rank0_stat,rank0_stat2,rank0_stat3,rank0_dam_tagk,rank0_dam_noele,rank0_inv,rank0_dam_tagk_noele
@@ -2026,7 +1886,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         tagkgum_exist=0
         tagk_tg=0
         
-        if rank_wep_name.count("(도)태극천제검")!=0:
+        if rank_wep_name.count("(도)태극천제검")!=0: #태극검 하드 코딩
             global  tagkgum,tagkgum_img
             tagkgum_exist=1
             tagk_tg=0
@@ -2241,7 +2101,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         canvas_res.create_image(59,558,image=result_sidebox_img)
         show_result_dealer()
 
-    elif job_type=='buf': ##########################
+    elif job_type=='buf': ########################### 버퍼 ###########################
         load_presetr=load_workbook("preset.xlsx", data_only=True)
         r_preset=load_presetr["custom"]
         global result_image_on1,result_image_on2,result_image_on3,rank_buf1,rank_buf2,rank_buf3, rank_type_buf, res_buf, res_img_list, res_buf_list, res_buf_ex1, res_buf_ex2, res_buf_ex3, rank_buf_ex1, rank_buf_ex2, rank_buf_ex3, res_buf_type_what
@@ -2393,10 +2253,9 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
             except IndexError as error:
                 pass
             
-        #canvas_res.create_text(122,193,text="커스텀 축복+"+str(int(r_preset['H2'].value)+int(r_preset['H4'].value)+int(r_preset['H5'].value))+"렙 / "+"커스텀 1각+"+str(int(r_preset['H3'].value))+"렙\n축복스탯+"+str(int(r_preset['H6'].value))+" / 1각 스탯+"+str(int(r_preset['H1'].value)),font=guide_font,fill='white')
         global buf_jingak_exist,buf_jingak_tg,buf_jingak,buf_jingak_img2
         buf_jingak_exist=0;buf_jingak_tg=0
-        if job_name=='(버프)세인트':
+        if job_name=='(버프)세인트': ## 진각 전환 하드 코딩
             buf_jingak_img2=tkinter.PhotoImage(file='ext_img/buf_jin_2.png')
             buf_jingak_img1=tkinter.PhotoImage(file='ext_img/buf_jin_1.png')
             def change_buf_jingak():
@@ -2724,8 +2583,6 @@ def show_result_dealer():
     check_list7_bt.place(x=265,y=673)
     check_list7_bt.bind("<Enter>",show_check_list7);check_list7_bt.bind("<Leave>",del_check_list7)
 
-    return
-
 
 def play_gif(count_frame,now_rank,now_pc,show_res,gif_list,mode,mode2,mode3):
     #now_rank:순위
@@ -2750,6 +2607,7 @@ def play_gif(count_frame,now_rank,now_pc,show_res,gif_list,mode,mode2,mode3):
         else:
             result_window.after(30, play_gif, count_frame,now_rank,now_pc,show_res,gif_list,mode,mode2,mode3)
 
+# GIF 정지용 쓰레딩
 def time_delay1():
     global stop_gif
     stop_gif=0
@@ -2769,10 +2627,10 @@ def time_delay4():
 def time_delayy():
     threading.Timer(0, time_delay4).start()
 
+## 지속딜 <> 그로기 전환
 def change_groggy(ele_skill):
     threading.Timer(0.07, change_groggy2,args=(ele_skill,)).start()
     threading.Timer(0, time_delayy).start()
-
 def change_groggy2(ele_skill):
     global res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43
     global res_dam,res_stat,res_stat2,res_stat3,res_inv,res_cool_what,res_wep
@@ -2888,7 +2746,8 @@ def change_groggy2(ele_skill):
                 #result_window.after(0,play_gif,0,i,temp,res_item_list[i][str(j)],siroco_gif_changed,1,0,1)
                 play_gif(0,i,temp,res_item_list[i][str(j)],siroco_gif_changed,1,0,1)
     show_result_dealer()
-  
+
+##태극검 음양 전환
 def change_tagk(ele_skill):
     global tagk_tg, tagkgum
     global res_stat,res_stat2,rank_stat_tagk, rank_stat, rank_stat_tagk2, rank_stat2
@@ -2965,11 +2824,11 @@ def change_tagk(ele_skill):
 def change_rank(rank_number,job_type,ele_skill,rank_setting,rank_ult):
     threading.Timer(0.05, change_rank2,args=(rank_number,job_type,ele_skill)).start()
     threading.Timer(0, time_delay).start()
-
 def change_rank_type(in_type):
     threading.Timer(0.05, change_rank_type2,args=(in_type,)).start()
     threading.Timer(0, time_delayy).start()
 
+## 순위 선택 변경
 def change_rank2(now,job_type,ele_skill):
     global image_list,canvas_res, res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43, now_rank_num, res_wep, res_dam_list
     global result_window
@@ -3115,7 +2974,7 @@ def change_rank2(now,job_type,ele_skill):
     if siroco_gif_changed_tg[now][2]==1:
         result_window.after(0,play_gif,0,now,2,res_img43,siroco_gif_changed,0,1,1)
     
-
+## 에픽 이미지 세트옵션 보이기 전환
 def show_set_name(job_type):
     global image_list,canvas_res,res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43, now_rank_num
     global set_name_toggle, image_list_tag, result_image_on, result_image_tag, pause_gif, result_window
@@ -3198,7 +3057,8 @@ def show_set_name(job_type):
             canvas_res.itemconfig(res_img42,image=image_list[temp_image_tag[now_rank_num]['42']])
             canvas_res.itemconfig(res_img43,image=image_list[temp_image_tag[now_rank_num]['43']])
 
-        
+
+## 버퍼용 축복/1각/종합 버프력 전환
 def change_rank_type2(in_type):
     global image_list,canvas_res, res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43,res_wep
     global result_image_on1,result_image_on2,result_image_on3,rank_buf1,rank_buf2,rank_buf3, rank_type_buf, res_img_list, res_buf_list, res_buf_ex1, res_buf_ex2, res_buf_ex3, rank_buf_ex1, rank_buf_ex2, rank_buf_ex3, res_buf_type_what
@@ -3342,7 +3202,7 @@ def change_rank_type2(in_type):
 
 
 
-
+## 통합 커스텀 설정창
 def costum(auto):
     global custom_window
     try:
@@ -3472,7 +3332,8 @@ def costum(auto):
         print('자동저장')
         auto_saved=0
         auto=0
-    
+
+## 통합 커스텀 저장
 def save_custom(ele_type,cool_con,cus1,cus2,cus3,cus4,cus6,cus7,cus8,cus9,cus10,cus11,cus12,c_stat,b_stat,b_style_lvl,c_style_lvl,b_plt,b_cri,ele1,ele2,ele3,ele4,ele5,ele6,aria_up,cool_con2):
     try:
         load_excel3=load_workbook("DATA.xlsx")
@@ -3540,7 +3401,7 @@ def save_custom(ele_type,cool_con,cus1,cus2,cus3,cus4,cus6,cus7,cus8,cus9,cus10,
     except PermissionError as error:
         tkinter.messagebox.showerror("에러","엑셀을 닫고 다시 시도해주세요.")
 
-
+## 저장된 preset 불러오기
 def load_checklist():
     ask_msg1=tkinter.messagebox.askquestion('확인',"저장된 내역을 불러오겠습니까?")
     for snum in range(0,10):
@@ -3623,7 +3484,7 @@ def load_checklist():
         jobup_select["values"]=list(calc_list_job.DNF_job_list[jobtype_select.get()])
         tkinter.messagebox.showinfo("알림","불러오기 완료")
         
-
+## 현재값 preset에 저장하기
 def save_checklist():
     ask_msg2=tkinter.messagebox.askquestion('확인',"저장하시겠습니까?")
     for snum in range(0,10):
@@ -3673,6 +3534,7 @@ def save_checklist():
     except PermissionError as error:
         tkinter.messagebox.showerror("에러","엑셀을 닫고 다시 시도해주세요.")
 
+## preset 리스트 이름 변경
 def change_list_name():
     global change_window
     try:
@@ -3703,7 +3565,6 @@ def change_list_name():
     entry10=tkinter.Entry(change_window,width=10);entry10.place(x=95,y=237);entry10.insert(END,save_name_list[9])
 
     tkinter.Button(change_window,text="저장",font=mid_font,command=lambda:change_savelist(entry1.get(),entry2.get(),entry3.get(),entry4.get(),entry5.get(),entry6.get(),entry7.get(),entry8.get(),entry9.get(),entry10.get())).place(x=60,y=270)
-
 def change_savelist(in1,in2,in3,in4,in5,in6,in7,in8,in9,in10):
     in_list=[in1,in2,in3,in4,in5,in6,in7,in8,in9,in10]
     try:
@@ -3757,7 +3618,7 @@ def change_savelist(in1,in2,in3,in4,in5,in6,in7,in8,in9,in10):
 
 
 
-
+## 실시간 갱신 카운터 (1: 계산 카운트 / 2: 경우의 수 카운트)
 def update_count():
     global count_num, count_all, show_number, all_list_list_num
     global showcon
@@ -3774,64 +3635,61 @@ def update_count2():
             try:
                 a_num[0]=a_num[0]+select_item['tg1{}0'.format(i)]+select_item['tg1{}1'.format(i)]
             except KeyError as error:
-                p=0
+                pass
             try:
                 a_num[1]=a_num[1]+select_item['tg1{}0'.format(i+100)]
             except KeyError as error:
-                p=0
+                pass
             try:
                 a_num[2]=a_num[2]+select_item['tg1{}0'.format(i+200)]
             except KeyError as error:
-                p=0
+                pass
             try:
                 a_num[3]=a_num[3]+select_item['tg1{}0'.format(i+300)]
             except KeyError as error:
-                p=0
+                pass
             try:
                 a_num[4]=a_num[4]+select_item['tg1{}0'.format(i+400)]
             except KeyError as error:
-                p=0
+                pass
             try:
                 a_num[5]=a_num[5]+select_item['tg2{}0'.format(i)]+select_item['tg2{}1'.format(i)]
             except KeyError as error:
-                p=0
+                pass
             try:
                 a_num[6]=a_num[6]+select_item['tg2{}0'.format(i+100)]
             except KeyError as error:
-                p=0
+                pass
             try:
                 a_num[7]=a_num[7]+select_item['tg2{}0'.format(i+200)]
             except KeyError as error:
-                p=0
+                pass
             try:
                 a_num[8]=a_num[8]+select_item['tg3{}0'.format(i)]
             except KeyError as error:
-                p=0
+                pass
             try:
                 a_num[9]=a_num[9]+select_item['tg3{}0'.format(i+100)]
             except KeyError as error:
-                p=0
+                pass
             try:
                 a_num[10]=a_num[10]+select_item['tg3{}0'.format(i+200)]+select_item['tg3{}1'.format(i+200)]
             except KeyError as error:
-                p=0
+                pass
         for i in range(0,5):
             if a_num[i]==0:
                 a_num[0]=a_num[0]+1;a_num[1]=a_num[1]+1;a_num[2]=a_num[2]+1;a_num[3]=a_num[3]+1;a_num[4]=a_num[4]+1;
                 break
-
-        if a_num[5]+a_num[6]+a_num[7]<2:
+        if a_num[5]+a_num[6]+a_num[7]<3:
             a_num[5]=a_num[5]+1;a_num[6]=a_num[6]+1;a_num[7]=a_num[7]+1
-        if a_num[8]+a_num[9]+a_num[10]<2:
+        if a_num[8]+a_num[9]+a_num[10]<3:
             a_num[8]=a_num[8]+1;a_num[9]=a_num[9]+1;a_num[10]=a_num[10]+1
-            
         if a_num[5]==0:
             a_num[5]=a_num[5]+1
         if a_num[6]==0:
             a_num[6]=a_num[6]+1
         if a_num[7]==0:
             a_num[7]=a_num[7]+1
-            
         if a_num[8]==0:
             a_num[8]=a_num[8]+1
         if a_num[9]==0:
@@ -3878,7 +3736,7 @@ def update_thread2():
 
 
 
-
+## 타임라인 조회 창
 def timeline_select():
     global timeline_window
     try:
@@ -3901,6 +3759,7 @@ def timeline_select():
     tkinter.Label(timeline_window,text="타임라인에 있는 에픽만 불러옵니다(일부X)",fg="Red").place(x=10,y=100)
     tkinter.Label(timeline_window,text="서버 불안정때매 안되면 여러번 눌러보세요",fg="Red").place(x=10,y=120)
 
+## 타임라인 조회
 def show_timeline(name,server):
     
     server_dict={'안톤':'anton','바칼':'bakal','카인':'cain','카시야스':'casillas',
@@ -3923,7 +3782,7 @@ def show_timeline(name,server):
         now_3='20200101T0000'
         now2='20200101T0000'
         now3='20200101T0000'
-        now4='20200101T0000'
+        now4='20200101T0000' ## 현재 11월 13일까지 조회 가능
         if int(time_now[0:8]) >= 20200316:
             now='20200315T2359'
             now_1='20200316T0000'
@@ -4011,7 +3870,7 @@ def show_timeline(name,server):
 
 
 
-
+## 선택한 모든 장비 체크 초기화
 def reset():
     know_list2=['13390150','22390240','23390450','33390750','21390340','31390540','32390650',
                 '11390850','12390950','13391050','14391150','15391250']
@@ -4047,7 +3906,7 @@ def reset():
 def guide_speed():
     tkinter.messagebox.showinfo("정확도 선택","매우빠름=세트옵션7개 풀적용 경우의 수만 계산. 중간세팅은 고려하지 않음\n빠름=단일 선택 부위를 전부 제거\n중간=단일은 포함하되, 신화에 우선권 부여\n느림=세트 수 우선권 완화, 신화 우선권 삭제")
                                 
-
+## 장비 선택시 점등
 select_item={}
 def click_equipment(code):
     if eval("select_item['tg{}']".format(code))==0:
@@ -4059,6 +3918,7 @@ def click_equipment(code):
     if len(str(code))==5:
         check_set(int('1'+str(code)[2:4]))
 
+## 실제 저장 토글값과 이미지 표시값 동기화
 def check_equipment():
     global select_item,select_13390150,select_22390240,select_23390450,select_33390750,select_21390340,select_31390540,select_32390650
     global select_22400150,select_22400250,select_22400350,select_22400450,select_22400550,select_21400640,select_31400750
@@ -4092,6 +3952,7 @@ def check_equipment():
         except:
             pass
 
+## 세트태그 선택시 풀셋 전부 온오프
 def click_set(code):
     code_add=code-100
     code_str=str(code)[1:3]
@@ -4184,7 +4045,8 @@ def click_set(code):
                 except KeyError as error:
                     c=1
             eval('set'+str(code))['image']=image_list_set[str(code)] ##세트이미지도 온으로 바꿈
-                    
+
+## 세트명 태그 점등 여부와 실제 토글값 동기화
 def check_set(code):
     code_str=str(code)[1:3]
     set_checked=0
@@ -4228,6 +4090,7 @@ def check_set(code):
         else:
             eval('set'+str(code))['image']=image_list_set2[str(code)]
 
+# 정지
 def stop_calc():
     global exit_calc
     exit_calc=1
@@ -4255,204 +4118,7 @@ def stop_calc():
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def add_image(bg_img,add_img,xtop,ytop,anchor):
-    xsize=len(add_img[0])
-    xsize_half=xsize/2
-    ysize=len(add_img)
-    ysize_half=ysize/2
-    bg_xsize=len(bg_img[0])
-    bg_ysize=len(bg_img)
-    ori_start_x=0;ori_end_x=xsize
-    ori_start_y=0;ori_end_y=ysize
-    if anchor=='nw':
-        start_x=xtop;end_x=xtop+xsize
-        start_y=ytop;end_y=ytop+ysize
-    elif anchor=='c':
-        start_x=int(xtop-xsize_half);end_x=int(xtop+xsize_half)
-        start_y=int(ytop-ysize_half);end_y=int(ytop+ysize_half)
-
-    if start_x<0: ori_start_x=-start_x;start_x=0
-    if start_y<0: ori_start_y=-start_y;start_y=0
-    if end_x>bg_xsize: ori_end_x=xsize-(end_x-bg_xsize);end_x=bg_xsize
-    if end_y>bg_ysize: ori_end_y=ysize-(end_y-bg_ysize);end_y=bg_ysize
-
-    
-    temp_add=add_img[ori_start_y:ori_end_y,ori_start_x:ori_end_x]
-    temp_gray=cv2.cvtColor(temp_add,cv2.COLOR_BGR2GRAY)
-    ret, mask=cv2.threshold(temp_gray,5,255,cv2.THRESH_BINARY)
-    mask_inv=cv2.bitwise_not(mask)
-    temp_bg=bg_img[start_y:end_y,start_x:end_x]
-    temp_bg=cv2.bitwise_and(temp_bg,temp_bg,mask=mask_inv)
-    temp_add=cv2.bitwise_and(temp_add,temp_add,mask=mask)
-    dst=cv2.add(temp_bg,temp_add)
-    bg_img[start_y:end_y,start_x:end_x]=dst
-    return bg_img
-
-def make_profile_image(name,server,def_result):
-    setting_str=def_result[0]
-    setting_dict=def_result[1]
-    cha_background=cv2.imread('ext_img/bg_info.png',-1)
-    cha_img=cv2.imread('my_cha.png',-1)
-    result_img=add_image(cha_background,cha_img,123,70,'c')
-
-    #####
-    image_on={}
-    for i in [11,12,13,14,15,21,22,23,31,32,33]:
-        for j in setting_dict['장비']:
-            if len(j)!=6:
-                if j[0:2] == str(i):
-                    image_on[str(i)]=cv2.imread('image/'+j+'n.png',-1)
-    for i in setting_dict['장비']:
-        if len(i)==4 and i[0]=='4':
-            image_on['41']=cv2.imread('image/415'+i[1]+'0n.png',-1)
-            image_on['42']=cv2.imread('image/425'+i[2]+'0n.png',-1)
-            image_on['43']=cv2.imread('image/435'+i[3]+'0n.png',-1)
-
-    result_img=add_image(result_img,image_on['11'],57,52,'c')
-    result_img=add_image(result_img,image_on['12'],27,82,'c')
-    result_img=add_image(result_img,image_on['13'],27,52,'c')
-    result_img=add_image(result_img,image_on['14'],57,82,'c')
-    result_img=add_image(result_img,image_on['15'],27,112,'c')
-    result_img=add_image(result_img,image_on['21'],189,52,'c')
-    result_img=add_image(result_img,image_on['22'],219,52,'c')
-    result_img=add_image(result_img,image_on['23'],219,82,'c')
-    result_img=add_image(result_img,image_on['31'],189,82,'c')
-    result_img=add_image(result_img,image_on['32'],219,112,'c')
-    result_img=add_image(result_img,image_on['33'],189,112,'c')
-    result_img=add_image(result_img,image_on['41'],27,82,'c')
-    result_img=add_image(result_img,image_on['42'],219,82,'c')
-    result_img=add_image(result_img,image_on['43'],189,82,'c')
-    
-    plt_img=[0,0]
-    for i in [0,1]:
-        if setting_dict['플티상세'][i]=='S': plt_img[i]=cv2.imread('ext_img/plt_best2.png',-1)
-        elif setting_dict['플티상세'][i]=='A': plt_img[i]=cv2.imread('ext_img/plt_good2.png',-1)
-        elif setting_dict['플티상세'][i]=='B': plt_img[i]=cv2.imread('ext_img/plt_active.png',-1)
-        elif setting_dict['플티상세'][i]=='C': plt_img[i]=cv2.imread('ext_img/plt_common.png',-1)
-        else: plt_img[i]=cv2.imread('ext_img/plt_nope.png',-1)
-    
-    result_img=add_image(result_img,plt_img[0],350,124,'c')
-    result_img=add_image(result_img,plt_img[1],390,124,'c')
-    
-    tal_img=[0,0]
-    for i in [0,1]:
-        if setting_dict['탈리상세'][i]=='S': tal_img[i]=cv2.imread('ext_img/talisman_unique.png',-1)
-        elif setting_dict['탈리상세'][i]=='A': tal_img[i]=cv2.imread('ext_img/talisman_rare.png',-1)
-        elif setting_dict['탈리상세'][i]=='B': tal_img[i]=cv2.imread('ext_img/talisman_common.png',-1)
-        else: tal_img[i]=cv2.imread('ext_img/talisman_nope.png',-1)
-    result_img=add_image(result_img,tal_img[0],350,170,'c')
-    result_img=add_image(result_img,tal_img[1],390,170,'c')
-
-    small_font=ImageFont.truetype("./malgun.ttf", 11)
-    guide_font=ImageFont.truetype("./malgunbd.ttf", 12)
-    show_font=ImageFont.truetype("./malgunbd.ttf", 20)
-    mid_font=ImageFont.truetype("./malgunbd.ttf", 22)
-
-    result_img = cv2.cvtColor(result_img, cv2.COLOR_BGRA2RGBA)
-    result_img = Image.fromarray(result_img)
-    draw = ImageDraw.Draw(result_img)
-    w, h = draw.textsize(setting_dict['무기명'],font=guide_font)
-    draw.text((int(233-w),int(17-h/2)),setting_dict['무기명'],font=guide_font,fill='white')
-    w, h = draw.textsize(setting_dict['캐릭명'],font=guide_font)
-    draw.text((int(10),int(170-h/2)),setting_dict['캐릭명'],font=guide_font,fill='white')
-    w, h = draw.textsize(setting_dict['직업명'],font=guide_font)
-    draw.text((int(10),int(185-h/2)),setting_dict['직업명'],font=guide_font,fill='white')
-    w, h = draw.textsize(setting_dict['모험단'],font=guide_font)
-    draw.text((int(233-w),int(170-h/2)),setting_dict['모험단'],font=guide_font,fill='white')
-    w, h = draw.textsize(server,font=guide_font)
-    draw.text((int(233-w),int(185-h/2)),server,font=guide_font,fill='white')
-
-    if float(setting_dict['종합점수'][:-1]) >=110: rank_color=(238,201,0, 255)
-    elif float(setting_dict['종합점수'][:-1]) >=100: rank_color=(0,191,222, 255)
-    elif float(setting_dict['종합점수'][:-1]) >=80: rank_color='white'
-    else: rank_color=(192,192,192, 255)
-
-    w, h = draw.textsize('장비%=',font=show_font)
-    draw.text((int(18),int(215-h/2)),'장비%=',font=show_font,fill='white')
-    w, h = draw.textsize(setting_dict['장비딜'],font=show_font)
-    draw.text((int(18+73),int(215-h/2)),setting_dict['장비딜'],font=show_font,fill='white')
-    w, h = draw.textsize('쿨감기대값\n='+setting_dict['쿨감'],font=small_font)
-    draw.text((int(20+189-w/2),int(218-h/2)),'쿨감기대값\n='+setting_dict['쿨감'],font=small_font,fill='white')
-    w, h = draw.textsize('세팅%=',font=show_font)
-    draw.text((int(18),int(250-h/2)),'세팅%=',font=show_font,fill='white')
-    w, h = draw.textsize(setting_dict['종합점수'],font=show_font)
-    draw.text((int(18+73),int(250-h/2)),setting_dict['종합점수'],font=show_font,fill=rank_color)
-
-    w, h = draw.textsize('강화/스탯\n',font=guide_font)
-    draw.text((int(254),int(18-h/2)),'강화/스탯\n',font=guide_font,fill='white')
-    w, h = draw.textsize(setting_dict['스탯'],font=mid_font)
-    draw.text((int(252),int(27-h/2)),setting_dict['스탯'],font=mid_font,fill='white')
-    w, h = draw.textsize('무기='+setting_dict['무기강화'],font=guide_font)
-    draw.text((int(254+83),int(13-h/2)),'무기='+setting_dict['무기강화'],font=guide_font,fill='white')
-    w, h = draw.textsize('스탯='+setting_dict['스탯상세'],font=guide_font)
-    draw.text((int(254+83),int(32-h/2)),'스탯='+setting_dict['스탯상세'],font=guide_font,fill='white')
-
-    w, h = draw.textsize('속강작\n',font=guide_font)
-    draw.text((int(254),int(68-h/2)),'속강작\n',font=guide_font,fill='white')
-    w, h = draw.textsize(setting_dict['속강'],font=mid_font)
-    draw.text((int(252),int(77-h/2)),setting_dict['속강'],font=mid_font,fill='white')
-    if setting_dict['속강종류']=='화': ele_type='火'; ele_color='red'
-    elif setting_dict['속강종류']=='수': ele_type='水'; ele_color='blue'
-    elif setting_dict['속강종류']=='명': ele_type='明'; ele_color='yellow'
-    elif setting_dict['속강종류']=='암': ele_type='暗'; ele_color='purple'
-    elif setting_dict['속강종류']=='모': ele_type='某'; ele_color='white'
-    w, h = draw.textsize(ele_type,font=mid_font)
-    draw.text((int(257+75),int(70-h/2)),ele_type,font=mid_font,fill=ele_color)
-    w, h = draw.textsize('+'+setting_dict['속강상세'],font=mid_font)
-    draw.text((int(257+75+23),int(70-h/2)),'+'+setting_dict['속강상세'],font=mid_font,fill='white')
-
-    w, h = draw.textsize('딜플티\n',font=guide_font)
-    draw.text((int(254),int(118-h/2)),'딜플티\n',font=guide_font,fill='white')
-    w, h = draw.textsize(setting_dict['플티'],font=mid_font)
-    draw.text((int(252),int(127-h/2)),setting_dict['플티'],font=mid_font,fill='white')
-
-    w, h = draw.textsize('룬/탈리\n',font=guide_font)
-    draw.text((int(254),int(168-h/2)),'룬/탈리\n',font=guide_font,fill='white')
-    w, h = draw.textsize(setting_dict['탈리'],font=mid_font)
-    draw.text((int(252),int(177-h/2)),setting_dict['탈리'],font=mid_font,fill='white')
-    rune_img=[0,0,0,0,0,0]
-    for i in range(0,6):
-        if i>=3: shift=7
-        else: shift=0
-        if setting_dict['룬상세'][i]=='S': rune_color='purple'
-        elif setting_dict['룬상세'][i]=='A': rune_color=(0,191,222, 255)
-        elif setting_dict['룬상세'][i]=='B': rune_color=(192,192,192, 255)
-        else: rune_color='black'
-        draw.rectangle(((336+i*11+shift,184),(336+6+i*11+shift,184+7)),fill=rune_color,width=0)
-
-    w, h = draw.textsize('스위칭\n',font=guide_font)
-    draw.text((int(254),int(218-h/2)),'스위칭\n',font=guide_font,fill='white')
-    w, h = draw.textsize(setting_dict['스위칭'],font=mid_font)
-    draw.text((int(252),int(227-h/2)),setting_dict['스위칭'],font=mid_font,fill='white')
-    w, h = draw.textsize(setting_dict['스위칭상세'],font=guide_font)
-    draw.text((int(254+83),int(22+190-h/2)),setting_dict['스위칭상세'],font=guide_font,fill='white')
-    w, h = draw.textsize(setting_dict['스위칭최대'],font=guide_font)
-    draw.text((int(254+83+30),int(22+209-h/2)),setting_dict['스위칭최대'],font=guide_font,fill='white')
-
-    result_img = np.array(result_img)
-    result_img = cv2.cvtColor(result_img, cv2.COLOR_RGBA2BGRA)
-    result_img=result_img[0:276,0:422]
-
-    cv2.imwrite('Screenshots/'+str(time.strftime('%y%m%d%H%M%S', time.localtime(time.time())))+'.png',result_img)
-
-
+## 딜러 프로필 보기 기능
 def show_profile2(name,server):
     try:
         def_result=calc_profile.make_profile(name,server)
@@ -4603,7 +4269,7 @@ def show_profile2(name,server):
 
 
     capture_img=tkinter.PhotoImage(file='ext_img/capture_img.png')
-    capture_but=tkinter.Button(profile_window,command=lambda:make_profile_image(name,server,def_result),image=capture_img,bg=dark_sub,borderwidth=0,activebackground=dark_sub,anchor='nw')
+    capture_but=tkinter.Button(profile_window,command=lambda:calc_profile.make_profile_image(name,server,def_result),image=capture_img,bg=dark_sub,borderwidth=0,activebackground=dark_sub,anchor='nw')
     capture_but.place(x=378,y=248)
     def profile_detail():
         tkinter.messagebox.showinfo('세부보기',setting_str,parent=profile_window)
@@ -4664,7 +4330,7 @@ def show_profile(name,server):
 
 
 
-## 내부 구조 ##
+## GUI ############################################################################################################################
 know_list=['13390150','22390240','23390450','33390750','21390340','31390540','32390650',
            '11390850','12390950','13391050','14391150','15391250']
 know_set_list=['22400150','22400250','22400350','22400450','22400550','21400640','31400750',

@@ -1,3 +1,7 @@
+#-*- coding: utf-8 -*-
+## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
+## Copyright ⓒ 2020 Dawnclass(새벽반) dawnclass16@naver.com
+
 DNF_job_list={
     '귀검사(남)':[
         '검신(진각)',

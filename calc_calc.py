@@ -1,3 +1,7 @@
+#-*- coding: utf-8 -*-
+## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
+## Copyright ⓒ 2020 Dawnclass(새벽반) dawnclass16@naver.com
+
 from math import floor
 from collections import Counter
 
@@ -6,6 +10,175 @@ set_code_list=[]
 for i in range(101,150):
     set_code_list.append(str(i))
     
+def make_all_equ_list(select_item,select_perfect):
+    
+    list11=[];list12=[];list13=[];list14=[];list15=[]
+    list21=[];list22=[];list23=[];list31=[];list32=[];list33=[]
+    list11_0=[];list11_1=[];list21_0=[];list21_1=[];list33_0=[];list33_1=[]
+    list_setnum=[];list_setnum1=[];list_setnum2=[];list_num=[]
+    ##에픽
+    for i in range(101,199):
+        try:
+            if eval('select_item["tg1{}0"]'.format(i)) == 1:
+                list11.append('1'+str(i)+'0')
+                list11_0.append('1'+str(i)+'0')
+                list_num.append(str(i)[1:]+'0')
+                list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+        except KeyError as error:
+            c=1
+    
+    for i in range(201,299):
+        try:
+            if eval('select_item["tg1{}0"]'.format(i)) == 1:
+                list12.append('1'+str(i)+'0')
+                list_num.append(str(i)[1:]+'0')
+                list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
+        except KeyError as error:
+            c=1
+    for i in range(301,399):
+        try:
+            if eval('select_item["tg1{}0"]'.format(i)) == 1:
+                list13.append('1'+str(i)+'0')
+                list_num.append(str(i)[1:]+'0')
+                list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
+        except KeyError as error:
+            c=1
+    for i in range(401,499):
+        try:
+            if eval('select_item["tg1{}0"]'.format(i)) == 1:
+                list14.append('1'+str(i)+'0')
+                list_num.append(str(i)[1:]+'0')
+                list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
+        except KeyError as error:
+            c=1
+    for i in range(501,599):
+        try:
+            if eval('select_item["tg1{}0"]'.format(i)) == 1:
+                list15.append('1'+str(i)+'0')
+                list_num.append(str(i)[1:]+'0')
+                list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
+        except KeyError as error:
+            c=1
+    for i in range(101,199):
+        try:
+            if eval('select_item["tg2{}0"]'.format(i)) == 1:
+                list21.append('2'+str(i)+'0')
+                list21_0.append('2'+str(i)+'0')
+                list_num.append(str(i)[1:]+'0')
+                list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+        except KeyError as error:
+            c=1
+    for i in range(201,299):
+        try:
+            if eval('select_item["tg2{}0"]'.format(i)) == 1:
+                list22.append('2'+str(i)+'0')
+                list_num.append(str(i)[1:]+'0')
+                list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
+        except KeyError as error:
+            c=1
+    for i in range(301,399):
+        try:
+            if eval('select_item["tg2{}0"]'.format(i)) == 1:
+                list23.append('2'+str(i)+'0')
+                list_num.append(str(i)[1:]+'0')
+                list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
+        except KeyError as error:
+            c=1
+    for i in range(101,199):
+        try:
+            if eval('select_item["tg3{}0"]'.format(i)) == 1:
+                list31.append('3'+str(i)+'0')
+                list_num.append(str(i)[1:]+'0')
+                list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
+        except KeyError as error:
+            c=1
+    for i in range(201,299):
+        try:
+            if eval('select_item["tg3{}0"]'.format(i)) == 1:
+                list32.append('3'+str(i)+'0')
+                list_num.append(str(i)[1:]+'0')
+                list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
+        except KeyError as error:
+            c=1
+    for i in range(301,399):
+        try:
+            if eval('select_item["tg3{}0"]'.format(i)) == 1:
+                list33.append('3'+str(i)+'0')
+                list33_0.append('3'+str(i)+'0')
+                list_num.append(str(i)[1:]+'0')
+                list_setnum.append('1'+str(i)[1:3])
+                list_setnum1.append('1'+str(i)[1:3])
+        except KeyError as error:
+            c=1
+  
+    algo_list=['11','12','13','14','15','21','22','23','31','32','33']
+    if select_perfect == '단품제외(보통)':
+        for i in list_num:
+            if list_num.count(i)==1:
+                if i[-1]!='1':
+                    for ca in algo_list:
+                        try:
+                            eval("list{}.remove('{}{}')".format(ca,ca,i))
+                            eval("list{}_0.remove('{}{}')".format(ca,ca,i))
+                        except:
+                            c=1
+
+    ##신화                        
+    for i in range(101,199):
+        try:
+            if eval('select_item["tg1{}1"]'.format(i)) == 1:
+                list11.append('1'+str(i)+'1')
+                list11_1.append('1'+str(i)+'1')
+                if list11.count('1'+str(i)+'0')==0:
+                    list_setnum.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
+        except KeyError as error:
+            c=1
+    for i in range(101,199):
+        try:
+            if eval('select_item["tg2{}1"]'.format(i)) == 1:
+                list21.append('2'+str(i)+'1')
+                list21_1.append('2'+str(i)+'1')
+                if list21.count('2'+str(i)+'0')==0:
+                    list_setnum.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
+        except KeyError as error:
+            c=1
+    for i in range(301,399):
+        try:
+            if eval('select_item["tg3{}1"]'.format(i)) == 1:
+                list33.append('3'+str(i)+'1')
+                list33_1.append('3'+str(i)+'1')
+                if list33.count('3'+str(i)+'0')==0:
+                    list_setnum.append('1'+str(i)[1:3])
+                list_setnum2.append('1'+str(i)[1:3])
+        except KeyError as error:
+            c=1
+    set_num_dict=Counter(list_setnum) ##전부
+    set_num_dict1=Counter(list_setnum1) ##에픽만
+    set_num_dict2=Counter(list_setnum2) ##신화만
+    
+    result_all_list=[list11,list11_0,list11_1,list12,list13,list14,list15,list21,list21_0,list21_1,list22,list23,list31,list32,list33,list33_0,list33_1]
+    result_setnum=[set_num_dict,set_num_dict1,set_num_dict2]
+    return [result_all_list,result_setnum]
 
 ##공통
 def make_setopt_num(equ_list,god_tg):

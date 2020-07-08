@@ -1,4 +1,4 @@
-now_version="4.0.0"
+now_version="4.0.1"
 ver_time='200709'
 
 #-*- coding: utf-8 -*-
@@ -511,8 +511,9 @@ def calc(mode):
     extra_stat=0
 
     #칭호
-    global style_calced
+    global style_calced,creature_calced
     style_calced=style_select.get()
+    creature_calced=creature_select.get()
     if style_calced == '증뎀10%':
         fixed_dam=10
     if style_calced == '증뎀15%':
@@ -521,12 +522,12 @@ def calc(mode):
         extra_bon=10
     if style_calced == '속강32':
         ele_in=ele_in+32
-    if creature_select.get() == '모공15%':
+    if creature_calced == '모공15%':
         extra_all=15
-    if creature_select.get() == '크증18%':
+    if creature_calced == '크증18%':
         fixed_cri=18
         extra_pas2=1
-    if creature_select.get() == '물마독공18%':
+    if creature_calced == '물마독공18%':
         extra_att=18
         extra_pas2=1
     if style_calced == '크증10%':
@@ -1677,7 +1678,18 @@ def calc_thread():
 
 
 
-
+tagkgum_img=tkinter.PhotoImage(file='ext_img/tagk_um.png')
+tg_groggy_img2=tkinter.PhotoImage(file='ext_img/groggy_swi2.png')
+tg_groggy_img1=tkinter.PhotoImage(file='ext_img/groggy_swi1.png')
+buf_jingak_img2=tkinter.PhotoImage(file='ext_img/buf_jin_2.png')
+buf_jingak_img1=tkinter.PhotoImage(file='ext_img/buf_jin_1.png')
+type1_img=tkinter.PhotoImage(file='ext_img/type_bless.png')
+type2_img=tkinter.PhotoImage(file='ext_img/type_crux.png')
+type3_img=tkinter.PhotoImage(file='ext_img/type_all.png')
+show_detail_img=tkinter.PhotoImage(file='ext_img/show_detail.png')
+show_tag_img=tkinter.PhotoImage(file='ext_img/show_set_tag.png')
+capture_img=tkinter.PhotoImage(file='ext_img/capture_img.png')
+style_compare_img=tkinter.PhotoImage(file='ext_img/style_compare.png')
 pause_gif=0
 stop_gif=0
 stop_gif2=0
@@ -1890,7 +1902,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
             global  tagkgum,tagkgum_img
             tagkgum_exist=1
             tagk_tg=0
-            tagkgum_img=tkinter.PhotoImage(file='ext_img/tagk_um.png')
+            
             tagkgum=tkinter.Button(result_window,command=lambda:change_tagk(ele_skill,),image=tagkgum_img,bg=dark_main,borderwidth=0,activebackground=dark_main)
             tagkgum.place(x=182,y=7)
             tagkgum.image=tagkgum_img
@@ -1959,10 +1971,6 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                 print(str(i+1)+'등')
                 print('순장비계수')
                 print(str(int(rank_dam_onlyequ[i]*100))+'%')
-                print('패시브만반영')
-                print(str(rank_dam_nolv[i])+'%')
-                print('종합계수')
-                print(rank_dam[i])
                 print()
                 
                 rank0_stat[i]=("증뎀= "+str(int(round(rss0[i][2],0)))+
@@ -2087,8 +2095,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         global tg_groggy
         global groggy_bt,tg_groggy_img2,tg_groggy_img1
         tg_groggy=0
-        tg_groggy_img2=tkinter.PhotoImage(file='ext_img/groggy_swi2.png')
-        tg_groggy_img1=tkinter.PhotoImage(file='ext_img/groggy_swi1.png')
+        
         groggy_bt=tkinter.Button(result_window,command=lambda:change_groggy(ele_skill),image=tg_groggy_img1,fg='white',bg=dark_main,borderwidth=0,activebackground=dark_main)
         groggy_bt.place(x=190,y=325)
         groggy_bt.image=tg_groggy_img1
@@ -2256,8 +2263,6 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         global buf_jingak_exist,buf_jingak_tg,buf_jingak,buf_jingak_img2
         buf_jingak_exist=0;buf_jingak_tg=0
         if job_name=='(버프)세인트': ## 진각 전환 하드 코딩
-            buf_jingak_img2=tkinter.PhotoImage(file='ext_img/buf_jin_2.png')
-            buf_jingak_img1=tkinter.PhotoImage(file='ext_img/buf_jin_1.png')
             def change_buf_jingak():
                 global buf_jingak_tg,buf_jingak,buf_jingak_img2
                 if rank_type_buf==1:
@@ -2330,16 +2335,13 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                 cn1=0
                 cn6=5
         length=len(rank_list[0])
-        type1_img=tkinter.PhotoImage(file='ext_img/type_bless.png')
-        type2_img=tkinter.PhotoImage(file='ext_img/type_crux.png')
-        type3_img=tkinter.PhotoImage(file='ext_img/type_all.png')
+        
         rank_type_but1=tkinter.Button(result_window,command=lambda:change_rank_type(1),image=type1_img,bg=dark_main,borderwidth=0,activebackground=dark_main);rank_type_but1.place(x=8,y=337)
         rank_type_but2=tkinter.Button(result_window,command=lambda:change_rank_type(2),image=type2_img,bg=dark_main,borderwidth=0,activebackground=dark_main);rank_type_but2.place(x=84,y=337)
         rank_type_but3=tkinter.Button(result_window,command=lambda:change_rank_type(3),image=type3_img,bg=dark_main,borderwidth=0,activebackground=dark_main);rank_type_but3.place(x=160,y=337)
         rank_type_but1.image=type1_img
         rank_type_but2.image=type2_img
         rank_type_but3.image=type3_img
-
         if result_image_gif3_tg[0][0]==1:
             play_gif( 0,0,0,res_img11,result_image_gif3,0,1,1)
         if result_image_gif3_tg[0][1]==1:
@@ -2365,8 +2367,6 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         
         load_presetr.close()
     
-    show_detail_img=tkinter.PhotoImage(file='ext_img/show_detail.png')
-    
     res_bt1=tkinter.Button(result_window,command=lambda:change_rank(0,job_type,ele_skill,rank_setting,rank_ult),image=show_detail_img,bg=dark_blue,borderwidth=0,activebackground=dark_blue);res_bt1.place(x=486,y=20+78*0)
     res_bt2=tkinter.Button(result_window,command=lambda:change_rank(1,job_type,ele_skill,rank_setting,rank_ult),image=show_detail_img,bg=dark_blue,borderwidth=0,activebackground=dark_blue)
     res_bt3=tkinter.Button(result_window,command=lambda:change_rank(2,job_type,ele_skill,rank_setting,rank_ult),image=show_detail_img,bg=dark_blue,borderwidth=0,activebackground=dark_blue)
@@ -2380,13 +2380,11 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         res_bt4.place(x=486,y=20+78*3)
     if length>4:
         res_bt5.place(x=486,y=20+78*4)
-
-    show_tag_img=tkinter.PhotoImage(file='ext_img/show_set_tag.png')
+    
     show_tag_but=tkinter.Button(result_window,command=lambda:show_set_name(job_type),image=show_tag_img,bg=dark_sub,borderwidth=0,activebackground=dark_sub)
     show_tag_but.place(x=173,y=158-26)
     show_tag_but.image=show_tag_img
-
-    capture_img=tkinter.PhotoImage(file='ext_img/capture_img.png')
+    
     capture_but=tkinter.Button(result_window,command=lambda:capture_screen(result_window),image=capture_img,bg=dark_sub,borderwidth=0,activebackground=dark_sub)
     capture_but.place(x=173-164,y=158-26)
     capture_but.image=capture_img
@@ -2394,11 +2392,10 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
     res_bt1.image=show_detail_img
     place_center(result_window,0)
 
+
 result_gauge_bar_img=tkinter.PhotoImage(file='ext_img/result_gauge_bar.png')
 result_gauge_img=tkinter.PhotoImage(file='ext_img/result_gauge.png')
 result_checklist_img=tkinter.PhotoImage(file='ext_img/result_show_checklist.png')
-
-
 def show_result_dealer():
     global result_window,canvas_res,guide_font
     result_window.geometry("585x710")
@@ -2494,7 +2491,7 @@ def show_result_dealer():
     canvas_res.create_text(213+int(move_gauge),465,text=str(round(groggy_sustain_ratio-100,1))+"%",font=guide_font,fill=ratio_color,anchor='c',tags=('not_overlap',))
     canvas_res.create_text(210,483,text=ratio_value_text,font=guide_font,fill=ratio_value_fg,anchor='c',tags=('not_overlap',))
 
-    canvas_res.create_text(209,521,text="<세팅 체크리스트>",font=guide_font,fill='white',tags=('not_overlap',))
+    canvas_res.create_text(189,521,text="<세팅 체크리스트>",font=guide_font,fill='white',tags=('not_overlap',))
     if (-sum(cool_list)/18)>15:
         check_list4_fg="white";check_list4_tg=font_normal
     else:
@@ -2546,10 +2543,17 @@ def show_result_dealer():
     def del_check_list6(event): del_check_list(6)
     def show_check_list7(event): show_check_list(7)
     def del_check_list7(event): del_check_list(7)
+    def show_check_style(event): show_check_list('style')
+    def del_check_style(event): del_check_list('style')
         
     def show_check_list(num):
         canvas_res.create_image(445,560,image=result_showbox_img,tags=('not_overlap','mouse_overlap'))
-        canvas_res.create_text(340,560,text=calc_result.result_check_list_explain[num-1],tags=('not_overlap','mouse_overlap'),anchor='w',width=210)
+        try:
+            canvas_res.create_text(340,560,text=calc_result.result_check_list_explain[num-1],tags=('not_overlap','mouse_overlap'),anchor='w',width=210)
+        except:
+            if num=='style':
+                style_check_list=style_compare()
+                canvas_res.create_text(340,560,text=style_check_list,tags=('not_overlap','mouse_overlap'),anchor='w',width=210)
     def del_check_list(num):
         canvas_res.delete("mouse_overlap")
 
@@ -2582,6 +2586,34 @@ def show_result_dealer():
     check_list7_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
     check_list7_bt.place(x=265,y=673)
     check_list7_bt.bind("<Enter>",show_check_list7);check_list7_bt.bind("<Leave>",del_check_list7)
+
+    def style_compare():
+        global style_calced,creature_calced
+        now_updam=now_base_array[2]
+        now_cridam=now_base_array[3]
+        now_bondam=now_base_array[4]
+        now_ele=now_base_array[9]
+        change_updam=15;change_cridam=10;change_bondam=10;change_ele=32
+        no_style_default=1
+        if style_calced=='증뎀10%': no_style_default=(now_updam-10+100)/(now_updam+100);now_updam=now_updam-10
+        elif style_calced=='증뎀15%': no_style_default=(now_updam-15+100)/(now_updam+100);now_updam=now_updam-15
+        elif style_calced=='크증10%' and creature_calced!='크증18%': no_style_default=(now_cridam-10+100)/(now_cridam+100);now_cridam=now_cridam-10
+        elif style_calced=='추뎀10%': no_style_default=(now_bondam-10+100)/(now_bondam+100);now_bondam=now_bondam-10
+        elif style_calced=='속강32': no_style_default=((now_ele-32)*0.0045+1.05)/((now_ele)*0.0045+1.05);now_ele=now_ele-32
+        if creature_calced=='크증18%': change_cridam=0
+        style_updam=str(round((now_updam+change_updam+100)/(now_updam+100)*no_style_default*100-100,2))+"%"
+        style_cridam=str(round((now_cridam+change_cridam+100)/(now_cridam+100)*no_style_default*100-100,2))+"%"
+        style_bondam=str(round((now_bondam+change_bondam+100)/(now_bondam+100)*no_style_default*100-100,2))+"%"
+        style_ele=str(round(((now_ele+change_ele)*0.0045+1.05)/((now_ele)*0.0045+1.05)*no_style_default*100-100,2))+"%"
+        result_explain="현 계산값에서 데미지 칭호를 변경했을 때의 증감율을 나타냅니다. 특정 액티브 스킬공격력 증가 옵션은 계산되지 않습니다.\n\n\n"
+        result_str='증뎀15% 칭호 : '+style_updam+'\n크증10% 칭호 : '+style_cridam+'\n추뎀10% 칭호 : '+style_bondam+'\n속강+32 칭호 : '+style_ele
+        return result_explain+result_str
+    
+    style_compare_bt=tkinter.Label(result_window,image=style_compare_img,bd=0,bg=result_sub)
+    style_compare_bt.place(x=255,y=508)
+    style_compare_bt.bind("<Enter>",show_check_style);style_compare_bt.bind("<Leave>",del_check_style)
+
+
 
 
 def play_gif(count_frame,now_rank,now_pc,show_res,gif_list,mode,mode2,mode3):

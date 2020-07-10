@@ -69,7 +69,7 @@ def make_profile(name,server):
         return {'error':'Not found'}
     else:
         stat_dic=load_api('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/status?apikey=' + apikey)
-        #print('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/equip/equipment?apikey='+ apikey)
+        #print('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/status?apikey=' + apikey)
         equipment_dic=load_api('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/equip/equipment?apikey='+ apikey)
         avatar_dic=load_api('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/equip/avatar?apikey='+ apikey)
         pet_dic=load_api('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/equip/creature?apikey='+ apikey)
@@ -121,7 +121,7 @@ def make_profile(name,server):
             now_swiper=float(swiper_list[swiper_value])
             swi_score=(100+now_swiper)/(100+max_swiper)*now_ele_eff/max_ele_eff
             show_swi=str(round(now_swiper,1))+'% / +'+str(int(now_swiele))+' / '
-        elif class_name=='격투가(여)' and job_name=='眞 스트리트 파이터':
+        elif class_name=='격투가(여)' and job_name=='眞 스트리트파이터':
             now_swiper=50+5.882352941176470588235294117647*float(swiper_list[swiper_value])/100
             swi_score=now_swiper/100
             show_swi=str(round(float(swiper_list[swiper_value]),1))+'% / '
@@ -182,7 +182,7 @@ def make_profile(name,server):
                         if now_opt["explain"][0:5]=="힘, 지능" and list(now_opt["explain"]).count('%')==0:
                             god_stat=now_opt["explain"][6:];god_stat=god_stat[:-3]
                             api_stat=api_stat-int(god_stat)
-        api_stat=api_stat+max([stat_dic["status"][2]["value"],stat_dic["status"][3]["value"]])
+        api_stat=api_stat+max([stat_dic["status"][4]["value"],stat_dic["status"][5]["value"]])
         max_stat=job_detail[class_name][job_name][3]
         stat_dif=api_stat-max_stat
         stat_score=1+stat_dif/100*0.0078
@@ -830,7 +830,7 @@ job_detail={
     '격투가(여)':{
         '眞 넨마스터':[3,57,0,4126,[''],5.15,'염제폐월수화',[''],[''],3.51], #4번 속강(86)도 있음
         '眞 스트라이커':[4,113,0,4188,[''],6.44,'카이저',[''],[''],3.54],
-        '眞 스트리트 파이터':[5,850,0,4127,[''],2.36,'용독문주',[''],[''],1.6], #독 바르기 공격력 변화율 (증가율이 아님,독비중 50% 기준 평균산출 필요)
+        '眞 스트리트파이터':[5,850,0,4127,[''],2.36,'용독문주',[''],[''],1.6], #독 바르기 공격력 변화율 (증가율이 아님,독비중 50% 기준 평균산출 필요)
         '眞 그래플러':[2,107,1,4095,[''],6.93,'얼티밋디바',[''],[''],3.57]
         },
     '거너(남)':{

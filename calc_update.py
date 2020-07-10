@@ -245,8 +245,7 @@ def update_preset():
             db_custom['A69']='inv_select4_2';db_custom[i+'69']='3%/40(상)'
             
         
-    if db_save['A70'].value!='cool_conv2': ## 4.0.0 지딜지표 분리, 수문장 모속 추가
-        print(12312312)
+    if db_custom['A70'].value!='cool_conv2': ## 4.0.0 지딜지표 분리, 수문장 모속 추가
         db_custom['A20']='cool_conv2';db_custom['B20']='70';
         db_custom['A70']='cool_conv2'
         db_custom['B2']='20'
@@ -260,7 +259,16 @@ def update_preset():
         db_save['A71']='wep_list'
         for i in ['C','D','E','F','G','H','I','J','K','B']:
             db_custom[i+'71']='[]'
-        
+
+    ele_type_list=['화','수','명','암']
+    if ele_type_list.count(db_save['L26'].value)!=1: ## 4.0.2 세이브 슬롯 확장
+        for j in['L','M','N','O','P','Q','R','S','T','U']:
+            for i in range(26,72):
+                db_custom[j+str(i)]=db_custom['K'+str(i)].value
+            for i in range(1,316):
+                db_save[j+str(i)]=0
+        for i in range(11,21):
+            db_custom['E'+str(i)]=str(i)+'번슬롯'
         
 
     

@@ -1,5 +1,5 @@
-now_version="4.0.1"
-ver_time='200709'
+now_version="4.0.2"
+ver_time='200710'
 
 #-*- coding: utf-8 -*-
 ## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
@@ -105,8 +105,12 @@ except:
     except:
         tkinter.messagebox.showerror("에러","API 접근 권한 획득 실패.")
 
-load_excel1=load_workbook("DATA.xlsx", data_only=True)
 
+
+load_excel1=load_workbook("DATA.xlsx", data_only=True)
+load_preset0=load_workbook("preset.xlsx", data_only=True)
+db_custom=load_preset0["custom"]
+db_save=load_preset0["one"]
 ## 초기 구동 엑셀
 db_one=load_excel1["one"]
 opt_one={}
@@ -147,14 +151,10 @@ for row in level_db.rows:
     opt_leveling[level_db.cell(jk,1).value]=row_value_cut ## DB 불러오기 ##
     jk=jk+1
 
-load_preset0=load_workbook("preset.xlsx", data_only=True)
-db_custom=load_preset0["custom"]
-db_save=load_preset0["one"]
 save_name_list=[]
-for i in range(1,11):
+for i in range(1,21):
     save_name_list.append(db_custom.cell(i,5).value)
-
-
+    
 auto_custom=0 #클라이언트 업데이트 시 preset 업데이트 여부
 ########## 버전 최초 구동 프리셋 업데이트 ###########
 def update_log():
@@ -230,12 +230,6 @@ load_excel1.close()
 
 
 
-
-
-
-
-
-
     
 ## 계산 함수 ##
 def calc(mode):
@@ -248,12 +242,12 @@ def calc(mode):
         result_window.after(500,time_delay3)
     except NameError as error:
         pass
-    if select_perfect.get() == '세트필터↓(매우느림)' or select_perfect.get() == '풀셋모드(매우빠름)' or select_perfect.get() == '메타몽풀셋모드':
+    if select_perfect.get()[0:5] == '세트필터↓' or select_perfect.get()[0:4] == '풀셋모드' or select_perfect.get() == '메타몽풀셋모드':
         set_perfect=1 #세트 필터 하락
     else:
         set_perfect=0
     if a_num_all>20000000:
-        if select_perfect.get() != "풀셋모드(매우빠름)" and select_perfect.get() != "메타몽풀셋모드":
+        if select_perfect.get()[0:4] != "풀셋모드" and select_perfect.get() != "메타몽풀셋모드":
             ask_really=tkinter.messagebox.askquestion('확인',"2천만 가지가 넘는 경우의 수는 풀셋/메타몽풀셋 모드를 권장합니다.\n그냥 진행하시겠습니까?")
             if ask_really == 'yes':
                 pass
@@ -682,7 +676,7 @@ def calc(mode):
 
     ##풀셋모드##
     ##########################################################################################################################
-    if select_perfect.get() == '풀셋모드(매우빠름)' or select_perfect.get() == '메타몽풀셋모드':
+    if select_perfect.get()[0:4] == '풀셋모드' or select_perfect.get() == '메타몽풀셋모드':
         active_bang5_0=[];active_bang5_1=[]
         active_bang2_0=[];active_bang3_1_0=[];active_bang3_1_1=[];active_bang3_2=[];active_bang3_3=[] #1:상의(1_1:신화), 2:하의, 3:신발 / 포함 어벨
         active_acc3_0=[];active_acc3_1=[]
@@ -1211,6 +1205,7 @@ def calc(mode):
                             oneonelist=[]
                             for i in range(oneone):
                                 no_cut=getone(for_calc[i])               ## 11번 스증 ## 20번 쿨감
+                        
                                 cut=np.array(no_cut[0:20]+no_cut[22:23]+no_cut[34:35]+no_cut[38:44])
                                 skiper=(skiper/100+1)*(cut[11]/100+1)*100-100
                                 coolper=(1-(100-coolper)/100*(100-no_cut[22+cool_eff_dictnum])/100)*100
@@ -1744,8 +1739,8 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         global result0_image_gif, result0_image_gif_tg,result0_siroco_gif,result0_siroco_gif_tg,rank0_dam_nolv,rank0_dam_tagk_nolv
         global res_cool_what,cool_eff_text
         global rank_wep_img,rank0_wep_img
-        cool_check=req_cool.get()[2:6]
-        if cool_check=='그로기포함':
+        cool_check=req_cool.get()[0]
+        if cool_check=='O':
             cool_eff_check=1
             cool_eff_text='(쿨감O)'
             cool_eff_text_all='그로기(쿨감O)'
@@ -3009,43 +3004,47 @@ def change_rank2(now,job_type,ele_skill):
 ## 에픽 이미지 세트옵션 보이기 전환
 def show_set_name(job_type):
     global image_list,canvas_res,res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43, now_rank_num
-    global set_name_toggle, image_list_tag, result_image_on, result_image_tag, pause_gif, result_window
+    global set_name_toggle, image_list_tag, result_image_on, result_image_tag,result0_image_tag, pause_gif, result_window
     if job_type == "deal":
         global result_image_tag
+        if tg_groggy==0:
+            temp_image_tag=result_image_tag
+        elif tg_groggy==1:
+            temp_image_tag=result0_image_tag
         if set_name_toggle ==0:
             set_name_toggle=1
             pause_gif=1
-            canvas_res.itemconfig(res_img11,image=image_list_tag[result_image_tag[now_rank_num]['11']])
-            canvas_res.itemconfig(res_img12,image=image_list_tag[result_image_tag[now_rank_num]['12']])
-            canvas_res.itemconfig(res_img13,image=image_list_tag[result_image_tag[now_rank_num]['13']])
-            canvas_res.itemconfig(res_img14,image=image_list_tag[result_image_tag[now_rank_num]['14']])
-            canvas_res.itemconfig(res_img15,image=image_list_tag[result_image_tag[now_rank_num]['15']])
-            canvas_res.itemconfig(res_img21,image=image_list_tag[result_image_tag[now_rank_num]['21']])
-            canvas_res.itemconfig(res_img22,image=image_list_tag[result_image_tag[now_rank_num]['22']])
-            canvas_res.itemconfig(res_img23,image=image_list_tag[result_image_tag[now_rank_num]['23']])
-            canvas_res.itemconfig(res_img31,image=image_list_tag[result_image_tag[now_rank_num]['31']])
-            canvas_res.itemconfig(res_img32,image=image_list_tag[result_image_tag[now_rank_num]['32']])
-            canvas_res.itemconfig(res_img33,image=image_list_tag[result_image_tag[now_rank_num]['33']])
-            canvas_res.itemconfig(res_img41,image=image_list_tag[result_image_tag[now_rank_num]['41']])
-            canvas_res.itemconfig(res_img42,image=image_list_tag[result_image_tag[now_rank_num]['42']])
-            canvas_res.itemconfig(res_img43,image=image_list_tag[result_image_tag[now_rank_num]['43']])
+            canvas_res.itemconfig(res_img11,image=image_list_tag[temp_image_tag[now_rank_num]['11']])
+            canvas_res.itemconfig(res_img12,image=image_list_tag[temp_image_tag[now_rank_num]['12']])
+            canvas_res.itemconfig(res_img13,image=image_list_tag[temp_image_tag[now_rank_num]['13']])
+            canvas_res.itemconfig(res_img14,image=image_list_tag[temp_image_tag[now_rank_num]['14']])
+            canvas_res.itemconfig(res_img15,image=image_list_tag[temp_image_tag[now_rank_num]['15']])
+            canvas_res.itemconfig(res_img21,image=image_list_tag[temp_image_tag[now_rank_num]['21']])
+            canvas_res.itemconfig(res_img22,image=image_list_tag[temp_image_tag[now_rank_num]['22']])
+            canvas_res.itemconfig(res_img23,image=image_list_tag[temp_image_tag[now_rank_num]['23']])
+            canvas_res.itemconfig(res_img31,image=image_list_tag[temp_image_tag[now_rank_num]['31']])
+            canvas_res.itemconfig(res_img32,image=image_list_tag[temp_image_tag[now_rank_num]['32']])
+            canvas_res.itemconfig(res_img33,image=image_list_tag[temp_image_tag[now_rank_num]['33']])
+            canvas_res.itemconfig(res_img41,image=image_list_tag[temp_image_tag[now_rank_num]['41']])
+            canvas_res.itemconfig(res_img42,image=image_list_tag[temp_image_tag[now_rank_num]['42']])
+            canvas_res.itemconfig(res_img43,image=image_list_tag[temp_image_tag[now_rank_num]['43']])
         elif set_name_toggle ==1:
             set_name_toggle=0
             pause_gif=0
-            canvas_res.itemconfig(res_img11,image=image_list[result_image_tag[now_rank_num]['11']])
-            canvas_res.itemconfig(res_img12,image=image_list[result_image_tag[now_rank_num]['12']])
-            canvas_res.itemconfig(res_img13,image=image_list[result_image_tag[now_rank_num]['13']])
-            canvas_res.itemconfig(res_img14,image=image_list[result_image_tag[now_rank_num]['14']])
-            canvas_res.itemconfig(res_img15,image=image_list[result_image_tag[now_rank_num]['15']])
-            canvas_res.itemconfig(res_img21,image=image_list[result_image_tag[now_rank_num]['21']])
-            canvas_res.itemconfig(res_img22,image=image_list[result_image_tag[now_rank_num]['22']])
-            canvas_res.itemconfig(res_img23,image=image_list[result_image_tag[now_rank_num]['23']])
-            canvas_res.itemconfig(res_img31,image=image_list[result_image_tag[now_rank_num]['31']])
-            canvas_res.itemconfig(res_img32,image=image_list[result_image_tag[now_rank_num]['32']])
-            canvas_res.itemconfig(res_img33,image=image_list[result_image_tag[now_rank_num]['33']])
-            canvas_res.itemconfig(res_img41,image=image_list[result_image_tag[now_rank_num]['41']])
-            canvas_res.itemconfig(res_img42,image=image_list[result_image_tag[now_rank_num]['42']])
-            canvas_res.itemconfig(res_img43,image=image_list[result_image_tag[now_rank_num]['43']])
+            canvas_res.itemconfig(res_img11,image=image_list[temp_image_tag[now_rank_num]['11']])
+            canvas_res.itemconfig(res_img12,image=image_list[temp_image_tag[now_rank_num]['12']])
+            canvas_res.itemconfig(res_img13,image=image_list[temp_image_tag[now_rank_num]['13']])
+            canvas_res.itemconfig(res_img14,image=image_list[temp_image_tag[now_rank_num]['14']])
+            canvas_res.itemconfig(res_img15,image=image_list[temp_image_tag[now_rank_num]['15']])
+            canvas_res.itemconfig(res_img21,image=image_list[temp_image_tag[now_rank_num]['21']])
+            canvas_res.itemconfig(res_img22,image=image_list[temp_image_tag[now_rank_num]['22']])
+            canvas_res.itemconfig(res_img23,image=image_list[temp_image_tag[now_rank_num]['23']])
+            canvas_res.itemconfig(res_img31,image=image_list[temp_image_tag[now_rank_num]['31']])
+            canvas_res.itemconfig(res_img32,image=image_list[temp_image_tag[now_rank_num]['32']])
+            canvas_res.itemconfig(res_img33,image=image_list[temp_image_tag[now_rank_num]['33']])
+            canvas_res.itemconfig(res_img41,image=image_list[temp_image_tag[now_rank_num]['41']])
+            canvas_res.itemconfig(res_img42,image=image_list[temp_image_tag[now_rank_num]['42']])
+            canvas_res.itemconfig(res_img43,image=image_list[temp_image_tag[now_rank_num]['43']])
     elif job_type == "buf":
         global result_image_on1_tag,result_image_on2_tag,result_image_on3_tag, rank_type_buf
         if rank_type_buf==1:
@@ -3436,7 +3435,7 @@ def save_custom(ele_type,cool_con,cus1,cus2,cus3,cus4,cus6,cus7,cus8,cus9,cus10,
 ## 저장된 preset 불러오기
 def load_checklist():
     ask_msg1=tkinter.messagebox.askquestion('확인',"저장된 내역을 불러오겠습니까?")
-    for snum in range(0,10):
+    for snum in range(0,20):
         if save_select.get() == save_name_list[snum]:
             ssnum1=snum
     if ask_msg1 == 'yes':
@@ -3519,7 +3518,7 @@ def load_checklist():
 ## 현재값 preset에 저장하기
 def save_checklist():
     ask_msg2=tkinter.messagebox.askquestion('확인',"저장하시겠습니까?")
-    for snum in range(0,10):
+    for snum in range(0,20):
         if save_select.get() == save_name_list[snum]:
             ssnum2=snum
     try:
@@ -3574,7 +3573,7 @@ def change_list_name():
     except:
         pass
     change_window=tkinter.Toplevel(self)
-    change_window.geometry("190x320+750+200")
+    change_window.geometry("390x320+750+200")
     tkinter.Label(change_window,text="1번슬롯").place(x=20,y=10)
     tkinter.Label(change_window,text="2번슬롯").place(x=20,y=35)
     tkinter.Label(change_window,text="3번슬롯").place(x=20,y=60)
@@ -3585,6 +3584,16 @@ def change_list_name():
     tkinter.Label(change_window,text="8번슬롯").place(x=20,y=185)
     tkinter.Label(change_window,text="9번슬롯").place(x=20,y=210)
     tkinter.Label(change_window,text="10번슬롯").place(x=20,y=235)
+    tkinter.Label(change_window,text="11번슬롯").place(x=220,y=10)
+    tkinter.Label(change_window,text="12번슬롯").place(x=220,y=35)
+    tkinter.Label(change_window,text="13번슬롯").place(x=220,y=60)
+    tkinter.Label(change_window,text="14번슬롯").place(x=220,y=85)
+    tkinter.Label(change_window,text="15번슬롯").place(x=220,y=110)
+    tkinter.Label(change_window,text="16번슬롯").place(x=220,y=135)
+    tkinter.Label(change_window,text="17번슬롯").place(x=220,y=160)
+    tkinter.Label(change_window,text="18번슬롯").place(x=220,y=185)
+    tkinter.Label(change_window,text="19번슬롯").place(x=220,y=210)
+    tkinter.Label(change_window,text="20번슬롯").place(x=220,y=235)
     entry1=tkinter.Entry(change_window,width=10);entry1.place(x=95,y=12);entry1.insert(END,save_name_list[0])
     entry2=tkinter.Entry(change_window,width=10);entry2.place(x=95,y=37);entry2.insert(END,save_name_list[1])
     entry3=tkinter.Entry(change_window,width=10);entry3.place(x=95,y=62);entry3.insert(END,save_name_list[2])
@@ -3595,15 +3604,29 @@ def change_list_name():
     entry8=tkinter.Entry(change_window,width=10);entry8.place(x=95,y=187);entry8.insert(END,save_name_list[7])
     entry9=tkinter.Entry(change_window,width=10);entry9.place(x=95,y=212);entry9.insert(END,save_name_list[8])
     entry10=tkinter.Entry(change_window,width=10);entry10.place(x=95,y=237);entry10.insert(END,save_name_list[9])
+    
+    entry11=tkinter.Entry(change_window,width=10);entry11.place(x=295,y=12);entry11.insert(END,save_name_list[10])
+    entry12=tkinter.Entry(change_window,width=10);entry12.place(x=295,y=37);entry12.insert(END,save_name_list[11])
+    entry13=tkinter.Entry(change_window,width=10);entry13.place(x=295,y=62);entry13.insert(END,save_name_list[12])
+    entry14=tkinter.Entry(change_window,width=10);entry14.place(x=295,y=87);entry14.insert(END,save_name_list[13])
+    entry15=tkinter.Entry(change_window,width=10);entry15.place(x=295,y=112);entry15.insert(END,save_name_list[14])
+    entry16=tkinter.Entry(change_window,width=10);entry16.place(x=295,y=137);entry16.insert(END,save_name_list[15])
+    entry17=tkinter.Entry(change_window,width=10);entry17.place(x=295,y=162);entry17.insert(END,save_name_list[16])
+    entry18=tkinter.Entry(change_window,width=10);entry18.place(x=295,y=187);entry18.insert(END,save_name_list[17])
+    entry19=tkinter.Entry(change_window,width=10);entry19.place(x=295,y=212);entry19.insert(END,save_name_list[18])
+    entry20=tkinter.Entry(change_window,width=10);entry20.place(x=295,y=237);entry20.insert(END,save_name_list[19])
 
-    tkinter.Button(change_window,text="저장",font=mid_font,command=lambda:change_savelist(entry1.get(),entry2.get(),entry3.get(),entry4.get(),entry5.get(),entry6.get(),entry7.get(),entry8.get(),entry9.get(),entry10.get())).place(x=60,y=270)
-def change_savelist(in1,in2,in3,in4,in5,in6,in7,in8,in9,in10):
-    in_list=[in1,in2,in3,in4,in5,in6,in7,in8,in9,in10]
+    tkinter.Button(change_window,text="저장",font=mid_font,command=lambda:change_savelist([entry1.get(),entry2.get(),entry3.get(),entry4.get(),entry5.get(),
+                                                                                         entry6.get(),entry7.get(),entry8.get(),entry9.get(),entry10.get(),
+                                                                                         entry11.get(),entry12.get(),entry13.get(),entry14.get(),entry15.get(),
+                                                                                         entry16.get(),entry17.get(),entry18.get(),entry19.get(),entry20.get()])).place(x=170,y=270)
+def change_savelist(changed_savelist_name):
+    in_list=changed_savelist_name
     try:
         load_preset5=load_workbook("preset.xlsx", data_only=True)
         db_custom2=load_preset5["custom"]
         
-        for i in range(1,11):
+        for i in range(1,21):
             db_custom2.cell(i,5).value=in_list[i-1]
         global save_name_list
         save_name_list=in_list

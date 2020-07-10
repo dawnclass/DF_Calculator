@@ -130,7 +130,7 @@ def make_all_equ_list(select_item,select_perfect):
             c=1
   
     algo_list=['11','12','13','14','15','21','22','23','31','32','33']
-    if select_perfect == '단품제외(보통)':
+    if select_perfect[0:4] == '단품제외':
         for i in list_num:
             if list_num.count(i)==1:
                 if i[-1]!='1':

@@ -1,5 +1,5 @@
-now_version="4.0.2"
-ver_time='200710'
+now_version="4.0.3"
+ver_time='200812'
 
 #-*- coding: utf-8 -*-
 ## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
@@ -1350,10 +1350,10 @@ def calc(mode):
                 base_c=12+int(db_preset['H3'].value)+1+extra_clvl
                 base_pas0=0
                 base_pas0_c=3
-                base_pas0_b=0
-                base_stat_s=4166+74-126+int(db_preset['H1'].value)+extra_stat
+                base_pas0_b=0 
+                base_stat_s=4339+int(db_preset['H1'].value)+extra_stat-40 ##2각 꺼지면 -528, 진각 추가로 40 제거
                 base_stat_d=int(db_preset['H6'].value)-int(db_preset['H1'].value)
-                base_stat_h=4308-45-83+int(db_preset['H1'].value)+extra_stat-40  ##2각 꺼지면 -528, 진각 추가로 40 제거
+                base_stat_h=4405+int(db_preset['H1'].value)+extra_stat-40  ##2각 꺼지면 -528, 진각 추가로 40 제거
                 base_pas0_1=0
                 load_presetc.close()
                 lvlget=opt_buflvl.get
@@ -1379,7 +1379,7 @@ def calc(mode):
                             base_array=np.array([base_stat_h,base_stat_s,0,0,0,0,extra_cstat,0,base_b,base_c,0,base_pas0,base_pas0_1,0,0,0,0,0,0,0,0,0,0])
 
                             if setopt_num >= max_setopt: max_setopt = setopt_num
-                            b_stat=(extra_bstat/100+1)*(10.24/100+1)*100-100  ##탈리스만 6%/4%
+                            b_stat=(extra_bstat/100+1)*1.236384*100-100  ##탈리스만 8%/8%/6%
                             b_phy=extra_batt
                             b_mag=extra_batt
                             b_ind=extra_batt
@@ -1417,11 +1417,11 @@ def calc(mode):
                                 stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
                                 stat_b=base_array[0]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]+base_stat_d
                                 stat_c=base_array[0]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]
-                                b_stat_calc=int(int(lvlget('hol_b_stat')[int(base_array[8])]*(b_stat/100+1))*(stat_b/630+1))
-                                b_phy_calc=int(int(b_base_att*(b_phy/100+1))*(stat_b/630+1)+lvlget('hol_act0')[int(base_array[12])])+42
-                                b_mag_calc=int(int(b_base_att*(b_mag/100+1))*(stat_b/630+1)+lvlget('hol_act0')[int(base_array[12])])+42
-                                b_ind_calc=int(int(b_base_att*(b_ind/100+1))*(stat_b/630+1)+lvlget('hol_act0')[int(base_array[12])])+42
-                                b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
+                                b_stat_calc=int(int(lvlget('hol_b_stat')[int(base_array[8])]*(b_stat/100+1))*(stat_b/620+1))
+                                b_phy_calc=int(int(b_base_att*(b_phy/100+1))*(stat_b/620+1))
+                                b_mag_calc=int(int(b_base_att*(b_mag/100+1))*(stat_b/620+1))
+                                b_ind_calc=int(int(b_base_att*(b_ind/100+1))*(stat_b/620+1))
+                                b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)+42+int(lvlget('hol_act0')[int(base_array[12])])
                                 c_calc2=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.1+0.01*int(base_array[22]))*(c_per/100+1))*(stat_c/750+1))
                                 c_calc=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.25+0.01*int(base_array[22]))*(c_per/100+1))*(stat_c/750+1))
                                 pas1_calc=int(lvlget('hol_pas1_out')[int(base_array[13])]+273)
@@ -1431,13 +1431,19 @@ def calc(mode):
 
                             else:
                                 if jobup_select.get()[4:7] == "세라핌":
-                                    b_value=675
-                                    aria=1+aria_fix+0.05*base_array[10]*aria_dif
+                                    b_value=665
+                                    aria=1.3
                                     amuguna=1.15
+                                    amuguna2=1.15
+                                    amuguna_stat=40
+                                    crux=0
                                 if jobup_select.get()[4:7] == "헤카테":
                                     b_value=665
-                                    aria=(0.95+aria_fix+0.05*base_array[10]*aria_dif)*1.15
-                                    amuguna=1.15
+                                    aria=1.25*1.15
+                                    amuguna=1.25+0.01*int(base_array[22])
+                                    amuguna2=1.1+0.01*int(base_array[22])
+                                    amuguna_stat=0
+                                    crux=42+int(base_array[13])
                                     
                                 b_base_att=lvlget('se_b_atta')[int(base_array[8])]
                                 stat_pas0lvl_b=lvlget('pas0')[int(base_array[11])+int(base_pas0_b)]
@@ -1445,19 +1451,22 @@ def calc(mode):
                                 stat_pas1lvl=lvlget('se_pas1')[int(base_array[13])]+base_array[18]
                                 stat_pas2lvl=lvlget('se_pas2')[int(base_array[14])]
                                 stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
-                                stat_b=base_array[1]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+base_stat_d
-                                stat_c=base_array[1]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl
+                                stat_b=base_array[1]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+base_stat_d+amuguna_stat
+                                stat_c=base_array[1]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+amuguna_stat
                                 b_stat_calc=int(int(lvlget('se_b_stat')[int(base_array[8])]*(b_stat/100+1))*(stat_b/b_value+1)*aria)
                                 b_phy_calc=int(int(b_base_att*(b_phy/100+1)*(stat_b/b_value+1))*aria)
                                 b_mag_calc=int(int(b_base_att*(b_mag/100+1)*(stat_b/b_value+1))*aria)
                                 b_ind_calc=int(int(b_base_att*(b_ind/100+1)*(stat_b/b_value+1))*aria)
-                                b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
+                                b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)+crux
                                 c_calc=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna*(c_per/100+1))*(stat_c/750+1))
                                 c_calc2=0
                                 pas1_calc=int(stat_pas1lvl+442)
                                 pas1_out=str(int(stat_pas1lvl+442))+"("+str(int(20+base_array[13]))+"렙)"
                                 save1='스탯='+str(b_stat_calc)+"("+str(int(b_stat_calc/aria))+")\n앞뎀="+str(b_average)+"("+str(int(b_average/aria))+")\n\n적용스탯= "+str(int(stat_b))+"\n적용레벨= "+str(int(base_array[8]))+"렙"
                                 save2='스탯= '+str(c_calc)+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
+                                if jobup_select.get()[4:7] == "헤카테":
+                                    c_calc2=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna2*(c_per/100+1))*(stat_c/750+1))
+                                    save2='스탯= '+str(c_calc)+'('+str(c_calc2)+')'+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
                             ##1축 2포 3합
                             final_buf1=((15000+b_stat_calc)/250+1)*(2650+b_average)
                             final_buf2=((15000+c_calc)/250+1)*2650*(base_array[21]/100+1)
@@ -1483,7 +1492,7 @@ def calc(mode):
                             base_array=np.array([base_stat_h,base_stat_s,0,0,0,0,extra_cstat,0,base_b,base_c,0,base_pas0,base_pas0_1,0,0,0,0,0,0,0,0,0,0])
 
                             if setopt_num >= max_setopt: max_setopt = setopt_num
-                            b_stat=(extra_bstat/100+1)*(10.24/100+1)*100-100  ##탈리스만 6%/4%
+                            b_stat=(extra_bstat/100+1)*1.236384*100-100  ##탈리스만 8%/8%/6%
                             b_phy=extra_batt
                             b_mag=extra_batt
                             b_ind=extra_batt
@@ -1522,9 +1531,9 @@ def calc(mode):
                                 stat_b=base_array[0]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]+base_stat_d
                                 stat_c=base_array[0]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]
                                 b_stat_calc=int(int(lvlget('hol_b_stat')[int(base_array[8])]*(b_stat/100+1))*(stat_b/630+1))
-                                b_phy_calc=int(int(b_base_att*(b_phy/100+1))*(stat_b/630+1)+lvlget('hol_act0')[int(base_array[12])])+42
-                                b_mag_calc=int(int(b_base_att*(b_mag/100+1))*(stat_b/630+1)+lvlget('hol_act0')[int(base_array[12])])+42
-                                b_ind_calc=int(int(b_base_att*(b_ind/100+1))*(stat_b/630+1)+lvlget('hol_act0')[int(base_array[12])])+42
+                                b_phy_calc=int(int(b_base_att*(b_phy/100+1))*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
+                                b_mag_calc=int(int(b_base_att*(b_mag/100+1))*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
+                                b_ind_calc=int(int(b_base_att*(b_ind/100+1))*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
                                 b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
                                 c_calc2=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.1+0.01*int(base_array[22]))*(c_per/100+1))*(stat_c/750+1))
                                 c_calc=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.25+0.01*int(base_array[22]))*(c_per/100+1))*(stat_c/750+1))
@@ -1535,13 +1544,19 @@ def calc(mode):
 
                             else:
                                 if jobup_select.get()[4:7] == "세라핌":
-                                    b_value=675
-                                    aria=1+aria_fix+0.05*base_array[10]*aria_dif
+                                    b_value=665
+                                    aria=1.3
                                     amuguna=1.15
+                                    amuguna2=1.15
+                                    amuguna_stat=40
+                                    crux=0
                                 if jobup_select.get()[4:7] == "헤카테":
                                     b_value=665
-                                    aria=(0.95+aria_fix+0.05*base_array[10]*aria_dif)*1.15
-                                    amuguna=1.15
+                                    aria=1.25*1.15
+                                    amuguna=1.25+0.01*int(base_array[22])
+                                    amuguna2=1.1+0.01*int(base_array[22])
+                                    amuguna_stat=0
+                                    crux=42+int(base_array[13])
                                     
                                 b_base_att=lvlget('se_b_atta')[int(base_array[8])]
                                 stat_pas0lvl_b=lvlget('pas0')[int(base_array[11])+int(base_pas0_b)]
@@ -1549,19 +1564,22 @@ def calc(mode):
                                 stat_pas1lvl=lvlget('se_pas1')[int(base_array[13])]+base_array[18]
                                 stat_pas2lvl=lvlget('se_pas2')[int(base_array[14])]
                                 stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
-                                stat_b=base_array[1]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+base_stat_d
-                                stat_c=base_array[1]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl
+                                stat_b=base_array[1]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+base_stat_d+amuguna_stat
+                                stat_c=base_array[1]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+amuguna_stat
                                 b_stat_calc=int(int(lvlget('se_b_stat')[int(base_array[8])]*(b_stat/100+1))*(stat_b/b_value+1)*aria)
                                 b_phy_calc=int(int(b_base_att*(b_phy/100+1)*(stat_b/b_value+1))*aria)
                                 b_mag_calc=int(int(b_base_att*(b_mag/100+1)*(stat_b/b_value+1))*aria)
                                 b_ind_calc=int(int(b_base_att*(b_ind/100+1)*(stat_b/b_value+1))*aria)
-                                b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
+                                b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)+crux
                                 c_calc=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna*(c_per/100+1))*(stat_c/750+1))
                                 c_calc2=0
                                 pas1_calc=int(stat_pas1lvl+442)
                                 pas1_out=str(int(stat_pas1lvl+442))+"("+str(int(20+base_array[13]))+"렙)"
                                 save1='스탯='+str(b_stat_calc)+"("+str(int(b_stat_calc/aria))+")\n앞뎀="+str(b_average)+"("+str(int(b_average/aria))+")\n\n적용스탯= "+str(int(stat_b))+"\n적용레벨= "+str(int(base_array[8]))+"렙"
                                 save2='스탯= '+str(c_calc)+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
+                                if jobup_select.get()[4:7] == "헤카테":
+                                    c_calc2=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna2*(c_per/100+1))*(stat_c/750+1))
+                                    save2='스탯= '+str(c_calc)+'('+str(c_calc2)+')'+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
                             ##1축 2포 3합
                             final_buf1=((15000+b_stat_calc)/250+1)*(2650+b_average)
                             final_buf2=((15000+c_calc)/250+1)*2650*(base_array[21]/100+1)
@@ -2254,7 +2272,8 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                                     result_siroco_gif1_tg[temp_rank][2]=1
             except IndexError as error:
                 pass
-            
+
+        """
         global buf_jingak_exist,buf_jingak_tg,buf_jingak,buf_jingak_img2
         buf_jingak_exist=0;buf_jingak_tg=0
         if job_name=='(버프)세인트': ## 진각 전환 하드 코딩
@@ -2282,7 +2301,8 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
             buf_jingak=tkinter.Button(result_window,command=change_buf_jingak,image=buf_jingak_img2,bg=dark_main,borderwidth=0,activebackground=dark_main)
             buf_jingak.place(x=172,y=7)
             buf_jingak.image=buf_jingak_img2
-            buf_jingak.command=change_buf_jingak        
+            buf_jingak.command=change_buf_jingak
+        """
 
         res_wep=canvas_res.create_text(12,22,text=rank_wep_name3[0],font=guide_font,fill='white',anchor='w')
         canvas_res.create_text(122-55,193,text=rank_inv1[0],font=small_font,fill='white',anchor="w")
@@ -3317,8 +3337,8 @@ def costum(auto):
     b_cri=tkinter.ttk.Combobox(custom_window,width=5,values=[0,1]); b_cri.place(x=540,y=142) ##
     b_cri.set(db_preset['H5'].value)
     aria_value=['항상증폭','템에따라','항상미증폭']
-    tkinter.Label(custom_window,text="아리아/퍼펫 증폭율 여부=",font=guide_font).place(x=320,y=170)
-    aria_up=tkinter.ttk.Combobox(custom_window,values=aria_value,width=10);aria_up.place(x=540-55,y=170)
+    #tkinter.Label(custom_window,text="아리아/퍼펫 증폭율 여부=",font=guide_font).place(x=320,y=170)
+    aria_up=tkinter.ttk.Combobox(custom_window,values=aria_value,width=10); #aria_up.place(x=540-55,y=170)
     aria_up.set(db_preset['H7'].value)
     
 

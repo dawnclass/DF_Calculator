@@ -1,5 +1,5 @@
-now_version="4.1.2"
-ver_time='200925'
+now_version="4.1.3"
+ver_time='200926'
 
 #-*- coding: utf-8 -*-
 ## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
@@ -675,7 +675,6 @@ def calc(mode):
         inv3_val=""
         inv4_opt="미부여"
         inv4_val=""
-
     
     all_list_num=0
     all_list_list_num=0
@@ -1416,15 +1415,6 @@ def calc(mode):
                                 b_ind=(b_ind/100+1)*(no_cut[5]/100+1)*100-100
                                 c_per=(c_per/100+1)*(no_cut[7]/100+1)*100-100
                                 oneonelist.append(no_cut)
-
-                            if hard_coding('1441') ==1:
-                                if hard_coding('11440')!=1: ##3셋 스탯160, 영축힘지8%, 물마독3% 감소
-                                    base_array[0]=base_array[0]-160
-                                    base_array[1]=base_array[1]-160
-                                    b_stat=(b_stat/100+1)/1.08*100-100
-                                    b_phy=(b_phy/100+1)/1.03*100-100
-                                    b_mag=(b_mag/100+1)/1.03*100-100
-                                    b_ind=(b_ind/100+1)/1.03*100-100
                             
                             if jobup_select.get()[4:7] == "세인트":
                                 b_base_att=lvlget('hol_b_atta')[int(base_array[8])]
@@ -1435,13 +1425,13 @@ def calc(mode):
                                 stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
                                 stat_b=base_array[0]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]+base_stat_d
                                 stat_c=base_array[0]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]
-                                b_stat_calc=int(int(lvlget('hol_b_stat')[int(base_array[8])]*(b_stat/100+1))*(stat_b/630+1))
-                                b_phy_calc=int(int(b_base_att*(b_phy/100+1))*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
-                                b_mag_calc=int(int(b_base_att*(b_mag/100+1))*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
-                                b_ind_calc=int(int(b_base_att*(b_ind/100+1))*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
+                                b_stat_calc=int(lvlget('hol_b_stat')[int(base_array[8])]*(b_stat/100+1)*(stat_b/630+1))
+                                b_phy_calc=int(b_base_att*(b_phy/100+1)*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
+                                b_mag_calc=int(b_base_att*(b_mag/100+1)*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
+                                b_ind_calc=int(b_base_att*(b_ind/100+1)*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
                                 b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
-                                c_calc2=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.1+0.01*int(base_array[22]))*(c_per/100+1))*(stat_c/750+1))
-                                c_calc=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.25+0.01*int(base_array[22]))*(c_per/100+1))*(stat_c/750+1))
+                                c_calc2=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.1+0.01*int(base_array[22]))*(c_per/100+1)*(stat_c/750+1))
+                                c_calc=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.25+0.01*int(base_array[22]))*(c_per/100+1)*(stat_c/750+1))
                                 pas1_calc=int(lvlget('hol_pas1_out')[int(base_array[13])]+273)
                                 pas1_out=str(pas1_calc)+"("+str(int(20+base_array[13]))+"렙)"
                                 save1='스탯='+str(b_stat_calc)+"\n앞뎀="+str(b_average)+"\n\n적용스탯= "+str(int(stat_b))+"\n적용레벨= "+str(int(base_array[8]))+"렙"
@@ -1467,20 +1457,17 @@ def calc(mode):
                                 stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
                                 stat_b=base_array[1]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+base_stat_d+amuguna_stat
                                 stat_c=base_array[1]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+amuguna_stat
-                                b_stat_calc=int(int(lvlget('se_b_stat')[int(base_array[8])]*(b_stat/100+1))*(stat_b/b_value+1)*aria*crux)+crux2
-                                b_phy_calc=int(int(b_base_att*(b_phy/100+1)*(stat_b/b_value+1))*aria*crux)
-                                b_mag_calc=int(int(b_base_att*(b_mag/100+1)*(stat_b/b_value+1))*aria*crux)
-                                b_ind_calc=int(int(b_base_att*(b_ind/100+1)*(stat_b/b_value+1))*aria*crux)
+                                b_stat_calc=int(lvlget('se_b_stat')[int(base_array[8])]*(b_stat/100+1)*(stat_b/b_value+1)*aria*crux)+crux2
+                                b_phy_calc=int(b_base_att*(b_phy/100+1)*(stat_b/b_value+1)*aria*crux)
+                                b_mag_calc=int(b_base_att*(b_mag/100+1)*(stat_b/b_value+1)*aria*crux)
+                                b_ind_calc=int(b_base_att*(b_ind/100+1)*(stat_b/b_value+1)*aria*crux)
                                 b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
-                                c_calc=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna*(c_per/100+1))*(stat_c/750+1))
-                                c_calc2=0
+                                c_calc=int((lvlget('c_stat')[int(base_array[9])]+base_array[6]*amuguna*(c_per/100+1))*(stat_c/750+1))
                                 pas1_calc=int(stat_pas1lvl+442)
                                 pas1_out=str(pas1_calc)+"("+str(int(20+base_array[13]))+"렙)"
                                 save1='스탯='+str(b_stat_calc)+"("+str(int(b_stat_calc/aria))+")\n앞뎀="+str(b_average)+"("+str(int(b_average/aria))+")\n\n적용스탯= "+str(int(stat_b))+"\n적용레벨= "+str(int(base_array[8]))+"렙"
-                                save2='스탯= '+str(c_calc)+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
-                                if jobup_select.get()[4:7] == "헤카테":
-                                    c_calc2=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna2*(c_per/100+1))*(stat_c/750+1))
-                                    save2='스탯= '+str(c_calc)+'('+str(c_calc2)+')'+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
+                                c_calc2=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna2*(c_per/100+1)*(stat_c/750+1))
+                                save2='스탯= '+str(c_calc)+'('+str(c_calc2)+')'+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
                             ##1축 2포 3합
 
                             final_save_list=[save1,save2,pas1_out]
@@ -1530,15 +1517,6 @@ def calc(mode):
                                 b_ind=(b_ind/100+1)*(no_cut[5]/100+1)*100-100
                                 c_per=(c_per/100+1)*(no_cut[7]/100+1)*100-100
                                 oneonelist.append(no_cut)
-
-                            if hard_coding('1441') ==1:
-                                if hard_coding('11440')!=1: ##3셋 스탯160, 영축힘지8%, 물마독3% 감소
-                                    base_array[0]=base_array[0]-160
-                                    base_array[1]=base_array[1]-160
-                                    b_stat=(b_stat/100+1)/1.08*100-100
-                                    b_phy=(b_phy/100+1)/1.03*100-100
-                                    b_mag=(b_mag/100+1)/1.03*100-100
-                                    b_ind=(b_ind/100+1)/1.03*100-100
                                 
                             if jobup_select.get()[4:7] == "세인트":
                                 b_base_att=lvlget('hol_b_atta')[int(base_array[8])]
@@ -1549,13 +1527,13 @@ def calc(mode):
                                 stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
                                 stat_b=base_array[0]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]+base_stat_d
                                 stat_c=base_array[0]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]
-                                b_stat_calc=int(int(lvlget('hol_b_stat')[int(base_array[8])]*(b_stat/100+1))*(stat_b/630+1))
-                                b_phy_calc=int(int(b_base_att*(b_phy/100+1))*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
-                                b_mag_calc=int(int(b_base_att*(b_mag/100+1))*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
-                                b_ind_calc=int(int(b_base_att*(b_ind/100+1))*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
+                                b_stat_calc=int(lvlget('hol_b_stat')[int(base_array[8])]*(b_stat/100+1)*(stat_b/630+1))
+                                b_phy_calc=int(b_base_att*(b_phy/100+1)*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
+                                b_mag_calc=int(b_base_att*(b_mag/100+1)*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
+                                b_ind_calc=int(b_base_att*(b_ind/100+1)*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
                                 b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
-                                c_calc2=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.1+0.01*int(base_array[22]))*(c_per/100+1))*(stat_c/750+1))
-                                c_calc=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.25+0.01*int(base_array[22]))*(c_per/100+1))*(stat_c/750+1))
+                                c_calc2=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.1+0.01*int(base_array[22]))*(c_per/100+1)*(stat_c/750+1))
+                                c_calc=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.25+0.01*int(base_array[22]))*(c_per/100+1)*(stat_c/750+1))
                                 pas1_calc=int(lvlget('hol_pas1_out')[int(base_array[13])]+273)
                                 pas1_out=str(pas1_calc)+"("+str(int(20+base_array[13]))+"렙)"
                                 save1='스탯='+str(b_stat_calc)+"\n앞뎀="+str(b_average)+"\n\n적용스탯= "+str(int(stat_b))+"\n적용레벨= "+str(int(base_array[8]))+"렙"
@@ -1581,20 +1559,17 @@ def calc(mode):
                                 stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
                                 stat_b=base_array[1]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+base_stat_d+amuguna_stat
                                 stat_c=base_array[1]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+amuguna_stat
-                                b_stat_calc=int(int(lvlget('se_b_stat')[int(base_array[8])]*(b_stat/100+1))*(stat_b/b_value+1)*aria*crux)+crux2
-                                b_phy_calc=int(int(b_base_att*(b_phy/100+1)*(stat_b/b_value+1))*aria*crux)
-                                b_mag_calc=int(int(b_base_att*(b_mag/100+1)*(stat_b/b_value+1))*aria*crux)
-                                b_ind_calc=int(int(b_base_att*(b_ind/100+1)*(stat_b/b_value+1))*aria*crux)
+                                b_stat_calc=int(lvlget('se_b_stat')[int(base_array[8])]*(b_stat/100+1)*(stat_b/b_value+1)*aria*crux)+crux2
+                                b_phy_calc=int(b_base_att*(b_phy/100+1)*(stat_b/b_value+1)*aria*crux)
+                                b_mag_calc=int(b_base_att*(b_mag/100+1)*(stat_b/b_value+1)*aria*crux)
+                                b_ind_calc=int(b_base_att*(b_ind/100+1)*(stat_b/b_value+1)*aria*crux)
                                 b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
-                                c_calc=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna*(c_per/100+1))*(stat_c/750+1))
-                                c_calc2=0
+                                c_calc=int((lvlget('c_stat')[int(base_array[9])]+base_array[6]*amuguna*(c_per/100+1))*(stat_c/750+1))
                                 pas1_calc=int(stat_pas1lvl+442)
                                 pas1_out=str(pas1_calc)+"("+str(int(20+base_array[13]))+"렙)"
                                 save1='스탯='+str(b_stat_calc)+"("+str(int(b_stat_calc/aria))+")\n앞뎀="+str(b_average)+"("+str(int(b_average/aria))+")\n\n적용스탯= "+str(int(stat_b))+"\n적용레벨= "+str(int(base_array[8]))+"렙"
-                                save2='스탯= '+str(c_calc)+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
-                                if jobup_select.get()[4:7] == "헤카테":
-                                    c_calc2=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna2*(c_per/100+1))*(stat_c/750+1))
-                                    save2='스탯= '+str(c_calc)+'('+str(c_calc2)+')'+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
+                                c_calc2=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna2*(c_per/100+1)*(stat_c/750+1))
+                                save2='스탯= '+str(c_calc)+'('+str(c_calc2)+')'+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
                             ##1축 2포 3합
 
                             final_save_list=[save1,save2,pas1_out]

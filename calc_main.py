@@ -1,5 +1,5 @@
-now_version="4.0.3"
-ver_time='200812'
+now_version="4.1.2"
+ver_time='200925'
 
 #-*- coding: utf-8 -*-
 ## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
@@ -259,6 +259,7 @@ def calc(mode):
     load_excel=load_workbook("DATA.xlsx",data_only=True)
 
     ## 갱신된 DB 불러오기 ##
+    global opt_one, name_one
     db_one=load_excel["one"]
     opt_one={}
     name_one={}
@@ -303,6 +304,7 @@ def calc(mode):
     load_presetc=load_workbook("preset.xlsx", data_only=True)
     db_preset=load_presetc["custom"]
     ele_skill=int(opt_job_ele[jobup_select.get()][1])
+    global ele_in
     ele_in=(int(db_preset["B14"].value)+int(db_preset["B15"].value)+int(db_preset["B16"].value)+
             int(ele_skill)-int(db_preset["B18"].value)+int(db_preset["B19"].value)+13)
     cool_eff=float(db_preset["B2"].value)/100
@@ -371,6 +373,7 @@ def calc(mode):
                 wep_num.append((str(i+111001),))
         if now_wep.count("흑천의 주인")==1: wep_num.append(("111001",))
         elif now_wep.count("원초의 꿈")==1: wep_num.append(("111076",))
+        elif now_wep.count("태극천제검(양)")==1: wep_num.append(("111108",))
         wep_type=now_wep[1:now_wep.find(")")]
         for i in range(1,63):
             if jobup_select.get()==db_job['A'+str(i)].value:
@@ -380,9 +383,10 @@ def calc(mode):
                         cool_pre_calced.append((1/float(db_job.cell(i,j+38).value)-1)*cool_eff*cool_on+1)
                         cool_pre_calced2.append((1/float(db_job.cell(i,j+38).value)-1)*cool_eff2+1)
     for i in range(len(wep_name_list_temp)):
-        if wep_pre_calced[i]==0 and jobup_select.get()[0:4]!="(버프)" and check_wep_tg==0:
-            tkinter.messagebox.showinfo('확인',"착용할 수 없는 무기를 선택했습니다. 이 경우 모든 무기 보정이 비활성화되어 마스터리/앞뎀 반영이 되지 않습니다.")
-            check_wep_tg=1
+        if wep_pre_calced[i]==0 and jobup_select.get()[0:4]!="(버프)":
+            if check_wep_tg==0:
+                tkinter.messagebox.showinfo('확인',"착용할 수 없는 무기를 선택했습니다. 이 경우 해당 무기 보정이 비활성화되어 마스터리/앞뎀 반영이 되지 않습니다.")
+                check_wep_tg=1
             wep_pre_calced[i]=1
             cool_pre_calced[i]=1
             cool_pre_calced2[i]=1
@@ -390,7 +394,6 @@ def calc(mode):
             tkinter.messagebox.showerror('에러',"버퍼가 사용할 수 없는 무기입니다.")
             showsta(text='중지됨')
             return
-
     ## 외부모듈: 경우의 수 만들기
     result_all_equ_list=make_all_equ_list(select_item,select_perfect.get())
     list11=result_all_equ_list[0][0];list11_0=result_all_equ_list[0][1];list11_1=result_all_equ_list[0][2]
@@ -399,7 +402,11 @@ def calc(mode):
     list22=result_all_equ_list[0][10];list23=result_all_equ_list[0][11]
     list31=result_all_equ_list[0][12];list32=result_all_equ_list[0][13]
     list33=result_all_equ_list[0][14];list33_0=result_all_equ_list[0][15];list33_1=result_all_equ_list[0][16]
-    
+    """
+    print(list11_0);print(list12);print(list13);print(list14);print(list15);
+    print(list21_0);print(list22);print(list23);
+    print(list33_0);print(list31);print(list32);
+    """
     set_num_dict=result_all_equ_list[1][0] ##전부
     set_num_dict1=result_all_equ_list[1][1] ##에픽만
     set_num_dict2=result_all_equ_list[1][2] ##신화만
@@ -1334,7 +1341,6 @@ def calc(mode):
                             damage_not_ele=final_damage*(1.05+0.0045*int(ele_skill))/(base_array[9]*0.0045+1.05)*((base_array[9]-int(ele_skill))*0.0045+1.05)/1.05*(real_bon_not_ele/100+1)/(base_array[4]/100+1)
                             damage_not_ele2=final_damage2*(1.05+0.0045*int(ele_skill))/(base_array[9]*0.0045+1.05)*((base_array[9]-int(ele_skill))*0.0045+1.05)/1.05*(real_bon_not_ele/100+1)/(base_array[4]/100+1)
                             damage_only_equ=damage/paslvl/wep_pre_calced[calc_wep_num]
-                            
                             inv_string="잔향부여= "+inv1_opt+"("+str(inv1_val)+"%) / "+inv2_opt+"("+str(inv2_val)+"%)"
                             save_list[final_damage]=[calc_wep,base_array,damage,damage_not_ele,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage2,wep_name_list_temp[calc_wep_num]]
                             save_list0[final_damage2]=[calc_wep,base_array,damage,damage_not_ele2,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage,wep_name_list_temp[calc_wep_num]]
@@ -1366,7 +1372,19 @@ def calc(mode):
                 #10 아리아/보징증폭
                 #11 전직패 12 보징/크크 13 각패1 14 각패2 15 2각 16 각패3
                 #17 깡신념 18 깡신실 19 아리아쿨 20 하베쿨 21 1각시특수피증(시로코옵션) 22 진각렙
-                
+
+                if jobup_select.get()[4:7] == "세라핌":
+                    b_value=665
+                    aria=1.15
+                    amuguna_stat=0
+                    crux=0
+                if jobup_select.get()[4:7] == "헤카테":
+                    b_value=665
+                    aria=1.25*1.15
+                    amuguna_stat=0
+                    crux=0
+
+                    
                 setget=opt_buf.get
                 if len(all_list_god)!=0:
                     for calc_now in all_list_god:
@@ -1417,33 +1435,29 @@ def calc(mode):
                                 stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
                                 stat_b=base_array[0]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]+base_stat_d
                                 stat_c=base_array[0]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]
-                                b_stat_calc=int(int(lvlget('hol_b_stat')[int(base_array[8])]*(b_stat/100+1))*(stat_b/620+1))
-                                b_phy_calc=int(int(b_base_att*(b_phy/100+1))*(stat_b/620+1))
-                                b_mag_calc=int(int(b_base_att*(b_mag/100+1))*(stat_b/620+1))
-                                b_ind_calc=int(int(b_base_att*(b_ind/100+1))*(stat_b/620+1))
-                                b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)+42+int(lvlget('hol_act0')[int(base_array[12])])
+                                b_stat_calc=int(int(lvlget('hol_b_stat')[int(base_array[8])]*(b_stat/100+1))*(stat_b/630+1))
+                                b_phy_calc=int(int(b_base_att*(b_phy/100+1))*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
+                                b_mag_calc=int(int(b_base_att*(b_mag/100+1))*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
+                                b_ind_calc=int(int(b_base_att*(b_ind/100+1))*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
+                                b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
                                 c_calc2=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.1+0.01*int(base_array[22]))*(c_per/100+1))*(stat_c/750+1))
                                 c_calc=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.25+0.01*int(base_array[22]))*(c_per/100+1))*(stat_c/750+1))
                                 pas1_calc=int(lvlget('hol_pas1_out')[int(base_array[13])]+273)
-                                pas1_out=str(int(lvlget('hol_pas1_out')[int(base_array[13])]+273))+"("+str(int(20+base_array[13]))+"렙)"
+                                pas1_out=str(pas1_calc)+"("+str(int(20+base_array[13]))+"렙)"
                                 save1='스탯='+str(b_stat_calc)+"\n앞뎀="+str(b_average)+"\n\n적용스탯= "+str(int(stat_b))+"\n적용레벨= "+str(int(base_array[8]))+"렙"
                                 save2='스탯= '+str(c_calc)+'('+str(c_calc2)+')'+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
 
                             else:
                                 if jobup_select.get()[4:7] == "세라핌":
-                                    b_value=665
-                                    aria=1.3
-                                    amuguna=1.15
-                                    amuguna2=1.15
-                                    amuguna_stat=40
-                                    crux=0
-                                if jobup_select.get()[4:7] == "헤카테":
-                                    b_value=665
-                                    aria=1.25*1.15
                                     amuguna=1.25+0.01*int(base_array[22])
                                     amuguna2=1.1+0.01*int(base_array[22])
-                                    amuguna_stat=0
-                                    crux=42+int(base_array[13])
+                                    crux=1.131
+                                    crux2=255+int(base_array[12])*6
+                                if jobup_select.get()[4:7] == "헤카테":
+                                    amuguna=1.25+0.01*int(base_array[22])
+                                    amuguna2=1.1+0.01*int(base_array[22])
+                                    crux=1
+                                    crux2=0
                                     
                                 b_base_att=lvlget('se_b_atta')[int(base_array[8])]
                                 stat_pas0lvl_b=lvlget('pas0')[int(base_array[11])+int(base_pas0_b)]
@@ -1453,30 +1467,35 @@ def calc(mode):
                                 stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
                                 stat_b=base_array[1]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+base_stat_d+amuguna_stat
                                 stat_c=base_array[1]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+amuguna_stat
-                                b_stat_calc=int(int(lvlget('se_b_stat')[int(base_array[8])]*(b_stat/100+1))*(stat_b/b_value+1)*aria)
-                                b_phy_calc=int(int(b_base_att*(b_phy/100+1)*(stat_b/b_value+1))*aria)
-                                b_mag_calc=int(int(b_base_att*(b_mag/100+1)*(stat_b/b_value+1))*aria)
-                                b_ind_calc=int(int(b_base_att*(b_ind/100+1)*(stat_b/b_value+1))*aria)
-                                b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)+crux
+                                b_stat_calc=int(int(lvlget('se_b_stat')[int(base_array[8])]*(b_stat/100+1))*(stat_b/b_value+1)*aria*crux)+crux2
+                                b_phy_calc=int(int(b_base_att*(b_phy/100+1)*(stat_b/b_value+1))*aria*crux)
+                                b_mag_calc=int(int(b_base_att*(b_mag/100+1)*(stat_b/b_value+1))*aria*crux)
+                                b_ind_calc=int(int(b_base_att*(b_ind/100+1)*(stat_b/b_value+1))*aria*crux)
+                                b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
                                 c_calc=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna*(c_per/100+1))*(stat_c/750+1))
                                 c_calc2=0
                                 pas1_calc=int(stat_pas1lvl+442)
-                                pas1_out=str(int(stat_pas1lvl+442))+"("+str(int(20+base_array[13]))+"렙)"
+                                pas1_out=str(pas1_calc)+"("+str(int(20+base_array[13]))+"렙)"
                                 save1='스탯='+str(b_stat_calc)+"("+str(int(b_stat_calc/aria))+")\n앞뎀="+str(b_average)+"("+str(int(b_average/aria))+")\n\n적용스탯= "+str(int(stat_b))+"\n적용레벨= "+str(int(base_array[8]))+"렙"
                                 save2='스탯= '+str(c_calc)+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
                                 if jobup_select.get()[4:7] == "헤카테":
                                     c_calc2=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna2*(c_per/100+1))*(stat_c/750+1))
                                     save2='스탯= '+str(c_calc)+'('+str(c_calc2)+')'+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
                             ##1축 2포 3합
+
+                            final_save_list=[save1,save2,pas1_out]
+
+                            final_buf_list=[b_stat_calc,b_average,c_calc,pas1_calc]
+                                    
                             final_buf1=((15000+b_stat_calc)/250+1)*(2650+b_average)
                             final_buf2=((15000+c_calc)/250+1)*2650*(base_array[21]/100+1)
                             final_buf2_2=((15000+c_calc2)/250+1)*2650*(base_array[21]/100+1)
                             final_buf3=((15000+pas1_calc+c_calc+b_stat_calc)/250+1)*(2650+b_average)*(base_array[21]/100+1)
                             final_buf3_2=((15000+pas1_calc+c_calc2+b_stat_calc)/250+1)*(2650+b_average)*(base_array[21]/100+1)
-                            save_list1[final_buf1]=[list(calc_wep),[save1,save2,pas1_out],inv_string,base_array,final_buf1,wep_name_list_temp[calc_wep_num]]
-                            save_list2[final_buf2]=[list(calc_wep),[save1,save2,pas1_out],inv_string,base_array,final_buf2_2,wep_name_list_temp[calc_wep_num]]
-                            save_list3[final_buf3]=[list(calc_wep),[save1,save2,pas1_out],inv_string,base_array,final_buf3_2,wep_name_list_temp[calc_wep_num]]
-                                                    
+                            save_list1[final_buf1]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf1,wep_name_list_temp[calc_wep_num],final_buf_list]
+                            save_list2[final_buf2]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf2_2,wep_name_list_temp[calc_wep_num],final_buf_list]
+                            save_list3[final_buf3]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf3_2,wep_name_list_temp[calc_wep_num],final_buf_list]
+                            
                             count_num=count_num+1
                         else:
                             count_all=count_all+1
@@ -1538,25 +1557,21 @@ def calc(mode):
                                 c_calc2=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.1+0.01*int(base_array[22]))*(c_per/100+1))*(stat_c/750+1))
                                 c_calc=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.25+0.01*int(base_array[22]))*(c_per/100+1))*(stat_c/750+1))
                                 pas1_calc=int(lvlget('hol_pas1_out')[int(base_array[13])]+273)
-                                pas1_out=str(int(lvlget('hol_pas1_out')[int(base_array[13])]+273))+"("+str(int(20+base_array[13]))+"렙)"
+                                pas1_out=str(pas1_calc)+"("+str(int(20+base_array[13]))+"렙)"
                                 save1='스탯='+str(b_stat_calc)+"\n앞뎀="+str(b_average)+"\n\n적용스탯= "+str(int(stat_b))+"\n적용레벨= "+str(int(base_array[8]))+"렙"
                                 save2='스탯= '+str(c_calc)+'('+str(c_calc2)+')'+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
 
                             else:
                                 if jobup_select.get()[4:7] == "세라핌":
-                                    b_value=665
-                                    aria=1.3
-                                    amuguna=1.15
-                                    amuguna2=1.15
-                                    amuguna_stat=40
-                                    crux=0
-                                if jobup_select.get()[4:7] == "헤카테":
-                                    b_value=665
-                                    aria=1.25*1.15
                                     amuguna=1.25+0.01*int(base_array[22])
                                     amuguna2=1.1+0.01*int(base_array[22])
-                                    amuguna_stat=0
-                                    crux=42+int(base_array[13])
+                                    crux=1.131
+                                    crux2=255+int(base_array[12])*6
+                                if jobup_select.get()[4:7] == "헤카테":
+                                    amuguna=1.25+0.01*int(base_array[22])
+                                    amuguna2=1.1+0.01*int(base_array[22])
+                                    crux=1
+                                    crux2=0
                                     
                                 b_base_att=lvlget('se_b_atta')[int(base_array[8])]
                                 stat_pas0lvl_b=lvlget('pas0')[int(base_array[11])+int(base_pas0_b)]
@@ -1566,29 +1581,34 @@ def calc(mode):
                                 stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
                                 stat_b=base_array[1]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+base_stat_d+amuguna_stat
                                 stat_c=base_array[1]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+amuguna_stat
-                                b_stat_calc=int(int(lvlget('se_b_stat')[int(base_array[8])]*(b_stat/100+1))*(stat_b/b_value+1)*aria)
-                                b_phy_calc=int(int(b_base_att*(b_phy/100+1)*(stat_b/b_value+1))*aria)
-                                b_mag_calc=int(int(b_base_att*(b_mag/100+1)*(stat_b/b_value+1))*aria)
-                                b_ind_calc=int(int(b_base_att*(b_ind/100+1)*(stat_b/b_value+1))*aria)
-                                b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)+crux
+                                b_stat_calc=int(int(lvlget('se_b_stat')[int(base_array[8])]*(b_stat/100+1))*(stat_b/b_value+1)*aria*crux)+crux2
+                                b_phy_calc=int(int(b_base_att*(b_phy/100+1)*(stat_b/b_value+1))*aria*crux)
+                                b_mag_calc=int(int(b_base_att*(b_mag/100+1)*(stat_b/b_value+1))*aria*crux)
+                                b_ind_calc=int(int(b_base_att*(b_ind/100+1)*(stat_b/b_value+1))*aria*crux)
+                                b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
                                 c_calc=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna*(c_per/100+1))*(stat_c/750+1))
                                 c_calc2=0
                                 pas1_calc=int(stat_pas1lvl+442)
-                                pas1_out=str(int(stat_pas1lvl+442))+"("+str(int(20+base_array[13]))+"렙)"
+                                pas1_out=str(pas1_calc)+"("+str(int(20+base_array[13]))+"렙)"
                                 save1='스탯='+str(b_stat_calc)+"("+str(int(b_stat_calc/aria))+")\n앞뎀="+str(b_average)+"("+str(int(b_average/aria))+")\n\n적용스탯= "+str(int(stat_b))+"\n적용레벨= "+str(int(base_array[8]))+"렙"
                                 save2='스탯= '+str(c_calc)+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
                                 if jobup_select.get()[4:7] == "헤카테":
                                     c_calc2=int(int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna2*(c_per/100+1))*(stat_c/750+1))
                                     save2='스탯= '+str(c_calc)+'('+str(c_calc2)+')'+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
                             ##1축 2포 3합
+
+                            final_save_list=[save1,save2,pas1_out]
+
+                            final_buf_list=[b_stat_calc,b_average,c_calc,pas1_calc]
+                                    
                             final_buf1=((15000+b_stat_calc)/250+1)*(2650+b_average)
                             final_buf2=((15000+c_calc)/250+1)*2650*(base_array[21]/100+1)
                             final_buf2_2=((15000+c_calc2)/250+1)*2650*(base_array[21]/100+1)
                             final_buf3=((15000+pas1_calc+c_calc+b_stat_calc)/250+1)*(2650+b_average)*(base_array[21]/100+1)
                             final_buf3_2=((15000+pas1_calc+c_calc2+b_stat_calc)/250+1)*(2650+b_average)*(base_array[21]/100+1)
-                            save_list1[final_buf1]=[list(calc_wep),[save1,save2,pas1_out],inv_string,base_array,final_buf1,wep_name_list_temp[calc_wep_num]]
-                            save_list2[final_buf2]=[list(calc_wep),[save1,save2,pas1_out],inv_string,base_array,final_buf2_2,wep_name_list_temp[calc_wep_num]]
-                            save_list3[final_buf3]=[list(calc_wep),[save1,save2,pas1_out],inv_string,base_array,final_buf3_2,wep_name_list_temp[calc_wep_num]]
+                            save_list1[final_buf1]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf1,wep_name_list_temp[calc_wep_num],final_buf_list]
+                            save_list2[final_buf2]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf2_2,wep_name_list_temp[calc_wep_num],final_buf_list]
+                            save_list3[final_buf3]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf3_2,wep_name_list_temp[calc_wep_num],final_buf_list]
                             
                             count_num=count_num+1
                         else:
@@ -1691,7 +1711,6 @@ def calc_thread():
 
 
 
-tagkgum_img=tkinter.PhotoImage(file='ext_img/tagk_um.png')
 tg_groggy_img2=tkinter.PhotoImage(file='ext_img/groggy_swi2.png')
 tg_groggy_img1=tkinter.PhotoImage(file='ext_img/groggy_swi1.png')
 buf_jingak_img2=tkinter.PhotoImage(file='ext_img/buf_jin_2.png')
@@ -1751,10 +1770,10 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
     rank_ult=[0,0,0,0,0];rank0_ult=[0,0,0,0,0]
     if job_type=='deal': ########################### 딜러 ###########################
   
-        global result_image_on,result_image_tag,rank_dam,rank_stat,rank_stat2,rank_stat3,req_cool,res_dam,res_stat,res_stat2, res_stat3, rank_dam_tagk,rank_dam_noele, res_ele, rank_inv, res_inv, rank_dam_tagk_noele
-        global result0_image_on,result0_image_tag,rank0_dam,rank0_stat,rank0_stat2,rank0_stat3,rank0_dam_tagk,rank0_dam_noele,rank0_inv,rank0_dam_tagk_noele
-        global result_image_gif, result_image_gif_tg,result_siroco_gif,result_siroco_gif_tg,rank_dam_nolv,rank_dam_tagk_nolv
-        global result0_image_gif, result0_image_gif_tg,result0_siroco_gif,result0_siroco_gif_tg,rank0_dam_nolv,rank0_dam_tagk_nolv
+        global result_image_on,result_image_tag,rank_dam,rank_stat,rank_stat2,rank_stat3,req_cool,res_dam,res_stat,res_stat2, res_stat3,rank_dam_noele, res_ele, rank_inv, res_inv
+        global result0_image_on,result0_image_tag,rank0_dam,rank0_stat,rank0_stat2,rank0_stat3,rank0_dam_noele,rank0_inv
+        global result_image_gif, result_image_gif_tg,result_siroco_gif,result_siroco_gif_tg,rank_dam_nolv
+        global result0_image_gif, result0_image_gif_tg,result0_siroco_gif,result0_siroco_gif_tg,rank0_dam_nolv
         global res_cool_what,cool_eff_text
         global rank_wep_img,rank0_wep_img
         cool_check=req_cool.get()[0]
@@ -1773,12 +1792,9 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         rank1_list=rank_list[0]
         
         rank_dam=[0,0,0,0,0];rank0_dam=[0,0,0,0,0]
-        rank_dam_tagk=[0,0,0,0,0];rank0_dam_tagk=[0,0,0,0,0]
         rank_dam_nolv=[0,0,0,0,0];rank0_dam_nolv=[0,0,0,0,0]
         rank_dam_noele=[0,0,0,0,0];rank0_dam_noele=[0,0,0,0,0]
         rank_inv=[0,0,0,0,0];rank0_inv=[0,0,0,0,0]
-        rank_dam_tagk_nolv=[0,0,0,0,0];rank0_dam_tagk_nolv=[0,0,0,0,0]
-        rank_dam_tagk_noele=[0,0,0,0,0];rank0_dam_tagk_noele=[0,0,0,0,0]
         rank_dam_onlyequ=[0,0,0,0,0];rank0_dam_onlyequ=[0,0,0,0,0]
         rss=[0,0,0,0,0];rss0=[0,0,0,0,0]
         rank_wep_img=[0,0,0,0,0];rank0_wep_img=[0,0,0,0,0]
@@ -1812,9 +1828,6 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                         rank0_setting[temp_rank].append('435'+i[3]+'0');
                         rank0_setting[temp_rank].remove(i);
                 rss[temp_rank]=rank1_list[temp_rank][1][1];rss0[temp_rank]=rank0_list[temp_rank][1][1]
-                rank_dam_tagk[temp_rank]=str(int((100*rank1_list[temp_rank][0])*(100+rss[temp_rank][6])/(121+rss[temp_rank][6])*1.23))+"%";rank0_dam_tagk[temp_rank]=str(int((100*rank0_list[temp_rank][0])*(100+rss0[temp_rank][6])/(121+rss0[temp_rank][6])*1.23))+"%"
-                rank_dam_tagk_nolv[temp_rank]=int((100+rss[temp_rank][6])/(121+rss[temp_rank][6])*1.23*(rank_dam_nolv[temp_rank]));rank0_dam_tagk_nolv[temp_rank]=int((100+rss0[temp_rank][6])/(121+rss0[temp_rank][6])*1.23*(rank0_dam_nolv[temp_rank]))
-                rank_dam_tagk_noele[temp_rank]=int((100+rss[temp_rank][6])/(121+rss[temp_rank][6])*1.23*(rank_dam_noele[temp_rank]));rank0_dam_tagk_noele[temp_rank]=int((100+rss0[temp_rank][6])/(121+rss0[temp_rank][6])*1.23*(rank0_dam_noele[temp_rank]))
                 for i in [11,12,13,14,15,21,22,23,31,32,33,41,42,43]:
                     for j in rank_setting[temp_rank]:
                         if len(j) != 6:
@@ -1907,19 +1920,6 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         # 0추스탯 1추공 2증 3크 4추
         # 6모 7공 8스탯 9속강 10지속 11스증 12특수
         # 13공속 14크확 / 15 특수액티브 / 16~19 패시브 /20 그로기포함/21 2각캐특수액티브 /22~27 액티브레벨링
-        global tagkgum_exist,tagk_tg
-        tagkgum_exist=0
-        tagk_tg=0
-        
-        if rank_wep_name.count("(도)태극천제검")!=0: #태극검 하드 코딩
-            global  tagkgum,tagkgum_img
-            tagkgum_exist=1
-            tagk_tg=0
-            
-            tagkgum=tkinter.Button(result_window,command=lambda:change_tagk(ele_skill,),image=tagkgum_img,bg=dark_main,borderwidth=0,activebackground=dark_main)
-            tagkgum.place(x=182,y=7)
-            tagkgum.image=tagkgum_img
-            tagkgum.command=change_tagk
         if job_up_name =='(진각)':
             simari=0
             jingakgi=1
@@ -1929,12 +1929,12 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         rank_stat=[0,0,0,0,0];rank0_stat=[0,0,0,0,0]
         rank_stat2=[0,0,0,0,0];rank0_stat2=[0,0,0,0,0]
         rank_stat3=[0,0,0,0,0];rank0_stat3=[0,0,0,0,0]
-        global rank_stat_tagk, rank_stat_tagk2
-        global rank0_stat_tagk, rank0_stat_tagk2
-        rank_stat_tagk=[0,0,0,0,0];rank0_stat_tagk=[0,0,0,0,0]
-        rank_stat_tagk2=[0,0,0,0,0];rank0_stat_tagk2=[0,0,0,0,0]
+        global rank_for_calc_eff,rank0_for_calc_eff
+        rank_for_calc_eff=[0,0,0,0,0]
+        rank0_for_calc_eff=[0,0,0,0,0]
         for i in range(0,5):
             try:
+                rank_for_calc_eff[i]=[rss[i][2],rss[i][3],rss[i][4],rss[i][6],rss[i][7],rss[i][8],rss[i][9],rss[i][10],rss[i][12]]
                 rank_stat[i]=("증뎀= "+str(int(round(rss[i][2],0)))+
                               "%\n크증= "+str(int(round(rss[i][3],0)))+
                               "%\n추뎀= "+str(int(round(rss[i][4],0)))+
@@ -1948,33 +1948,12 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                               "%\n각성= "+str(int(round(rank_ult[i][3],0)))+
                               "%\n공속= "+str(int(round(rss[i][13],0)))+
                               "%\n크확= "+str(int(round(rss[i][14],0)))+"%")
-                if rank_wep_name[i]=="(도)태극천제검":
-                    rank_stat_tagk[i]=("증뎀= "+str(int(round(rss[i][2],0)))+
-                                      "%\n크증= "+str(int(round(rss[i][3],0)))+
-                                      "%\n추뎀= "+str(int(round(rss[i][4],0)))+
-                                      "%\n모공= "+str(-21+int(round(rss[i][6],0)))+
-                                      "%\n공%= "+str(int(round(rss[i][7],0)))+
-                                      "%\n스탯= "+str(int(round(rss[i][8],0)))+
-                                      "%\n속강= "+str(int(round(rss[i][9],0)))+
-                                      "\n지속= "+str(int(round(rss[i][10],0)))+
-                                      "%\n스증= "+str(int(1.23*(100+round(rss[i][11],0))-100))+
-                                      "%\n특수= "+str(int(round(rss[i][12],0)))+
-                                      "%\n각성= "+str(int(round(rank_ult[i][3],0)))+
-                                      "%\n공속= "+str(-70+int(round(rss[i][13],0)))+
-                                      "%\n크확= "+str(int(round(rss[i][14],0)))+"%")
                 rank_stat2[i]=(str(int(round(rss[i][22],0)))+' : '+str(int(rank_dam_nolv[i]*(1+0.1014953549605047*(rss[i][22]+30))/(1+0.1014953549605047*30)))+'%'+
                                "\n"+str(int(round(rss[i][23],0)))+' : '+str(int((1+rank_ult[i][0]/100)*rank_dam_nolv[i]*(1+0.2318898690189789*(rss[i][23]+11))/(1+0.2318898690189789*11)))+'%'+
                                "\n"+str(int(round(rss[i][24],0)))+' : '+str(int(rank_dam_nolv[i]*(1+0.1014953549605047*(rss[i][24]+17))/(1+0.1014953549605047*17)))+'%'+
                                "\n"+str(int(round(rss[i][25],0)))+' : '+str(int((1+rank_ult[i][1]/100)*rank_dam_nolv[i]*(1+simari*(0.2+0.05*rss[i][27]))/(1+simari*0.2)*(1+0.2318898690189789*(rss[i][25]+4))/(1+0.2318898690189789*4)))+'%'+
                                "\n"+str(int(round(rss[i][26],0)))+' : '+str(int(rank_dam_nolv[i]*jingakgi*(1+0.1014953549605047*(rss[i][26]+5))/(1+0.1014953549605047*5)))+'%'+
                                "\n"+str(int(round(rss[i][27],0)))+' : '+str(int((1+rank_ult[i][2]/100)*rank_dam_nolv[i]*jingakgi*(1+0.2318898690189789*(rss[i][27]+1))/(1+0.2318898690189789*1)))+'%')
-                if rank_wep_name[i]=="(도)태극천제검":
-                    rank_stat_tagk2[i]=(str(int(round(rss[i][22],0)))+' : '+str(int(rank_dam_tagk_nolv[i]*(1+0.1014953549605047*(rss[i][22]+30))/(1+0.1014953549605047*30)))+'%'+
-                                       "\n"+str(int(round(rss[i][23],0)))+' : '+str(int((1+rank_ult[i][0]/100)*rank_dam_tagk_nolv[i]*(1+0.2318898690189789*(rss[i][23]+11))/(1+0.2318898690189789*11)))+'%'+
-                                       "\n"+str(int(round(rss[i][24],0)))+' : '+str(int(rank_dam_tagk_nolv[i]*(1+0.1014953549605047*(rss[i][24]+17))/(1+0.1014953549605047*17)))+'%'+
-                                       "\n"+str(int(round(rss[i][25],0)))+' : '+str(int((1+rank_ult[i][1]/100)*rank_dam_tagk_nolv[i]*(1+simari*(0.2+0.05*rss[i][27]))/(1+simari*0.2)*(1+0.2318898690189789*(rss[i][25]+4))/(1+0.2318898690189789*4)))+'%'+
-                                       "\n"+str(int(round(rss[i][26],0)))+' : '+str(int(rank_dam_tagk_nolv[i]*jingakgi*(1+0.1014953549605047*(rss[i][26]+5))/(1+0.1014953549605047*5)))+'%'+
-                                       "\n"+str(int(round(rss[i][27],0)))+' : '+str(int((1+rank_ult[i][2]/100)*rank_dam_tagk_nolv[i]*jingakgi*(1+0.2318898690189789*(rss[i][27]+1))/(1+0.2318898690189789*1)))+'%')
                                
                 rank_stat3[i]=(str(round(rss[i][16],1))+
                                "\n"+str(int(round(rss[i][17],0)))+
@@ -1985,7 +1964,8 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                 print('순장비계수')
                 print(str(int(rank_dam_onlyequ[i]*100))+'%')
                 print()
-                
+
+                rank0_for_calc_eff[i]=[rss0[i][2],rss0[i][3],rss0[i][4],rss0[i][6],rss0[i][7],rss0[i][8],rss0[i][9],rss0[i][10],rss0[i][12]]
                 rank0_stat[i]=("증뎀= "+str(int(round(rss0[i][2],0)))+
                               "%\n크증= "+str(int(round(rss0[i][3],0)))+
                               "%\n추뎀= "+str(int(round(rss0[i][4],0)))+
@@ -1999,33 +1979,12 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                               "%\n각성= "+str(int(round(rank0_ult[i][3],0)))+
                               "%\n공속= "+str(int(round(rss0[i][13],0)))+
                               "%\n크확= "+str(int(round(rss0[i][14],0)))+"%")
-                if rank_wep_name[i]=="(도)태극천제검":
-                    rank0_stat_tagk[i]=("증뎀= "+str(int(round(rss0[i][2],0)))+
-                                      "%\n크증= "+str(int(round(rss0[i][3],0)))+
-                                      "%\n추뎀= "+str(int(round(rss0[i][4],0)))+
-                                      "%\n모공= "+str(-21+int(round(rss0[i][6],0)))+
-                                      "%\n공%= "+str(int(round(rss0[i][7],0)))+
-                                      "%\n스탯= "+str(int(round(rss0[i][8],0)))+
-                                      "%\n속강= "+str(int(round(rss0[i][9],0)))+
-                                      "\n지속= "+str(int(round(rss0[i][10],0)))+
-                                      "%\n스증= "+str(int(1.23*(100+round(rss0[i][11],0))-100))+
-                                      "%\n특수= "+str(int(round(rss0[i][12],0)))+
-                                      "%\n각성= "+str(int(round(rank0_ult[i][3],0)))+
-                                      "%\n공속= "+str(-70+int(round(rss0[i][13],0)))+
-                                      "%\n크확= "+str(int(round(rss0[i][14],0)))+"%")
                 rank0_stat2[i]=(str(int(round(rss0[i][22],0)))+' : '+str(int(rank0_dam_nolv[i]*(1+0.1014953549605047*(rss0[i][22]+30))/(1+0.1014953549605047*30)))+'%'+
                                "\n"+str(int(round(rss0[i][23],0)))+' : '+str(int((1+rank0_ult[i][0]/100)*rank0_dam_nolv[i]*(1+0.2318898690189789*(rss0[i][23]+11))/(1+0.2318898690189789*11)))+'%'+
                                "\n"+str(int(round(rss0[i][24],0)))+' : '+str(int(rank0_dam_nolv[i]*(1+0.1014953549605047*(rss0[i][24]+17))/(1+0.1014953549605047*17)))+'%'+
                                "\n"+str(int(round(rss0[i][25],0)))+' : '+str(int((1+rank0_ult[i][1]/100)*rank0_dam_nolv[i]*(1+simari*(0.2+0.05*rss0[i][27]))/(1+simari*0.2)*(1+0.2318898690189789*(rss0[i][25]+4))/(1+0.2318898690189789*4)))+'%'+
                                "\n"+str(int(round(rss0[i][26],0)))+' : '+str(int(rank0_dam_nolv[i]*jingakgi*(1+0.1014953549605047*(rss0[i][26]+5))/(1+0.1014953549605047*5)))+'%'+
                                "\n"+str(int(round(rss0[i][27],0)))+' : '+str(int((1+rank0_ult[i][2]/100)*rank0_dam_nolv[i]*jingakgi*(1+0.2318898690189789*(rss0[i][27]+1))/(1+0.2318898690189789*1)))+'%')
-                if rank_wep_name[i]=="(도)태극천제검":
-                    rank0_stat_tagk2[i]=(str(int(round(rss0[i][22],0)))+' : '+str(int(rank0_dam_tagk_nolv[i]*(1+0.1014953549605047*(rss0[i][22]+30))/(1+0.1014953549605047*30)))+'%'+
-                                       "\n"+str(int(round(rss0[i][23],0)))+' : '+str(int((1+rank0_ult[i][0]/100)*rank0_dam_tagk_nolv[i]*(1+0.2318898690189789*(rss0[i][23]+11))/(1+0.2318898690189789*11)))+'%'+
-                                       "\n"+str(int(round(rss0[i][24],0)))+' : '+str(int(rank0_dam_tagk_nolv[i]*(1+0.1014953549605047*(rss0[i][24]+17))/(1+0.1014953549605047*17)))+'%'+
-                                       "\n"+str(int(round(rss0[i][25],0)))+' : '+str(int((1+rank0_ult[i][1]/100)*rank0_dam_tagk_nolv[i]*(1+simari*(0.2+0.05*rss0[i][27]))/(1+simari*0.2)*(1+0.2318898690189789*(rss0[i][25]+4))/(1+0.2318898690189789*4)))+'%'+
-                                       "\n"+str(int(round(rss0[i][26],0)))+' : '+str(int(rank0_dam_tagk_nolv[i]*jingakgi*(1+0.1014953549605047*(rss0[i][26]+5))/(1+0.1014953549605047*5)))+'%'+
-                                       "\n"+str(int(round(rss0[i][27],0)))+' : '+str(int((1+rank0_ult[i][2]/100)*rank0_dam_tagk_nolv[i]*jingakgi*(1+0.2318898690189789*(rss0[i][27]+1))/(1+0.2318898690189789*1)))+'%')
                                
                 rank0_stat3[i]=(str(round(rss0[i][16],1))+
                                "\n"+str(int(round(rss0[i][17],0)))+
@@ -2119,7 +2078,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         canvas_res.create_image(210,455,image=result_upbox_img)
         canvas_res.create_image(210,606,image=result_downbox_img)
         canvas_res.create_image(59,558,image=result_sidebox_img)
-        show_result_dealer()
+        
 
     elif job_type=='buf': ########################### 버퍼 ###########################
         load_presetr=load_workbook("preset.xlsx", data_only=True)
@@ -2129,6 +2088,8 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         global result_image_gif1, result_image_gif1_tg,result_image_gif2, result_image_gif2_tg,result_image_gif3, result_image_gif3_tg
         global result_siroco_gif1,result_siroco_gif2,result_siroco_gif3,result_siroco_gif1_tg,result_siroco_gif2_tg,result_siroco_gif3_tg
         global rank_neo_buf1,rank_neo_buf2,rank_neo_buf3,rank_wep_name1,rank_wep_name2,rank_wep_name3
+        global rank_res1,rank_res2,rank_res3
+        global rank_setting1,rank_setting2,rank_setting3
         global rank_wep_img1,rank_wep_img2,rank_wep_img3
         rank_type_buf=3
         rank_setting1=[0,0,0,0,0]
@@ -2170,6 +2131,9 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         rank_wep_img1=[0,0,0,0,0]
         rank_wep_img2=[0,0,0,0,0]
         rank_wep_img3=[0,0,0,0,0]
+        rank_res1=[0,0,0,0,0]
+        rank_res2=[0,0,0,0,0]
+        rank_res3=[0,0,0,0,0]
         ## rank_setting[rank]=rank_list[a][rank][b][c]
         ## a: 0=축복,1=크오,2=합계
         ## b: 0=계수,1=스펙or증가량
@@ -2197,6 +2161,9 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                 rank_wep_img3[temp_rank]=image_list_wep[rank_wep_name3[temp_rank]]
                 rank_wep_img2[temp_rank]=image_list_wep[rank_wep_name2[temp_rank]]
                 rank_wep_img1[temp_rank]=image_list_wep[rank_wep_name1[temp_rank]]
+                rank_res3[temp_rank]=rank_list[2][temp_rank][1][6]
+                rank_res2[temp_rank]=rank_list[1][temp_rank][1][6]
+                rank_res1[temp_rank]=rank_list[0][temp_rank][1][6]
                 for i in rank_setting3[temp_rank]:
                     if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
                         rank_setting3[temp_rank].append('415'+i[1]+'0')
@@ -2273,36 +2240,6 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
             except IndexError as error:
                 pass
 
-        """
-        global buf_jingak_exist,buf_jingak_tg,buf_jingak,buf_jingak_img2
-        buf_jingak_exist=0;buf_jingak_tg=0
-        if job_name=='(버프)세인트': ## 진각 전환 하드 코딩
-            def change_buf_jingak():
-                global buf_jingak_tg,buf_jingak,buf_jingak_img2
-                if rank_type_buf==1:
-                    c_rank0_buf=rank_neo_buf1
-                    c_rank_buf=rank_buf1
-                elif rank_type_buf==2:
-                    c_rank0_buf=rank_neo_buf2
-                    c_rank_buf=rank_buf2
-                elif rank_type_buf==3:
-                    c_rank0_buf=rank_neo_buf3
-                    c_rank_buf=rank_buf3
-                if buf_jingak_tg==0:
-                    buf_jingak["image"]=buf_jingak_img1
-                    canvas_res.itemconfig(res_buf,text=c_rank0_buf[now_rank_num],fill='gray')
-                    buf_jingak_tg=1
-                elif buf_jingak_tg==1:
-                    buf_jingak["image"]=buf_jingak_img2
-                    canvas_res.itemconfig(res_buf,text=c_rank_buf[now_rank_num],fill='white')
-                    buf_jingak_tg=0
-                    
-            buf_jingak_exist=1
-            buf_jingak=tkinter.Button(result_window,command=change_buf_jingak,image=buf_jingak_img2,bg=dark_main,borderwidth=0,activebackground=dark_main)
-            buf_jingak.place(x=172,y=7)
-            buf_jingak.image=buf_jingak_img2
-            buf_jingak.command=change_buf_jingak
-        """
 
         res_wep=canvas_res.create_text(12,22,text=rank_wep_name3[0],font=guide_font,fill='white',anchor='w')
         canvas_res.create_text(122-55,193,text=rank_inv1[0],font=small_font,fill='white',anchor="w")
@@ -2405,17 +2342,33 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
     capture_but.image=capture_img
     canvas_res.image=result_bg,random_npc_img
     res_bt1.image=show_detail_img
+
+    
+    global result_first_run
+    result_first_run=0
+    if job_type=='deal':
+        show_result_dealer()
+        result_first_run=1
+
+    elif job_type=='buf':
+        show_result_buffer()
+        result_first_run=1
+        
     place_center(result_window,0)
 
 
 result_gauge_bar_img=tkinter.PhotoImage(file='ext_img/result_gauge_bar.png')
 result_gauge_img=tkinter.PhotoImage(file='ext_img/result_gauge.png')
 result_checklist_img=tkinter.PhotoImage(file='ext_img/result_show_checklist.png')
+bg_result_setbox=tkinter.PhotoImage(file='ext_img/bg_result_setbox.png')
+img_equ_none=PhotoImage(file="image/99990.png")
 def show_result_dealer():
+    global result_first_run
     global result_window,canvas_res,guide_font
     result_window.geometry("585x710")
     global now_rank_num,tg_groggy,tg_result_first
     global rank1_list,rank0_list
+    global rank_for_calc_eff,rank0_for_calc_eff
     set_list=[]
     cool_list=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ##최종값
     cool_list1=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ##쿨감
@@ -2428,11 +2381,13 @@ def show_result_dealer():
         now_damage_groggy=rank1_list[now_rank_num][0]
         now_damage_sustain=rank1_list[now_rank_num][1][7]
         now_base_array=rank1_list[now_rank_num][1][1]
+        now_damage_stat=rank_for_calc_eff[now_rank_num]
     elif tg_groggy==1:
         now_list_list=list(rank0_list[now_rank_num][1][0])
         now_damage_groggy=rank0_list[now_rank_num][1][7]
         now_damage_sustain=rank0_list[now_rank_num][0]
         now_base_array=rank0_list[now_rank_num][1][1]
+        now_damage_stat=rank0_for_calc_eff[now_rank_num]
     if now_damage_groggy>=now_damage_sustain:
         ratio_tg='groggy'
         groggy_sustain_ratio=round(now_damage_groggy/now_damage_sustain*100,1)
@@ -2540,27 +2495,6 @@ def show_result_dealer():
     canvas_res.create_text(130,665,text="※ 특수 데미지 옵션",fill=check_list6_fg,tags=('not_overlap',),anchor='w',font=check_list6_tg)
     canvas_res.create_text(130,685,text="※ 높은 유틸성",fill=check_list7_fg,tags=('not_overlap',),anchor='w',font=check_list7_tg)
 
-    def show_explain_ratio(event): show_check_list(8)
-    def del_explain_ratio(event): del_check_list(8)
-    def show_explain_damage(event): show_check_list(9)
-    def del_explain_damage(event): del_check_list(9)
-    def show_check_list1(event): show_check_list(1)
-    def del_check_list1(event): del_check_list(1)
-    def show_check_list2(event): show_check_list(2)
-    def del_check_list2(event): del_check_list(2)
-    def show_check_list3(event): show_check_list(3)
-    def del_check_list3(event): del_check_list(3)
-    def show_check_list4(event): show_check_list(4)
-    def del_check_list4(event): del_check_list(4)
-    def show_check_list5(event): show_check_list(5)
-    def del_check_list5(event): del_check_list(5)
-    def show_check_list6(event): show_check_list(6)
-    def del_check_list6(event): del_check_list(6)
-    def show_check_list7(event): show_check_list(7)
-    def del_check_list7(event): del_check_list(7)
-    def show_check_style(event): show_check_list('style')
-    def del_check_style(event): del_check_list('style')
-        
     def show_check_list(num):
         canvas_res.create_image(445,560,image=result_showbox_img,tags=('not_overlap','mouse_overlap'))
         try:
@@ -2571,36 +2505,36 @@ def show_result_dealer():
                 canvas_res.create_text(340,560,text=style_check_list,tags=('not_overlap','mouse_overlap'),anchor='w',width=210)
     def del_check_list(num):
         canvas_res.delete("mouse_overlap")
+    if result_first_run==0:
+        explain_ratio_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
+        explain_ratio_bt.place(x=265,y=470)
+        explain_ratio_bt.bind("<Enter>",lambda event,a=8:show_check_list(a));explain_ratio_bt.bind("<Leave>",lambda event,a=0:del_check_list(a))
 
-    explain_ratio_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
-    explain_ratio_bt.place(x=265,y=470)
-    explain_ratio_bt.bind("<Enter>",show_explain_ratio);explain_ratio_bt.bind("<Leave>",del_explain_ratio)
-
-    explain_damage_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
-    explain_damage_bt.place(x=146,y=76)
-    explain_damage_bt.bind("<Enter>",show_explain_damage);explain_damage_bt.bind("<Leave>",del_explain_damage)
-        
-    check_list1_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
-    check_list1_bt.place(x=265,y=533)
-    check_list1_bt.bind("<Enter>",show_check_list1);check_list1_bt.bind("<Leave>",del_check_list1)
-    check_list2_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
-    check_list2_bt.place(x=265,y=553)
-    check_list2_bt.bind("<Enter>",show_check_list2);check_list2_bt.bind("<Leave>",del_check_list2)
-    check_list3_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
-    check_list3_bt.place(x=265,y=583)
-    check_list3_bt.bind("<Enter>",show_check_list3);check_list3_bt.bind("<Leave>",del_check_list3)
-    check_list4_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
-    check_list4_bt.place(x=265,y=603)
-    check_list4_bt.bind("<Enter>",show_check_list4);check_list4_bt.bind("<Leave>",del_check_list4)
-    check_list5_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
-    check_list5_bt.place(x=265,y=623)
-    check_list5_bt.bind("<Enter>",show_check_list5);check_list5_bt.bind("<Leave>",del_check_list5)
-    check_list6_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
-    check_list6_bt.place(x=265,y=653)
-    check_list6_bt.bind("<Enter>",show_check_list6);check_list6_bt.bind("<Leave>",del_check_list6)
-    check_list7_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
-    check_list7_bt.place(x=265,y=673)
-    check_list7_bt.bind("<Enter>",show_check_list7);check_list7_bt.bind("<Leave>",del_check_list7)
+        explain_damage_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
+        explain_damage_bt.place(x=146,y=76)
+        explain_damage_bt.bind("<Enter>",lambda event,a=9:show_check_list(a));explain_damage_bt.bind("<Leave>",lambda event,a=0:del_check_list(a))
+            
+        check_list1_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
+        check_list1_bt.place(x=265,y=533)
+        check_list1_bt.bind("<Enter>",lambda event,a=1:show_check_list(a));check_list1_bt.bind("<Leave>",lambda event,a=0:del_check_list(a))
+        check_list2_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
+        check_list2_bt.place(x=265,y=553)
+        check_list2_bt.bind("<Enter>",lambda event,a=2:show_check_list(a));check_list2_bt.bind("<Leave>",lambda event,a=0:del_check_list(a))
+        check_list3_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
+        check_list3_bt.place(x=265,y=583)
+        check_list3_bt.bind("<Enter>",lambda event,a=3:show_check_list(a));check_list3_bt.bind("<Leave>",lambda event,a=0:del_check_list(a))
+        check_list4_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
+        check_list4_bt.place(x=265,y=603)
+        check_list4_bt.bind("<Enter>",lambda event,a=4:show_check_list(a));check_list4_bt.bind("<Leave>",lambda event,a=0:del_check_list(a))
+        check_list5_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
+        check_list5_bt.place(x=265,y=623)
+        check_list5_bt.bind("<Enter>",lambda event,a=5:show_check_list(a));check_list5_bt.bind("<Leave>",lambda event,a=0:del_check_list(a))
+        check_list6_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
+        check_list6_bt.place(x=265,y=653)
+        check_list6_bt.bind("<Enter>",lambda event,a=6:show_check_list(a));check_list6_bt.bind("<Leave>",lambda event,a=0:del_check_list(a))
+        check_list7_bt=tkinter.Label(result_window,image=result_checklist_img,font=small_font,bd=0,bg=result_sub);
+        check_list7_bt.place(x=265,y=673)
+        check_list7_bt.bind("<Enter>",lambda event,a=7:show_check_list(a));check_list7_bt.bind("<Leave>",lambda event,a=0:del_check_list(a))
 
     def style_compare():
         global style_calced,creature_calced
@@ -2626,9 +2560,230 @@ def show_result_dealer():
     
     style_compare_bt=tkinter.Label(result_window,image=style_compare_img,bd=0,bg=result_sub)
     style_compare_bt.place(x=255,y=508)
-    style_compare_bt.bind("<Enter>",show_check_style);style_compare_bt.bind("<Leave>",del_check_style)
+    style_compare_bt.bind("<Enter>",lambda event,a='style':show_check_list(a));style_compare_bt.bind("<Leave>",lambda event,a=0:del_check_list(a))
+
+    global eff_setbox,eff_bg,eff_equ_name,eff_set_name,eff_image,eff_value
+    if result_first_run==0:
+        eff_setbox=tkinter.Canvas(result_window,bd=0,width=160,height=90)
+        eff_bg=eff_setbox.create_image(0,0,image=bg_result_setbox,anchor='nw')
+        eff_equ_name=eff_setbox.create_text(80,13,text="",font=small_font,anchor='c')
+        eff_set_name=eff_setbox.create_text(80,28,text="",font=small_font,anchor='c',fill='green3')
+        eff_image=eff_setbox.create_image(30,66,image=img_equ_none,anchor='c')
+        eff_guide=eff_setbox.create_text(106,55,text="세트 조합 효율",font=small_font,anchor='c')
+        eff_value=eff_setbox.create_text(106,73,text="",font=mid_font,anchor='c')
+    
+    global res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43
+    def check_equ_eff(code):
+        try:
+            global opt_one, name_one
+            global ele_in, image_list
+            global eff_setbox,eff_bg,eff_equ_name,eff_set_name,eff_image,eff_value
+            temp_set_list=[]
+            for now_equ in now_list_list:
+                if now_equ[0:2]==code and len(now_equ)!=4 and len(now_equ)!=6:
+                    now_equ_code=now_equ
+                    now_equ_name=name_one.get(now_equ)[38] ##
+                    now_equ_set=now_equ[2:4]
+            if int(now_equ_set)<36 or 46<int(now_equ_set)<50 or 38<int(now_equ_set)<41:
+                if now_equ_code[-1]=="1": item_color="#DB86AE"
+                elif now_equ_code[-1]=="0":  item_color="#FFB400"
+            elif len(now_equ_code)==8: item_color="#FFB400"
+            else: item_color="#FF7800"
+            for now_equ in now_list_list:
+                if now_equ[2:4]==now_equ_set and len(now_equ)!=4 and len(now_equ)!=6:
+                    if now_equ_set!="39" and now_equ_set!="40":
+                        temp_set_list.append(now_equ)
+            if len(temp_set_list)==0 and len(now_equ_code)==8:
+                temp_set_list.append(now_equ_code)
+            if len(temp_set_list)==2:
+                try: now_set_name=name_one.get("1"+now_equ_set+"1")[38]
+                except: now_set_name="-"
+                temp_set_list.append("1"+now_equ_set+"1");now_set_num="2"
+            elif len(temp_set_list)==3:
+                try: now_set_name=name_one.get("1"+now_equ_set+"2")[38]
+                except: now_set_name="-"
+                temp_set_list.append("1"+now_equ_set+"2");now_set_num="3"
+            elif len(temp_set_list)==4:
+                try: now_set_name=name_one.get("1"+now_equ_set+"2")[38]
+                except: now_set_name="-"
+                temp_set_list.append("1"+now_equ_set+"2");now_set_num="4"
+            elif len(temp_set_list)==5:
+                try: now_set_name=name_one.get("1"+now_equ_set+"3")[38]
+                except: now_set_name="-"
+                temp_set_list.append("1"+now_equ_set+"3");now_set_num="5"
+            else:
+                now_set_num="1"
+                now_set_name="-"
+            now_option_sum=[0,0,0,0,0,0,0,0,0]
+            for now_opt_equ in temp_set_list:
+                now_options=opt_one.get(now_opt_equ)
+                now_option_sum[0]+=now_options[2] #증뎀
+                now_option_sum[1]+=now_options[3] #크증뎀
+                now_option_sum[2]+=now_options[4]+now_options[5]*(1.05+0.0045*now_damage_stat[6]) #추뎀
+                now_option_sum[3]+=now_options[6] #모공
+                now_option_sum[4]+=now_options[7] #공%
+                now_option_sum[5]+=now_options[8] #스탯%
+                now_option_sum[6]+=now_options[9] #속강
+                now_option_sum[7]+=now_options[10] #지속%
+                now_option_sum[8]+=now_options[12] #특수%
+            compare_option_sum=[0,0,0,0,0,0,0,0,0]
+            for i in range(0,8):
+                compare_option_sum[i]=now_damage_stat[i]-now_option_sum[i]
+            now_equ_damage=1
+            final_equ_damage=1
+            compare_equ_damage=1
+            for i in [0,1,2,3,4,5,7,8]:
+                final_equ_damage=final_equ_damage*(1+now_damage_stat[i]/100)
+                now_equ_damage=now_equ_damage*(1+now_option_sum[i]/100)
+                compare_equ_damage=compare_equ_damage*(1+compare_option_sum[i]/100)
+            now_equ_damage=now_equ_damage*(1.05+0.0045*now_option_sum[6])
+            final_equ_damage=final_equ_damage*(1.05+0.0045*(now_damage_stat[6]-ele_in))
+            compare_equ_damage=compare_equ_damage*(1.05+0.0045*(compare_option_sum[6]-ele_in))
+
+            eff_str = str(round(final_equ_damage/compare_equ_damage/now_equ_damage*100,2))+"%"
+            
+            if code=="11":
+                eff_place_x=57+15; eff_place_y=57-15;
+                part_str="상의"
+            elif code=="12":
+                eff_place_x=27+15; eff_place_y=87-15;
+                part_str="하의"
+            elif code=="13":
+                eff_place_x=27+15; eff_place_y=57-15;
+                part_str="어깨"
+            elif code=="14":
+                eff_place_x=57+15; eff_place_y=87-15;
+                part_str="벨트"
+            elif code=="15":
+                eff_place_x=27+15; eff_place_y=117-15;
+                part_str="신발"
+            elif code=="21":
+                eff_place_x=189+15; eff_place_y=57-15;
+                part_str="팔찌"
+            elif code=="22":
+                eff_place_x=219+15; eff_place_y=57-15;
+                part_str="목걸이"
+            elif code=="23":
+                eff_place_x=219+15; eff_place_y=87-15;
+                part_str="반지"
+            elif code=="31":
+                eff_place_x=189+15; eff_place_y=87-15;
+                part_str="보조장비"
+            elif code=="32":
+                eff_place_x=219+15; eff_place_y=117-15;
+                part_str="마법석"
+            elif code=="33":
+                eff_place_x=189+15; eff_place_y=117-15;
+                part_str="귀걸이"
+
+            eff_setbox.itemconfig(eff_equ_name,text=now_equ_name,fill=item_color)
+            eff_setbox.itemconfig(eff_set_name,text=now_set_name+" ("+now_set_num+"셋)")
+            eff_setbox.itemconfig(eff_image,image=image_list[now_equ_code])
+            eff_setbox.itemconfig(eff_value,text=str(round(final_equ_damage/compare_equ_damage/now_equ_damage*100,1))+"%")
+            
+            eff_setbox.place(x=eff_place_x,y=eff_place_y)
+        except: pass
+    def del_equ_eff(event):
+        global eff_setbox
+        canvas_res.delete("mouse_overlap2")
+        eff_setbox.place(x=1000,y=1000)
+
+    canvas_res.tag_bind(res_img11,"<Enter>",lambda event,a=0:check_equ_eff("11"));canvas_res.tag_bind(res_img11,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img41,"<Enter>",lambda event,a=0:check_equ_eff("12"));canvas_res.tag_bind(res_img41,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img13,"<Enter>",lambda event,a=0:check_equ_eff("13"));canvas_res.tag_bind(res_img13,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img14,"<Enter>",lambda event,a=0:check_equ_eff("14"));canvas_res.tag_bind(res_img14,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img15,"<Enter>",lambda event,a=0:check_equ_eff("15"));canvas_res.tag_bind(res_img15,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img21,"<Enter>",lambda event,a=0:check_equ_eff("21"));canvas_res.tag_bind(res_img21,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img22,"<Enter>",lambda event,a=0:check_equ_eff("22"));canvas_res.tag_bind(res_img22,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img42,"<Enter>",lambda event,a=0:check_equ_eff("23"));canvas_res.tag_bind(res_img42,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img43,"<Enter>",lambda event,a=0:check_equ_eff("31"));canvas_res.tag_bind(res_img43,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img32,"<Enter>",lambda event,a=0:check_equ_eff("32"));canvas_res.tag_bind(res_img32,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img33,"<Enter>",lambda event,a=0:check_equ_eff("33"));canvas_res.tag_bind(res_img33,"<Leave>",del_equ_eff)
 
 
+
+
+
+result_calc_buf_sum=PhotoImage(file="ext_img/result_calc_buf_sum.png")
+def show_result_buffer():
+    global result_window, canvas_res, guide_font, mid_font, big_font
+    global result_first_run
+    result_window.geometry("585x710")
+    if result_first_run==0:
+        canvas_res.create_image(210-110,455,image=result_upbox_img)
+        canvas_res.create_image(210-110,606,image=result_downbox_img)
+        ##canvas_res.create_image(59,558,image=result_sidebox_img)
+        canvas_res.create_image(210-110,445,image=result_gauge_bar_img)
+    elif result_first_run==1:
+        canvas_res.delete('not_overlap')
+    global now_rank_num, rank_type_buf
+    global rank_res1,rank_res2,rank_res3
+    global rank_setting1,rank_setting2,rank_setting3
+    if rank_type_buf==1:
+        now_rank_res=rank_res1[now_rank_num]
+        now_rank_setting=rank_setting1[now_rank_num]
+    elif rank_type_buf==2:
+        now_rank_res=rank_res2[now_rank_num]
+        now_rank_setting=rank_setting2[now_rank_num]
+    elif rank_type_buf==3:
+        now_rank_res=rank_res3[now_rank_num]
+        now_rank_setting=rank_setting3[now_rank_num]
+
+    now_bless_stat=now_rank_res[0]
+    now_bless_att=now_rank_res[1]
+    now_crux_stat=now_rank_res[2]
+    now_pas1_stat=now_rank_res[3]
+
+    only_bless_buf=((now_bless_stat+now_pas1_stat+15250)/250)*(2650+now_bless_att)/10
+    all_sum_buf=((now_bless_stat+now_crux_stat+now_pas1_stat+15250)/250)*(2650+now_bless_att)/10
+
+    buf_ratio=str(round(only_bless_buf/all_sum_buf*100,1))+"%"
+
+    move_gauge=(only_bless_buf/all_sum_buf-0.5)*140
+    
+    canvas_res.create_image(210-110+int(move_gauge),445,image=result_gauge_img,tags=('not_overlap',))
+    canvas_res.create_text(160-110,465,text="축복",fill='sky blue',anchor='c',tags=('not_overlap',))
+    canvas_res.create_text(260-110,465,text="총합",fill='pink1',anchor='c',tags=('not_overlap',))
+    canvas_res.create_text(213-110+int(move_gauge),424,text=buf_ratio,font=guide_font,fill='white',anchor='c',tags=('not_overlap',))
+
+    canvas_res.create_text(160-110,483,text=str(int(only_bless_buf)),font=guide_font,fill='sky blue',anchor='c',tags=('not_overlap',))
+    canvas_res.create_text(260-110,483,text=str(int(all_sum_buf)),font=guide_font,fill='pink1',anchor='c',tags=('not_overlap',))
+
+    bless_exist_list=[]
+    crux_exist_list=[]
+    for i in range(0,5):
+        if rank_setting1[i] != 0:
+            bless_exist_list.append(str(i+1)+"위")
+        if rank_setting2[i] != 0:
+            crux_exist_list.append(str(i+1)+"위")
+    
+    def sum_two_buf():
+        global sumed_buf
+        now_bless_rank=int(select_bless.get()[0])-1
+        now_crux_rank=int(select_crux.get()[0])-1
+        now_bless_stat=rank_res1[now_bless_rank][0]
+        now_bless_att=rank_res1[now_bless_rank][1]
+        now_crux_stat=rank_res2[now_crux_rank][2]
+        now_pas1_stat=rank_res2[now_crux_rank][3]
+        all_sum_buf=((now_bless_stat+now_crux_stat+now_pas1_stat+15250)/250)*(2650+now_bless_att)/10
+        canvas_res.itemconfig(sumed_buf,text=int(all_sum_buf))
+        pass
+
+    canvas_res.create_text(210-110,530,text="<이중세팅 버프력 계산>",anchor='c',font=guide_font,fill='white',tags=('not_overlap',))
+    canvas_res.create_text(127-110,560,text="축복:",fill='sky blue',anchor='nw',tags=('not_overlap',),font=guide_font)
+    canvas_res.create_text(127-110,592,text="각성:",fill='pink1',anchor='nw',tags=('not_overlap',),font=guide_font)
+    canvas_res.create_text(210-110,640,text="<종합 버프력>",anchor='c',font=mid_font,fill='white')
+    global sumed_buf
+    if result_first_run==0:
+        sumed_buf=canvas_res.create_text(210-110,670,text=" ",anchor='c',font=big_font,fill='white')
+        select_bless=tkinter.ttk.Combobox(result_window,values=bless_exist_list,width=4)
+        select_bless.place(x=158-110,y=556);select_bless.set('1위')
+        select_crux=tkinter.ttk.Combobox(result_window,values=crux_exist_list,width=4)
+        select_crux.place(x=158-110,y=588);select_crux.set('1위')
+        sum_bless_crux_bt=tkinter.Button(result_window,image=result_calc_buf_sum,bd=0,command=sum_two_buf,bg=result_sub,highlightcolor=result_sub)
+        sum_bless_crux_bt.place(x=220-110,y=553)
+
+        
 
 
 def play_gif(count_frame,now_rank,now_pc,show_res,gif_list,mode,mode2,mode3):
@@ -2684,17 +2839,10 @@ def change_groggy2(ele_skill):
     global tg_groggy,groggy,res_cool_what,cool_eff_text
     global stop_gif,stop_gif2,result_window
     global result_image_on,rank_dam_noele,rank_dam,rank_stat,rank_stat2,rank_stat3,rank_inv,result_image_gif_tg,result_image_gif,result_siroco_gif_tg,result_siroco_gif
-    global rank_dam_tagk_noele,rank_dam_tagk,rank_stat_tagk,rank_stat_tagk2
     global result0_image_on,rank0_dam_noele,rank0_dam,rank0_stat,rank0_stat2,rank0_stat3,rank0_inv,result0_image_gif_tg,result0_image_gif,result0_siroco_gif_tg,result0_siroco_gif
-    global rank0_dam_tagk_noele,rank0_dam_tagk,rank0_stat_tagk,rank0_stat_tagk2
-    global tagkgum_exist,tagk_tg
     global groggy_bt,tg_groggy_img2,tg_groggy_img1,now_rank_num
     global rank_wep_name,rank0_wep_name
     now_rank_num=0
-    if tagkgum_exist==1:
-        global  tagkgum,tagkgum_img
-        tagkgum["image"]=tagkgum_img
-        tagk_tg=0
     if tg_groggy==0:
         groggy_bt["image"]=tg_groggy_img2
         cool_what='지속딜(쿨감O)'
@@ -2794,80 +2942,6 @@ def change_groggy2(ele_skill):
                 play_gif(0,i,temp,res_item_list[i][str(j)],siroco_gif_changed,1,0,1)
     show_result_dealer()
 
-##태극검 음양 전환
-def change_tagk(ele_skill):
-    global tagk_tg, tagkgum
-    global res_stat,res_stat2,rank_stat_tagk, rank_stat, rank_stat_tagk2, rank_stat2
-    global res_dam, rank_dam_tagk, rank_dam, rank_dam_tagk_noele, rank_dam_noele
-    global rank0_stat_tagk, rank0_stat, rank0_stat_tagk2, rank0_stat2
-    global rank0_dam_tagk, rank0_dam, rank0_dam_tagk_noele, rank0_dam_noele
-    global rank_wep_name,rank0_wep_name
-    global now_rank_num
-    global res_dam_list
-    global tg_groggy
-    now=now_rank_num
-    tagkgum_img=tkinter.PhotoImage(file='ext_img/tagk_um.png')
-    tagkgum_img2=tkinter.PhotoImage(file='ext_img/tagk_ang.png')
-    if tg_groggy==0:
-        c_rank_dam_tagk=rank_dam_tagk
-        c_rank_stat_tagk=rank_stat_tagk
-        c_rank_stat_tagk2=rank_stat_tagk2
-        c_rank_dam_tagk_noele=rank_dam_tagk_noele
-        c_rank_dam=rank_dam
-        c_rank_stat=rank_stat
-        c_rank_stat2=rank_stat2
-        c_rank_dam_noele=rank_dam_noele
-        c_rank_dam=rank_dam
-        c_rank_wep_name=rank_wep_name
-    elif tg_groggy==1:
-        c_rank_dam_tagk=rank0_dam_tagk
-        c_rank_stat_tagk=rank0_stat_tagk
-        c_rank_stat_tagk2=rank0_stat_tagk2
-        c_rank_dam_tagk_noele=rank0_dam_tagk_noele
-        c_rank_dam=rank0_dam
-        c_rank_stat=rank0_stat
-        c_rank_stat2=rank0_stat2
-        c_rank_dam_noele=rank0_dam_noele
-        c_rank_dam=rank0_dam
-        c_rank_wep_name=rank0_wep_name
-    if c_rank_wep_name[now_rank_num]=="(도)태극천제검": 
-        if tagk_tg==0:
-            canvas_res.itemconfig(res_dam,text=c_rank_dam_tagk[now])
-            canvas_res.itemconfig(res_stat,text=c_rank_stat_tagk[now])
-            canvas_res.itemconfig(res_stat2,text=c_rank_stat_tagk2[now])
-            if ele_skill !=0:
-                canvas_res.itemconfig(res_ele,text="자속강X="+str(c_rank_dam_tagk_noele[now])+"%")
-            canvas_res.itemconfig(res_wep,fill='red')
-            
-        elif tagk_tg==1:
-            canvas_res.itemconfig(res_dam,text=c_rank_dam[now])
-            canvas_res.itemconfig(res_stat,text=c_rank_stat[now])
-            canvas_res.itemconfig(res_stat2,text=c_rank_stat2[now])
-            if ele_skill !=0:
-                canvas_res.itemconfig(res_ele,text="자속강X="+str(c_rank_dam_noele[now])+"%")
-            canvas_res.itemconfig(res_wep,fill='white')
-    if tagk_tg==0:
-        tagk_tg=1
-        tagkgum['image']=tagkgum_img2
-        tagkgum.image=tagkgum_img2
-        for i in range(0,5):
-            try:
-                if c_rank_wep_name[i]=="(도)태극천제검":
-                    canvas_res.itemconfig(res_dam_list[i],text=c_rank_dam_tagk[i],fill='red')
-            except:
-                pass
-    elif tagk_tg==1:
-        tagk_tg=0
-        tagkgum['image']=tagkgum_img
-        tagkgum.image=tagkgum_img
-        for i in range(0,5):
-            try:
-                if c_rank_wep_name[i]=="(도)태극천제검":
-                    canvas_res.itemconfig(res_dam_list[i],text=c_rank_dam[i],fill='white')
-            except:
-                pass
-
-
 def change_rank(rank_number,job_type,ele_skill,rank_setting,rank_ult):
     threading.Timer(0.05, change_rank2,args=(rank_number,job_type,ele_skill)).start()
     threading.Timer(0, time_delay).start()
@@ -2881,7 +2955,6 @@ def change_rank2(now,job_type,ele_skill):
     global result_window
     now_rank_num=now
     if job_type =='deal':
-        global tagk_tg, tagkgum, tagkgum_exist, rank_dam_tagk, rank_stat_tagk, rank_stat_tagk2, rank_dam_tagk_noele
         global res_dam,res_stat,res_stat2,res_stat3,rank_stat,rank_stat2,rank_stat3,result_image_on,res_ele,rank_dam_noele, rank_inv, res_inv
         global result_image_gif, result_image_gif_tg,result_siroco_gif,result_siroco_gif_tg
         global rank0_stat,rank0_stat2,rank0_stat3,result0_image_on,rank0_dam_noele, rank0_inv
@@ -2892,18 +2965,11 @@ def change_rank2(now,job_type,ele_skill):
             if tg_groggy==0:
                 image_changed=result_image_on[now]
                 c_rank_wep=rank_wep_name
-                if c_rank_wep[now]=="(도)태극천제검" and tagkgum_exist==1 and tagk_tg==1:
-                    c_rank_dam=rank_dam_tagk
-                    c_rank_stat=rank_stat_tagk
-                    c_rank_stat2=rank_stat_tagk2
-                    c_rank_dam_noele=rank_dam_tagk_noele
-                    canvas_res.itemconfig(res_wep,fill="red")
-                else:
-                    c_rank_dam=rank_dam
-                    c_rank_stat=rank_stat
-                    c_rank_stat2=rank_stat2
-                    c_rank_dam_noele=rank_dam_noele
-                    canvas_res.itemconfig(res_wep,fill="white")
+                c_rank_dam=rank_dam
+                c_rank_stat=rank_stat
+                c_rank_stat2=rank_stat2
+                c_rank_dam_noele=rank_dam_noele
+                canvas_res.itemconfig(res_wep,fill="white")
                 c_rank_stat3=rank_stat3
                 c_rank_inv=rank_inv
                 image_gif_changed=result_image_gif
@@ -2915,18 +2981,11 @@ def change_rank2(now,job_type,ele_skill):
             elif tg_groggy==1:
                 image_changed=result0_image_on[now]
                 c_rank_wep=rank0_wep_name
-                if c_rank_wep[now]=="(도)태극천제검" and tagkgum_exist==1 and tagk_tg==1:
-                    c_rank_dam=rank0_dam_tagk
-                    c_rank_stat=rank0_stat_tagk
-                    c_rank_stat2=rank0_stat_tagk2
-                    c_rank_dam_noele=rank0_dam_tagk_noele
-                    canvas_res.itemconfig(res_wep,fill="red")
-                else:
-                    c_rank_dam=rank0_dam
-                    c_rank_stat=rank0_stat
-                    c_rank_stat2=rank0_stat2
-                    c_rank_dam_noele=rank0_dam_noele
-                    canvas_res.itemconfig(res_wep,fill="white")
+                c_rank_dam=rank0_dam
+                c_rank_stat=rank0_stat
+                c_rank_stat2=rank0_stat2
+                c_rank_dam_noele=rank0_dam_noele
+                canvas_res.itemconfig(res_wep,fill="white")
                 c_rank_stat3=rank0_stat3
                 c_rank_inv=rank0_inv
                 image_gif_changed=result0_image_gif
@@ -2985,11 +3044,7 @@ def change_rank2(now,job_type,ele_skill):
             canvas_res.itemconfig(res_buf_ex1,text=rank_buf_ex_changed[now][0])
             canvas_res.itemconfig(res_buf_ex2,text=rank_buf_ex_changed[now][1])
             canvas_res.itemconfig(res_buf_ex3,text=rank_buf_ex_changed[now][2])
-            global buf_jingak_exist,buf_jingak_tg,buf_jingak,buf_jingak_img2
-            if buf_jingak_exist==1:
-                buf_jingak["image"]=buf_jingak_img2
-                canvas_res.itemconfig(res_buf,fill='white')
-                buf_jingak_tg=0
+            show_result_buffer()
         
         except KeyError as error:
             c=1
@@ -3213,12 +3268,7 @@ def change_rank_type2(in_type):
             temp=j-41
             if siroco_gif_changed_tg[i][temp]==1:
                 result_window.after(0,play_gif,0,i,temp,res_img_list[str(i)+str(j)],siroco_gif_changed,1,0,1)
-    global buf_jingak_exist,buf_jingak_tg,buf_jingak,buf_jingak_img2
-    if buf_jingak_exist==1:
-        buf_jingak["image"]=buf_jingak_img2
-        canvas_res.itemconfig(res_buf,fill='white')
-        buf_jingak_tg=0
-
+    show_result_buffer()
 
 
 
@@ -3465,7 +3515,7 @@ def load_checklist():
         load_cell=db_load_check.cell
         load_cus=db_load_cus.cell
         k=1
-        for i in range(1,316):
+        for i in range(1,317):
             if load_cell(i,2+ssnum1).value == 1:
                 try:
                     select_item['tg{}'.format(load_cell(i,1).value)]=1
@@ -3549,7 +3599,7 @@ def save_checklist():
             save_cell=db_save_check.cell
             save_cus=db_save_cus.cell
             opt_save={}
-            for i in range(1,316):
+            for i in range(1,317):
                 opt_save[save_cell(i,1).value]=i
 
             for code in opt_save.keys():
@@ -3896,9 +3946,11 @@ def show_timeline(name,server):
         reset()
             
         for i in range(76,257):
-            api_cod=sh.cell(i,40).value
-            if all_item.count(api_cod) != 0:
-                select_item['tg{}'.format(str(sh.cell(i,1).value))]=1
+            try:
+                api_cod=sh.cell(i,40).value
+                if all_item.count(api_cod) != 0:
+                    select_item['tg{}'.format(str(sh.cell(i,1).value))]=1
+            except: pass
         xl.close()
         check_equipment()
         for i in range(101,136):

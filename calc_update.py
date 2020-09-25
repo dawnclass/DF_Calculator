@@ -259,7 +259,7 @@ def update_preset():
 
     ele_type_list=['화','수','명','암']
     if ele_type_list.count(db_save['L26'].value)!=1: ## 4.0.2 세이브 슬롯 확장
-        for j in['L','M','N','O','P','Q','R','S','T','U']:
+        for j in ['L','M','N','O','P','Q','R','S','T','U']:
             for i in range(26,72):
                 db_custom[j+str(i)]=db_custom['K'+str(i)].value
             for i in range(1,316):
@@ -267,7 +267,10 @@ def update_preset():
         for i in range(11,21):
             db_custom['E'+str(i)]=str(i)+'번슬롯'
         
-
+    if db_save['A316'].value!="111108" : ## 4.1 태극검 음양 분리
+        db_save['A316']="111108"
+        for j in ['C','D','E','F','G','H','I','J','K','B']:
+            db_save[j+'316']=0
     
 
     load_preset.save("preset.xlsx")

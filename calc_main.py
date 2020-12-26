@@ -1,5 +1,5 @@
-now_version="4.1.3"
-ver_time='200926'
+now_version="4.3.1"
+ver_time='201226'
 
 #-*- coding: utf-8 -*-
 ## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
@@ -108,6 +108,7 @@ except:
 
 
 load_excel1=load_workbook("DATA.xlsx", data_only=True)
+load_excel1_test=load_workbook("DATA_test.xlsx", data_only=True)
 load_preset0=load_workbook("preset.xlsx", data_only=True)
 db_custom=load_preset0["custom"]
 db_save=load_preset0["one"]
@@ -150,6 +151,18 @@ for row in level_db.rows:
     row_value_cut = row_value[2:]
     opt_leveling[level_db.cell(jk,1).value]=row_value_cut ## DB 불러오기 ##
     jk=jk+1
+
+try:
+    level_db_test=load_excel1_test["leveling"]
+    jkk=1;opt_leveling_test={}
+    for row in level_db_test.rows:
+        row_value=[]
+        for cell in row:
+            row_value.append(cell.value)
+        row_value_cut = row_value[2:]
+        opt_leveling_test[level_db_test.cell(jkk,1).value]=row_value_cut ## test DB 불러오기 ##
+        jkk=jkk+1
+except: pass
 
 save_name_list=[]
 for i in range(1,21):
@@ -256,7 +269,21 @@ def calc(mode):
                 return
     showsta(text="조합 알고리즘 구동 준비중...")
     start_time = time.time()
-    load_excel=load_workbook("DATA.xlsx",data_only=True)
+
+    ## 테스팅 버전 체크
+    global isTest
+    isTest=test_tg.get()
+
+    if isTest==0:
+        load_excel=load_workbook("DATA.xlsx",data_only=True)
+    elif isTest==1:
+        tkinter.messagebox.showinfo('경고',"본 기능은 퍼스트서버 선 체험 기능입니다. 실제 본 서버에 반영되는 값은 상당히 다를 수 있으니 참고로만 보세요.")
+        load_excel=load_workbook("DATA_test.xlsx",data_only=True)
+
+    isCustomWep=custom_wep_tg.get()*isTest
+    isCustom12=custom_12_tg.get()*isTest
+    isCustom23=custom_23_tg.get()*isTest
+    isCustom31=custom_31_tg.get()*isTest
 
     ## 갱신된 DB 불러오기 ##
     global opt_one, name_one
@@ -315,18 +342,6 @@ def calc(mode):
         cool_on=1
 
     betterang=int(db_one["J86"].value)
-
-    #아리아 증폭 판정
-    if db_preset["H7"].value == "항상증폭":
-        aria_fix=0.3
-        aria_dif=0
-    elif db_preset["H7"].value == "템에따라":
-        aria_fix=0.25
-        aria_dif=1
-    elif db_preset["H7"].value == "항상미증폭":
-        aria_fix=0.25
-        aria_dif=0
-        
     
     global count_num, count_all, show_number, max_setopt, inv_tg
     count_num=0;count_all=0;show_number=0;metamong=0
@@ -1177,6 +1192,8 @@ def calc(mode):
     max_setopt=0
     loop_counter=0
 
+    customText={2:"증뎀", 3:"크증", 4:"추뎀", 6:"모공", 7:"공%", 8:"스탯%", 27:"각성"}
+
     for calc_wep_num in range(len(wep_num)):
     
         for now_all_list in all_list_list:
@@ -1211,7 +1228,6 @@ def calc(mode):
                             oneonelist=[]
                             for i in range(oneone):
                                 no_cut=getone(for_calc[i])               ## 11번 스증 ## 20번 쿨감
-                        
                                 cut=np.array(no_cut[0:20]+no_cut[22:23]+no_cut[34:35]+no_cut[38:44])
                                 skiper=(skiper/100+1)*(cut[11]/100+1)*100-100
                                 coolper=(1-(100-coolper)/100*(100-no_cut[22+cool_eff_dictnum])/100)*100
@@ -1224,7 +1240,7 @@ def calc(mode):
                             for i in range(oneone):
                                 base_array=base_array+oneonelist[i]
                             
-                            hard_code_result=hard_coding_dealer(base_array,betterang,for_calc,coolper,skiper)
+                            hard_code_result=hard_coding_dealer(base_array,betterang,for_calc,coolper,skiper,isTest)
                             base_array=hard_code_result[0]
                             coolper=hard_code_result[1]
                             skiper=hard_code_result[2]
@@ -1234,10 +1250,92 @@ def calc(mode):
                             base_array[3]=max_criper+base_array[3]
                             only_bon=base_array[4]
                             base_array[4]=base_array[4]+base_array[5]*(base_array[9]*0.0045+1.05)
-                            actlvl=((base_array[active_eff_one]+base_array[22]*job_lv1+base_array[23]*job_lv2+base_array[24]*job_lv3+
-                                    base_array[25]*job_lv4+base_array[26]*job_lv5+base_array[27]*job_lv6)/100+1)
-                            actlvl2=base_array[22]*(0.5-silmari*0.06)*0.0213+base_array[24]*(0.5-silmari*0.06)*0.04+base_array[24]*(0.1484-silmari*0.0284)*0.0674+1
-                            paslvl=((100+base_array[16]*job_pas0)/100)*((100+base_array[17]*job_pas1)/100)*((100+base_array[18]*job_pas2)/100)*((100+base_array[19]*job_pas3)/100)
+                            
+                            ## 옵션 커스텀
+                            customWepText="미변환"
+                            custom12Text="미변환"
+                            custom23Text="미변환"
+                            custom31Text="미변환"
+                            if isCustomWep==1:
+                                for code in for_calc:
+                                    if len(code)==6:
+                                        now_temp_opt=getone(code)
+                                        now_index=now_temp_opt[50]
+                                        now_change_value=now_temp_opt[51]
+                                        if now_index==0:
+                                            break
+                                        elif now_index!=27:
+                                            base_array[now_index]=base_array[now_index]-now_change_value
+                                        else:
+                                            now_change_value=0
+                                        changing_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
+                                        for kk in [2,3,4,6,7,8]:
+                                            if min(changing_opt_list)==base_array[kk]:
+                                                base_array[kk]=base_array[kk]+now_change_value+16
+                                                if kk==4:
+                                                    only_bon=only_bon+16
+                                                if now_index!=27:
+                                                    customWepText=customText.get(now_index)+" > "+customText.get(kk)
+                                                else:
+                                                    customWepText=customText.get(now_index)+" + "+customText.get(kk)
+                                                break
+                                        break
+                            if isCustom12==1:
+                                for code in for_calc:
+                                    if code[0:2]=="12":
+                                        now_temp_opt=getone(code)
+                                        now_index=now_temp_opt[50]
+                                        now_change_value=now_temp_opt[51]
+                                        if now_index==0:
+                                            break
+                                        base_array[now_index]=base_array[now_index]-now_change_value
+                                        changing_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
+                                        for kk in [2,3,4,6,7,8]:
+                                            if min(changing_opt_list)==base_array[kk]:
+                                                base_array[kk]=base_array[kk]+now_change_value+8
+                                                if kk==4:
+                                                    only_bon=only_bon+8
+                                                custom12Text=customText.get(now_index)+" > "+customText.get(kk)
+                                                break
+                                        break
+                            if isCustom23==1:
+                                for code in for_calc:
+                                    if code[0:2]=="23":
+                                        now_temp_opt=getone(code)
+                                        now_index=now_temp_opt[50]
+                                        now_change_value=now_temp_opt[51]
+                                        if now_index==0:
+                                            break
+                                        base_array[now_index]=base_array[now_index]-now_change_value
+                                        changing_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
+                                        for kk in [2,3,4,6,7,8]:
+                                            if min(changing_opt_list)==base_array[kk]:
+                                                base_array[kk]=base_array[kk]+now_change_value+8
+                                                if kk==4:
+                                                    only_bon=only_bon+8
+                                                custom23Text=customText.get(now_index)+" > "+customText.get(kk)
+                                                break
+                                        break
+                            if isCustom31==1:
+                                for code in for_calc:
+                                    if code[0:2]=="31":
+                                        now_temp_opt=getone(code)
+                                        now_index=now_temp_opt[50]
+                                        now_change_value=now_temp_opt[51]
+                                        if now_index==0:
+                                            break
+                                        base_array[now_index]=base_array[now_index]-now_change_value
+                                        changing_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
+                                        for kk in [2,3,4,6,7,8]:
+                                            if min(changing_opt_list)==base_array[kk]:
+                                                base_array[kk]=base_array[kk]+now_change_value+8
+                                                if kk==4:
+                                                    only_bon=only_bon+8
+                                                custom31Text=customText.get(now_index)+" > "+customText.get(kk)
+                                                break
+                                        break
+                                    
+                            ## 잔향
                             if inv_tg ==2:
                                 inv_auto=inv_auto_dealer(base_array,only_bon,inv2_on_tg,inv_type_list)
                                 base_array=inv_auto[0]
@@ -1246,6 +1344,12 @@ def calc(mode):
                                 inv2_opt=inv_auto[3]
                                 inv1_val=inv_auto[4]
                                 inv2_val=inv_auto[5]
+
+                                
+                            actlvl=((base_array[active_eff_one]+base_array[22]*job_lv1+base_array[23]*job_lv2+base_array[24]*job_lv3+
+                                    base_array[25]*job_lv4+base_array[26]*job_lv5+base_array[27]*job_lv6)/100+1)
+                            actlvl2=base_array[22]*(0.5-silmari*0.06)*0.0213+base_array[24]*(0.5-silmari*0.06)*0.04+base_array[24]*(0.1484-silmari*0.0284)*0.0674+1
+                            paslvl=((100+base_array[16]*job_pas0)/100)*((100+base_array[17]*job_pas1)/100)*((100+base_array[18]*job_pas2)/100)*((100+base_array[19]*job_pas3)/100)
                             if ult_2 !=0:
                                 ult1_per=job_ult1*(1+base_array[23]*0.0653)/actlvl*(ult_1/100)
                                 ult2_per=job_ult2*(1+(base_array[25]*0.1203+0.04348*base_array[27]*silmari))/actlvl*(ult_2/100)
@@ -1255,15 +1359,17 @@ def calc(mode):
                             damage=((base_array[2]/100+1)*(base_array[3]/100+1)*(base_array[4]/100+1)*(base_array[6]/100+1)*(base_array[7]/100+1)*
                                     (base_array[8]/100+1)*(base_array[9]*0.0045+1.05)*(base_array[10]/100+1)*(skiper/100+1)*
                                     paslvl*((54500+3.31*base_array[0])/54500)*((4800+base_array[1])/4800)/(1.05+0.0045*int(ele_skill)))*wep_pre_calced[calc_wep_num]
-                            final_damage=damage*((100/(100-coolper)-1)*cool_eff*cool_on+1)*((base_array[12]+(actlvl-1)*100+ult_skiper)/100+1)*cool_pre_calced[calc_wep_num]
-                            final_damage2=damage*((100/(100-coolper)-1)*cool_eff2+1)*((base_array[12]+(actlvl2-1)*100)/100+1)*cool_pre_calced2[calc_wep_num]
+
+                            cool_real_eff=(100/(100-coolper)-1)/((coolper/55)*(coolper/55)*(coolper/55)+1)
+                            final_damage=damage*(cool_real_eff*cool_eff*cool_on+1)*((base_array[12]+(actlvl-1)*100+ult_skiper)/100+1)*cool_pre_calced[calc_wep_num]
+                            final_damage2=damage*(cool_real_eff*cool_eff2+1)*((base_array[12]+(actlvl2-1)*100)/100+1)*cool_pre_calced2[calc_wep_num]
                             damage_not_ele=final_damage*(1.05+0.0045*int(ele_skill))/(base_array[9]*0.0045+1.05)*((base_array[9]-int(ele_skill))*0.0045+1.05)/1.05*(real_bon_not_ele/100+1)/(base_array[4]/100+1)
                             damage_not_ele2=final_damage2*(1.05+0.0045*int(ele_skill))/(base_array[9]*0.0045+1.05)*((base_array[9]-int(ele_skill))*0.0045+1.05)/1.05*(real_bon_not_ele/100+1)/(base_array[4]/100+1)
                             damage_only_equ=damage/paslvl/wep_pre_calced[calc_wep_num]
                             
                             inv_string="잔향부여= "+inv1_opt+"("+str(inv1_val)+"%) / "+inv2_opt+"("+str(inv2_val)+"%)"
-                            save_list[final_damage]=[calc_wep,base_array,damage,damage_not_ele,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage2,wep_name_list_temp[calc_wep_num]]
-                            save_list0[final_damage2]=[calc_wep,base_array,damage,damage_not_ele2,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage,wep_name_list_temp[calc_wep_num]]
+                            save_list[final_damage]=[calc_wep,base_array,damage,damage_not_ele,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage2,wep_name_list_temp[calc_wep_num],[customWepText,custom12Text,custom23Text,custom31Text]]
+                            save_list0[final_damage2]=[calc_wep,base_array,damage,damage_not_ele2,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage,wep_name_list_temp[calc_wep_num],[customWepText,custom12Text,custom23Text,custom31Text]]
                             count_num=count_num+1
                         else:
                             count_all=count_all+1
@@ -1304,7 +1410,7 @@ def calc(mode):
                             for i in range(oneone):
                                 base_array=base_array+oneonelist[i]
                             
-                            hard_code_result=hard_coding_dealer(base_array,betterang,for_calc,coolper,skiper)
+                            hard_code_result=hard_coding_dealer(base_array,betterang,for_calc,coolper,skiper,isTest)
                             base_array=hard_code_result[0]
                             coolper=hard_code_result[1]
                             skiper=hard_code_result[2]
@@ -1314,10 +1420,92 @@ def calc(mode):
                             base_array[3]=max_criper+base_array[3]
                             only_bon=base_array[4]
                             base_array[4]=base_array[4]+base_array[5]*(base_array[9]*0.0045+1.05)
-                            actlvl=((base_array[active_eff_one]+base_array[22]*job_lv1+base_array[23]*job_lv2+base_array[24]*job_lv3+
-                                    base_array[25]*job_lv4+base_array[26]*job_lv5+base_array[27]*job_lv6)/100+1)
-                            actlvl2=base_array[22]*(0.5-silmari*0.06)*0.0213+base_array[24]*(0.5-silmari*0.06)*0.04+base_array[24]*(0.1484-silmari*0.0284)*0.0674+1
-                            paslvl=((100+base_array[16]*job_pas0)/100)*((100+base_array[17]*job_pas1)/100)*((100+base_array[18]*job_pas2)/100)*((100+base_array[19]*job_pas3)/100)
+                            
+                            ## 옵션 커스텀
+                            customWepText="미변환"
+                            custom12Text="미변환"
+                            custom23Text="미변환"
+                            custom31Text="미변환"
+                            if isCustomWep==1:
+                                for code in for_calc:
+                                    if len(code)==6:
+                                        now_temp_opt=getone(code)
+                                        now_index=now_temp_opt[50]
+                                        now_change_value=now_temp_opt[51]
+                                        if now_index==0:
+                                            break
+                                        elif now_index!=27:
+                                            base_array[now_index]=base_array[now_index]-now_change_value
+                                        else:
+                                            now_change_value=0
+                                        changing_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
+                                        for kk in [2,3,4,6,7,8]:
+                                            if min(changing_opt_list)==base_array[kk]:
+                                                base_array[kk]=base_array[kk]+now_change_value+16
+                                                if kk==4:
+                                                    only_bon=only_bon+16
+                                                if now_index!=27:
+                                                    customWepText=customText.get(now_index)+" > "+customText.get(kk)
+                                                else:
+                                                    customWepText=customText.get(now_index)+" + "+customText.get(kk)
+                                                break
+                                        break
+                            if isCustom12==1:
+                                for code in for_calc:
+                                    if code[0:2]=="12":
+                                        now_temp_opt=getone(code)
+                                        now_index=now_temp_opt[50]
+                                        now_change_value=now_temp_opt[51]
+                                        if now_index==0:
+                                            break
+                                        base_array[now_index]=base_array[now_index]-now_change_value
+                                        changing_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
+                                        for kk in [2,3,4,6,7,8]:
+                                            if min(changing_opt_list)==base_array[kk]:
+                                                base_array[kk]=base_array[kk]+now_change_value+8
+                                                if kk==4:
+                                                    only_bon=only_bon+8
+                                                custom12Text=customText.get(now_index)+" > "+customText.get(kk)
+                                                break
+                                        break
+                            if isCustom23==1:
+                                for code in for_calc:
+                                    if code[0:2]=="23":
+                                        now_temp_opt=getone(code)
+                                        now_index=now_temp_opt[50]
+                                        now_change_value=now_temp_opt[51]
+                                        if now_index==0:
+                                            break
+                                        base_array[now_index]=base_array[now_index]-now_change_value
+                                        changing_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
+                                        for kk in [2,3,4,6,7,8]:
+                                            if min(changing_opt_list)==base_array[kk]:
+                                                base_array[kk]=base_array[kk]+now_change_value+8
+                                                if kk==4:
+                                                    only_bon=only_bon+8
+                                                custom23Text=customText.get(now_index)+" > "+customText.get(kk)
+                                                break
+                                        break
+                            if isCustom31==1:
+                                for code in for_calc:
+                                    if code[0:2]=="31":
+                                        now_temp_opt=getone(code)
+                                        now_index=now_temp_opt[50]
+                                        now_change_value=now_temp_opt[51]
+                                        if now_index==0:
+                                            break
+                                        base_array[now_index]=base_array[now_index]-now_change_value
+                                        changing_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
+                                        for kk in [2,3,4,6,7,8]:
+                                            if min(changing_opt_list)==base_array[kk]:
+                                                base_array[kk]=base_array[kk]+now_change_value+8
+                                                if kk==4:
+                                                    only_bon=only_bon+8
+                                                custom31Text=customText.get(now_index)+" > "+customText.get(kk)
+                                                break
+                                        break
+                                    
+                            ## 잔향
                             if inv_tg ==2:
                                 inv_auto=inv_auto_dealer(base_array,only_bon,inv2_on_tg,inv_type_list)
                                 base_array=inv_auto[0]
@@ -1326,6 +1514,11 @@ def calc(mode):
                                 inv2_opt=inv_auto[3]
                                 inv1_val=inv_auto[4]
                                 inv2_val=inv_auto[5]
+
+                            actlvl=((base_array[active_eff_one]+base_array[22]*job_lv1+base_array[23]*job_lv2+base_array[24]*job_lv3+
+                                    base_array[25]*job_lv4+base_array[26]*job_lv5+base_array[27]*job_lv6)/100+1)
+                            actlvl2=base_array[22]*(0.5-silmari*0.06)*0.0213+base_array[24]*(0.5-silmari*0.06)*0.04+base_array[24]*(0.1484-silmari*0.0284)*0.0674+1
+                            paslvl=((100+base_array[16]*job_pas0)/100)*((100+base_array[17]*job_pas1)/100)*((100+base_array[18]*job_pas2)/100)*((100+base_array[19]*job_pas3)/100)
                             if ult_2 !=0:
                                 ult1_per=job_ult1*(1+base_array[23]*0.0653)/actlvl*(ult_1/100)
                                 ult2_per=job_ult2*(1+(base_array[25]*0.1203+0.04348*base_array[27]*silmari))/actlvl*(ult_2/100)
@@ -1335,14 +1528,17 @@ def calc(mode):
                             damage=((base_array[2]/100+1)*(base_array[3]/100+1)*(base_array[4]/100+1)*(base_array[6]/100+1)*(base_array[7]/100+1)*
                                     (base_array[8]/100+1)*(base_array[9]*0.0045+1.05)*(base_array[10]/100+1)*(skiper/100+1)*
                                     paslvl*((54500+3.31*base_array[0])/54500)*((4800+base_array[1])/4800)/(1.05+0.0045*int(ele_skill)))*wep_pre_calced[calc_wep_num]
-                            final_damage=damage*((100/(100-coolper)-1)*cool_eff*cool_on+1)*((base_array[12]+(actlvl-1)*100+ult_skiper)/100+1)*cool_pre_calced[calc_wep_num]
-                            final_damage2=damage*((100/(100-coolper)-1)*cool_eff2+1)*((base_array[12]+(actlvl2-1)*100)/100+1)*cool_pre_calced2[calc_wep_num]
+
+                            cool_real_eff=(100/(100-coolper)-1)/((coolper/55)*(coolper/55)*(coolper/55)+1)
+                            final_damage=damage*(cool_real_eff*cool_eff*cool_on+1)*((base_array[12]+(actlvl-1)*100+ult_skiper)/100+1)*cool_pre_calced[calc_wep_num]
+                            final_damage2=damage*(cool_real_eff*cool_eff2+1)*((base_array[12]+(actlvl2-1)*100)/100+1)*cool_pre_calced2[calc_wep_num]
                             damage_not_ele=final_damage*(1.05+0.0045*int(ele_skill))/(base_array[9]*0.0045+1.05)*((base_array[9]-int(ele_skill))*0.0045+1.05)/1.05*(real_bon_not_ele/100+1)/(base_array[4]/100+1)
                             damage_not_ele2=final_damage2*(1.05+0.0045*int(ele_skill))/(base_array[9]*0.0045+1.05)*((base_array[9]-int(ele_skill))*0.0045+1.05)/1.05*(real_bon_not_ele/100+1)/(base_array[4]/100+1)
                             damage_only_equ=damage/paslvl/wep_pre_calced[calc_wep_num]
+                            
                             inv_string="잔향부여= "+inv1_opt+"("+str(inv1_val)+"%) / "+inv2_opt+"("+str(inv2_val)+"%)"
-                            save_list[final_damage]=[calc_wep,base_array,damage,damage_not_ele,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage2,wep_name_list_temp[calc_wep_num]]
-                            save_list0[final_damage2]=[calc_wep,base_array,damage,damage_not_ele2,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage,wep_name_list_temp[calc_wep_num]]
+                            save_list[final_damage]=[calc_wep,base_array,damage,damage_not_ele,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage2,wep_name_list_temp[calc_wep_num],[customWepText,custom12Text,custom23Text,custom31Text]]
+                            save_list0[final_damage2]=[calc_wep,base_array,damage,damage_not_ele2,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage,wep_name_list_temp[calc_wep_num],[customWepText,custom12Text,custom23Text,custom31Text]]
                             count_num=count_num+1
                         else:
                             count_all=count_all+1
@@ -1425,7 +1621,7 @@ def calc(mode):
                                 stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
                                 stat_b=base_array[0]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]+base_stat_d
                                 stat_c=base_array[0]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]
-                                b_stat_calc=int(lvlget('hol_b_stat')[int(base_array[8])]*(b_stat/100+1)*(stat_b/630+1))
+                                b_stat_calc=int(lvlget('hol_b_stat')[int(base_array[8])]*(b_stat/100+1)*(stat_b/620+1))
                                 b_phy_calc=int(b_base_att*(b_phy/100+1)*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
                                 b_mag_calc=int(b_base_att*(b_mag/100+1)*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
                                 b_ind_calc=int(b_base_att*(b_ind/100+1)*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
@@ -1462,7 +1658,7 @@ def calc(mode):
                                 b_mag_calc=int(b_base_att*(b_mag/100+1)*(stat_b/b_value+1)*aria*crux)
                                 b_ind_calc=int(b_base_att*(b_ind/100+1)*(stat_b/b_value+1)*aria*crux)
                                 b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
-                                c_calc=int((lvlget('c_stat')[int(base_array[9])]+base_array[6]*amuguna*(c_per/100+1))*(stat_c/750+1))
+                                c_calc=int(((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna*(c_per/100+1))*(stat_c/750+1))
                                 pas1_calc=int(stat_pas1lvl+442)
                                 pas1_out=str(pas1_calc)+"("+str(int(20+base_array[13]))+"렙)"
                                 save1='스탯='+str(b_stat_calc)+"("+str(int(b_stat_calc/aria))+")\n앞뎀="+str(b_average)+"("+str(int(b_average/aria))+")\n\n적용스탯= "+str(int(stat_b))+"\n적용레벨= "+str(int(base_array[8]))+"렙"
@@ -1527,7 +1723,7 @@ def calc(mode):
                                 stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
                                 stat_b=base_array[0]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]+base_stat_d
                                 stat_c=base_array[0]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]
-                                b_stat_calc=int(lvlget('hol_b_stat')[int(base_array[8])]*(b_stat/100+1)*(stat_b/630+1))
+                                b_stat_calc=int(lvlget('hol_b_stat')[int(base_array[8])]*(b_stat/100+1)*(stat_b/620+1))
                                 b_phy_calc=int(b_base_att*(b_phy/100+1)*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
                                 b_mag_calc=int(b_base_att*(b_mag/100+1)*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
                                 b_ind_calc=int(b_base_att*(b_ind/100+1)*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
@@ -1564,14 +1760,14 @@ def calc(mode):
                                 b_mag_calc=int(b_base_att*(b_mag/100+1)*(stat_b/b_value+1)*aria*crux)
                                 b_ind_calc=int(b_base_att*(b_ind/100+1)*(stat_b/b_value+1)*aria*crux)
                                 b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
-                                c_calc=int((lvlget('c_stat')[int(base_array[9])]+base_array[6]*amuguna*(c_per/100+1))*(stat_c/750+1))
+                                c_calc=int(((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna*(c_per/100+1))*(stat_c/750+1))
                                 pas1_calc=int(stat_pas1lvl+442)
                                 pas1_out=str(pas1_calc)+"("+str(int(20+base_array[13]))+"렙)"
                                 save1='스탯='+str(b_stat_calc)+"("+str(int(b_stat_calc/aria))+")\n앞뎀="+str(b_average)+"("+str(int(b_average/aria))+")\n\n적용스탯= "+str(int(stat_b))+"\n적용레벨= "+str(int(base_array[8]))+"렙"
                                 c_calc2=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna2*(c_per/100+1)*(stat_c/750+1))
                                 save2='스탯= '+str(c_calc)+'('+str(c_calc2)+')'+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
                             ##1축 2포 3합
-
+                            
                             final_save_list=[save1,save2,pas1_out]
 
                             final_buf_list=[b_stat_calc,b_average,c_calc,pas1_calc]
@@ -1704,6 +1900,7 @@ result_upbox_img=tkinter.PhotoImage(file='ext_img/bg_result_upbox.png')
 result_downbox_img=tkinter.PhotoImage(file='ext_img/bg_result_downbox.png')
 result_sidebox_img=tkinter.PhotoImage(file='ext_img/bg_result_sidebox.png')
 result_showbox_img=tkinter.PhotoImage(file='ext_img/bg_result_showbox.png')
+result_wep_tag=tkinter.PhotoImage(file='ext_img/result_wep_tag.png')
 def show_result(rank_list,job_type,ele_skill,cool_eff):
     global result_window
     result_window=tkinter.Toplevel(self)
@@ -1725,7 +1922,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
     
     
     global image_list_wep,image_list, set_name_toggle, image_list_tag, now_version,pause_gif,stop_gif,stop_gif2
-    global res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43,wep_select,jobup_select, now_rank_num, res_wep,res_wep_img
+    global res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43,wep_select,jobup_select, now_rank_num, res_wep,res_wep_img, res_wep_tag
     now_rank_num=0
     set_name_toggle=0
     pause_gif=0;stop_gif=0;stop_gif2=0
@@ -1773,6 +1970,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         rank_dam_onlyequ=[0,0,0,0,0];rank0_dam_onlyequ=[0,0,0,0,0]
         rss=[0,0,0,0,0];rss0=[0,0,0,0,0]
         rank_wep_img=[0,0,0,0,0];rank0_wep_img=[0,0,0,0,0]
+        rank_custom_text=[0,0,0,0,0];rank0_custom_text=[0,0,0,0,0]
         result_image_gif=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]];result0_image_gif=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
         result_image_gif_tg=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]];result0_image_gif_tg=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
         result_siroco_gif=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]];result0_siroco_gif=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
@@ -1790,6 +1988,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
                 rank_dam_onlyequ[temp_rank]=rank1_list[temp_rank][1][6];rank0_dam_onlyequ[temp_rank]=rank0_list[temp_rank][1][6];
                 rank_wep_name[temp_rank]=rank1_list[temp_rank][1][8];rank0_wep_name[temp_rank]=rank0_list[temp_rank][1][8]
                 rank_wep_img[temp_rank]=image_list_wep[rank_wep_name[temp_rank]];rank0_wep_img[temp_rank]=image_list_wep[rank0_wep_name[temp_rank]]
+                rank_custom_text[temp_rank]=rank1_list[temp_rank][1][9];rank0_custom_text[temp_rank]=rank0_list[temp_rank][1][9];
                 for i in rank_setting[temp_rank]:
                     if len(i)==4 and i[0]=='4': ## 융합 장비 다시 풀기
                         rank_setting[temp_rank].append('415'+i[1]+'0');
@@ -2318,7 +2517,8 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
     canvas_res.image=result_bg,random_npc_img
     res_bt1.image=show_detail_img
 
-    
+    res_wep_tag=canvas_res.create_image(0,0,image=result_wep_tag,anchor="nw")
+
     global result_first_run
     result_first_run=0
     if job_type=='deal':
@@ -2344,6 +2544,8 @@ def show_result_dealer():
     global now_rank_num,tg_groggy,tg_result_first
     global rank1_list,rank0_list
     global rank_for_calc_eff,rank0_for_calc_eff
+    global rank_custom_text, rank0_custom_text
+    global isTest
     set_list=[]
     cool_list=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ##최종값
     cool_list1=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ##쿨감
@@ -2357,12 +2559,16 @@ def show_result_dealer():
         now_damage_sustain=rank1_list[now_rank_num][1][7]
         now_base_array=rank1_list[now_rank_num][1][1]
         now_damage_stat=rank_for_calc_eff[now_rank_num]
+        now_custom_text=rank1_list[now_rank_num][1][9]
+        now_wep_name=rank1_list[now_rank_num][1][8]
     elif tg_groggy==1:
         now_list_list=list(rank0_list[now_rank_num][1][0])
         now_damage_groggy=rank0_list[now_rank_num][1][7]
         now_damage_sustain=rank0_list[now_rank_num][0]
         now_base_array=rank0_list[now_rank_num][1][1]
         now_damage_stat=rank0_for_calc_eff[now_rank_num]
+        now_custom_text=rank0_list[now_rank_num][1][9]
+        now_wep_name=rank0_list[now_rank_num][1][8]
     if now_damage_groggy>=now_damage_sustain:
         ratio_tg='groggy'
         groggy_sustain_ratio=round(now_damage_groggy/now_damage_sustain*100,1)
@@ -2383,14 +2589,28 @@ def show_result_dealer():
         elif set_list.count(str(i))==4: now_list_list.append(str(i)+'2')
         elif set_list.count(str(i))==5: now_list_list.append(str(i)+'3')
     penalty_score=0;bonus_score=0;utility_score=0
+
     for now_equ in now_list_list:
-        now_equ_opt=opt_leveling.get(now_equ)
+        if isTest==0:
+            now_equ_opt=opt_leveling.get(now_equ)
+        else:
+            now_equ_opt=opt_leveling_test.get(now_equ)
         for i in range(0,18):
             penalty_score+=now_equ_opt[54]
             bonus_score+=now_equ_opt[55]
             utility_score+=now_equ_opt[56]
             cool_list1[i]=100-(1-cool_list1[i]/100)*(1-now_equ_opt[18+i]/100)*100
             cool_list2[i]+=now_equ_opt[36+i]
+    
+    ## 역작신화 계산식
+    if now_list_list.count("11111")==1:
+        if now_list_list.count("1112")==1 or now_list_list.count("1113")==1:
+            for i in range(0,18):
+                if i==17 or i==16 or i==15 or i==10:
+                    continue
+                cool_list1[i]=100-(1-cool_list1[i]/100)*0.875*100
+
+    ## 최종 쿨타임 표기
     for i in range(0,18):
         cool_list[i]=-round(100-(1-cool_list1[i]/100)/(1+cool_list2[i]/100)*100,1)
 
@@ -2544,14 +2764,15 @@ def show_result_dealer():
         eff_equ_name=eff_setbox.create_text(80,13,text="",font=small_font,anchor='c')
         eff_set_name=eff_setbox.create_text(80,28,text="",font=small_font,anchor='c',fill='green3')
         eff_image=eff_setbox.create_image(30,66,image=img_equ_none,anchor='c')
-        eff_guide=eff_setbox.create_text(106,55,text="세트 조합 효율",font=small_font,anchor='c')
-        eff_value=eff_setbox.create_text(106,73,text="",font=mid_font,anchor='c')
+        eff_guide=eff_setbox.create_text(106,55,text="옵션 변환",font=small_font,anchor='c')
+        eff_value=eff_setbox.create_text(106,73,text="",font=guide_font,anchor='c')
     
-    global res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43
-    def check_equ_eff(code):
+    global res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43,res_wep_tag
+    
+    def mouse_over_equ(code):
         try:
             global opt_one, name_one
-            global ele_in, image_list
+            global ele_in, image_list, image_list_wep
             global eff_setbox,eff_bg,eff_equ_name,eff_set_name,eff_image,eff_value
             temp_set_list=[]
             for now_equ in now_list_list:
@@ -2559,6 +2780,10 @@ def show_result_dealer():
                     now_equ_code=now_equ
                     now_equ_name=name_one.get(now_equ)[38] ##
                     now_equ_set=now_equ[2:4]
+                elif code=="111" and len(now_equ)==6:
+                    now_equ_code=now_equ
+                    now_equ_name=name_one.get(now_equ)[38]
+                    now_equ_set="99"
             if int(now_equ_set)<36 or 46<int(now_equ_set)<50 or 38<int(now_equ_set)<41:
                 if now_equ_code[-1]=="1": item_color="#DB86AE"
                 elif now_equ_code[-1]=="0":  item_color="#FFB400"
@@ -2589,73 +2814,63 @@ def show_result_dealer():
             else:
                 now_set_num="1"
                 now_set_name="-"
-            now_option_sum=[0,0,0,0,0,0,0,0,0]
-            for now_opt_equ in temp_set_list:
-                now_options=opt_one.get(now_opt_equ)
-                now_option_sum[0]+=now_options[2] #증뎀
-                now_option_sum[1]+=now_options[3] #크증뎀
-                now_option_sum[2]+=now_options[4]+now_options[5]*(1.05+0.0045*now_damage_stat[6]) #추뎀
-                now_option_sum[3]+=now_options[6] #모공
-                now_option_sum[4]+=now_options[7] #공%
-                now_option_sum[5]+=now_options[8] #스탯%
-                now_option_sum[6]+=now_options[9] #속강
-                now_option_sum[7]+=now_options[10] #지속%
-                now_option_sum[8]+=now_options[12] #특수%
-            compare_option_sum=[0,0,0,0,0,0,0,0,0]
-            for i in range(0,8):
-                compare_option_sum[i]=now_damage_stat[i]-now_option_sum[i]
-            now_equ_damage=1
-            final_equ_damage=1
-            compare_equ_damage=1
-            for i in [0,1,2,3,4,5,7,8]:
-                final_equ_damage=final_equ_damage*(1+now_damage_stat[i]/100)
-                now_equ_damage=now_equ_damage*(1+now_option_sum[i]/100)
-                compare_equ_damage=compare_equ_damage*(1+compare_option_sum[i]/100)
-            now_equ_damage=now_equ_damage*(1.05+0.0045*now_option_sum[6])
-            final_equ_damage=final_equ_damage*(1.05+0.0045*(now_damage_stat[6]-ele_in))
-            compare_equ_damage=compare_equ_damage*(1.05+0.0045*(compare_option_sum[6]-ele_in))
 
-            eff_str = str(round(final_equ_damage/compare_equ_damage/now_equ_damage*100,2))+"%"
-            
-            if code=="11":
+            if code=="111":
+                eff_place_x=-3+15; eff_place_y=30;
+                part_str="무기"
+                eff_setbox.itemconfig(eff_value,text=now_custom_text[0])
+            elif code=="11":
                 eff_place_x=57+15; eff_place_y=57-15;
                 part_str="상의"
+                eff_setbox.itemconfig(eff_value,text="-")
             elif code=="12":
                 eff_place_x=27+15; eff_place_y=87-15;
                 part_str="하의"
+                eff_setbox.itemconfig(eff_value,text=now_custom_text[1])
             elif code=="13":
                 eff_place_x=27+15; eff_place_y=57-15;
                 part_str="어깨"
+                eff_setbox.itemconfig(eff_value,text="-")
             elif code=="14":
                 eff_place_x=57+15; eff_place_y=87-15;
                 part_str="벨트"
+                eff_setbox.itemconfig(eff_value,text="-")
             elif code=="15":
                 eff_place_x=27+15; eff_place_y=117-15;
                 part_str="신발"
+                eff_setbox.itemconfig(eff_value,text="-")
             elif code=="21":
                 eff_place_x=189+15; eff_place_y=57-15;
                 part_str="팔찌"
+                eff_setbox.itemconfig(eff_value,text="-")
             elif code=="22":
                 eff_place_x=219+15; eff_place_y=57-15;
                 part_str="목걸이"
+                eff_setbox.itemconfig(eff_value,text="-")
             elif code=="23":
                 eff_place_x=219+15; eff_place_y=87-15;
                 part_str="반지"
+                eff_setbox.itemconfig(eff_value,text=now_custom_text[2])
             elif code=="31":
                 eff_place_x=189+15; eff_place_y=87-15;
                 part_str="보조장비"
+                eff_setbox.itemconfig(eff_value,text=now_custom_text[3])
             elif code=="32":
                 eff_place_x=219+15; eff_place_y=117-15;
                 part_str="마법석"
+                eff_setbox.itemconfig(eff_value,text="-")
             elif code=="33":
                 eff_place_x=189+15; eff_place_y=117-15;
                 part_str="귀걸이"
+                eff_setbox.itemconfig(eff_value,text="-")
 
             eff_setbox.itemconfig(eff_equ_name,text=now_equ_name,fill=item_color)
             eff_setbox.itemconfig(eff_set_name,text=now_set_name+" ("+now_set_num+"셋)")
-            eff_setbox.itemconfig(eff_image,image=image_list[now_equ_code])
-            eff_setbox.itemconfig(eff_value,text=str(round(final_equ_damage/compare_equ_damage/now_equ_damage*100,1))+"%")
-            
+            if code=="111":
+                eff_setbox.itemconfig(eff_image,image=image_list_wep[now_wep_name])
+            else:
+                eff_setbox.itemconfig(eff_image,image=image_list[now_equ_code])
+
             eff_setbox.place(x=eff_place_x,y=eff_place_y)
         except: pass
     def del_equ_eff(event):
@@ -2663,17 +2878,18 @@ def show_result_dealer():
         canvas_res.delete("mouse_overlap2")
         eff_setbox.place(x=1000,y=1000)
 
-    canvas_res.tag_bind(res_img11,"<Enter>",lambda event,a=0:check_equ_eff("11"));canvas_res.tag_bind(res_img11,"<Leave>",del_equ_eff)
-    canvas_res.tag_bind(res_img41,"<Enter>",lambda event,a=0:check_equ_eff("12"));canvas_res.tag_bind(res_img41,"<Leave>",del_equ_eff)
-    canvas_res.tag_bind(res_img13,"<Enter>",lambda event,a=0:check_equ_eff("13"));canvas_res.tag_bind(res_img13,"<Leave>",del_equ_eff)
-    canvas_res.tag_bind(res_img14,"<Enter>",lambda event,a=0:check_equ_eff("14"));canvas_res.tag_bind(res_img14,"<Leave>",del_equ_eff)
-    canvas_res.tag_bind(res_img15,"<Enter>",lambda event,a=0:check_equ_eff("15"));canvas_res.tag_bind(res_img15,"<Leave>",del_equ_eff)
-    canvas_res.tag_bind(res_img21,"<Enter>",lambda event,a=0:check_equ_eff("21"));canvas_res.tag_bind(res_img21,"<Leave>",del_equ_eff)
-    canvas_res.tag_bind(res_img22,"<Enter>",lambda event,a=0:check_equ_eff("22"));canvas_res.tag_bind(res_img22,"<Leave>",del_equ_eff)
-    canvas_res.tag_bind(res_img42,"<Enter>",lambda event,a=0:check_equ_eff("23"));canvas_res.tag_bind(res_img42,"<Leave>",del_equ_eff)
-    canvas_res.tag_bind(res_img43,"<Enter>",lambda event,a=0:check_equ_eff("31"));canvas_res.tag_bind(res_img43,"<Leave>",del_equ_eff)
-    canvas_res.tag_bind(res_img32,"<Enter>",lambda event,a=0:check_equ_eff("32"));canvas_res.tag_bind(res_img32,"<Leave>",del_equ_eff)
-    canvas_res.tag_bind(res_img33,"<Enter>",lambda event,a=0:check_equ_eff("33"));canvas_res.tag_bind(res_img33,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_wep_tag,"<Enter>",lambda event,a=0:mouse_over_equ("111"));canvas_res.tag_bind(res_wep_tag,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img11,"<Enter>",lambda event,a=0:mouse_over_equ("11"));canvas_res.tag_bind(res_img11,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img41,"<Enter>",lambda event,a=0:mouse_over_equ("12"));canvas_res.tag_bind(res_img41,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img13,"<Enter>",lambda event,a=0:mouse_over_equ("13"));canvas_res.tag_bind(res_img13,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img14,"<Enter>",lambda event,a=0:mouse_over_equ("14"));canvas_res.tag_bind(res_img14,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img15,"<Enter>",lambda event,a=0:mouse_over_equ("15"));canvas_res.tag_bind(res_img15,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img21,"<Enter>",lambda event,a=0:mouse_over_equ("21"));canvas_res.tag_bind(res_img21,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img22,"<Enter>",lambda event,a=0:mouse_over_equ("22"));canvas_res.tag_bind(res_img22,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img42,"<Enter>",lambda event,a=0:mouse_over_equ("23"));canvas_res.tag_bind(res_img42,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img43,"<Enter>",lambda event,a=0:mouse_over_equ("31"));canvas_res.tag_bind(res_img43,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img32,"<Enter>",lambda event,a=0:mouse_over_equ("32"));canvas_res.tag_bind(res_img32,"<Leave>",del_equ_eff)
+    canvas_res.tag_bind(res_img33,"<Enter>",lambda event,a=0:mouse_over_equ("33"));canvas_res.tag_bind(res_img33,"<Leave>",del_equ_eff)
 
 
 
@@ -3413,43 +3629,68 @@ def costum(auto):
 def save_custom(ele_type,cool_con,cus1,cus2,cus3,cus4,cus6,cus7,cus8,cus9,cus10,cus11,cus12,c_stat,b_stat,b_style_lvl,c_style_lvl,b_plt,b_cri,ele1,ele2,ele3,ele4,ele5,ele6,aria_up,cool_con2):
     try:
         load_excel3=load_workbook("DATA.xlsx")
+        load_excel3_test=load_workbook("DATA_test.xlsx")
         load_preset1=load_workbook("preset.xlsx")
         db_custom1=load_preset1["custom"]
         db_save_one=load_excel3["one"]
-        db_save_set=load_excel3["set"]
+        db_save_one_test=load_excel3_test["one"]
         
         db_custom1['B1']=ele_type
         if ele_type == '화':
             db_save_one['L181']=0;db_save_one['L165']=0;db_save_one['L149']=24;db_save_one['L129']=0
             db_save_one['L429']=0;db_save_one['L430']=0;db_save_one['L431']=20;db_save_one['L433']=0
+            db_save_one_test['L181']=0;db_save_one_test['L165']=0;db_save_one_test['L149']=24;db_save_one_test['L129']=0
+            db_save_one_test['L429']=0;db_save_one_test['L430']=0;db_save_one_test['L431']=20;db_save_one_test['L433']=0
         elif ele_type == '수':
             db_save_one['L181']=0;db_save_one['L165']=24;db_save_one['L149']=0;db_save_one['L129']=0
             db_save_one['L429']=20;db_save_one['L430']=0;db_save_one['L431']=0;db_save_one['L433']=0
+            db_save_one_test['L181']=0;db_save_one_test['L165']=24;db_save_one_test['L149']=0;db_save_one_test['L129']=0
+            db_save_one_test['L429']=20;db_save_one_test['L430']=0;db_save_one_test['L431']=0;db_save_one_test['L433']=0
         elif ele_type == '명':
             db_save_one['L181']=24;db_save_one['L165']=0;db_save_one['L149']=0;db_save_one['L129']=0
             db_save_one['L429']=0;db_save_one['L430']=20;db_save_one['L431']=0;db_save_one['L433']=0
+            db_save_one_test['L181']=24;db_save_one_test['L165']=0;db_save_one_test['L149']=0;db_save_one_test['L129']=0
+            db_save_one_test['L429']=0;db_save_one_test['L430']=20;db_save_one_test['L431']=0;db_save_one_test['L433']=0
         elif ele_type == '암':
             db_save_one['L181']=0;db_save_one['L165']=0;db_save_one['L149']=0;db_save_one['L129']=24
             db_save_one['L429']=0;db_save_one['L430']=0;db_save_one['L431']=0;db_save_one['L433']=20
+            db_save_one_test['L181']=0;db_save_one_test['L165']=0;db_save_one_test['L149']=0;db_save_one_test['L129']=24
+            db_save_one_test['L429']=0;db_save_one_test['L430']=0;db_save_one_test['L431']=0;db_save_one_test['L433']=20
         
-        db_custom1['B3']=float(cus1);db_save_one['O164']=float(cus1)
-        db_custom1['B4']=float(cus2);db_save_one['O180']=float(cus2)
-        db_custom1['B5']=float(cus6);db_save_one['O100']=float(cus6);db_save_one['O101']=float(cus6)
-        db_custom1['B6']=float(cus7);db_save_one['O127']=float(cus7)
-        db_custom1['B7']=float(cus8);db_save_one['O147']=float(cus8)
-        db_custom1['B8']=float(cus9);db_save_one['O163']=float(cus9)
-        db_custom1['B9']=float(cus10);db_save_one['O179']=float(cus10)
-        db_custom1['B10']=float(cus11);db_save_one['O295']=float(cus11)
-        db_custom1['B11']=float(cus12);db_save_one['O296']=float(cus12);db_save_one['O297']=float(cus12)
+        db_custom1['B3']=float(cus1);
+        db_save_one['O164']=float(cus1);db_save_one_test['O164']=float(cus1);
+        db_custom1['B4']=float(cus2);
+        db_save_one['O180']=float(cus2);db_save_one_test['O180']=float(cus2);
+        db_custom1['B5']=float(cus6);
+        db_save_one['O100']=float(cus6);db_save_one['O101']=float(cus6);
+        db_save_one_test['O100']=float(cus6);db_save_one_test['O101']=float(cus6);
+        db_custom1['B6']=float(cus7);
+        db_save_one['O127']=float(cus7);db_save_one_test['O127']=float(cus7);
+        db_custom1['B7']=float(cus8);
+        db_save_one['O147']=float(cus8);db_save_one_test['O147']=float(cus8);
+        db_custom1['B8']=float(cus9);
+        db_save_one['O163']=float(cus9);db_save_one_test['O163']=float(cus9);
+        db_custom1['B9']=float(cus10);
+        db_save_one['O179']=float(cus10);db_save_one_test['O179']=float(cus10);
+        db_custom1['B10']=float(cus11);
+        db_save_one['O295']=float(cus11);db_save_one_test['O295']=float(cus11);
+        db_custom1['B11']=float(cus12);
+        db_save_one['O296']=float(cus12);db_save_one['O297']=float(cus12);
+        db_save_one_test['O296']=float(cus12);db_save_one_test['O297']=float(cus12);
         db_custom1['B12']=cus3
         db_custom1['B2']=cool_con
         db_custom1['B20']=cool_con2
         if cus3=='전설↓':
             db_save_one['J86']=34;db_save_one['F120']=34;db_save_one['N140']=34;db_save_one['L156']=68;db_save_one['K172']=34;db_save_one['G276']=40;
+            db_save_one_test['J86']=34;db_save_one_test['F120']=34;db_save_one_test['N140']=34;db_save_one_test['L156']=68;db_save_one_test['K172']=34;db_save_one_test['G276']=40;
+            db_save_one_test['BB120']=34
         else:
             db_save_one['J86']=35;db_save_one['F120']=35;db_save_one['N140']=35;db_save_one['L156']=72;db_save_one['K172']=35;db_save_one['G276']=41;
+            db_save_one_test['J86']=35;db_save_one_test['F120']=35;db_save_one_test['N140']=35;db_save_one_test['L156']=72;db_save_one_test['K172']=35;db_save_one_test['G276']=41;
+            db_save_one_test['BB120']=35
         db_custom1['B13']=cus4
         db_save_one['N189']=int(cus4)+4;db_save_one['N190']=int(cus4)+4;db_save_one['K205']=int(cus4)+4;db_save_one['E214']=int(cus4)+4
+        db_save_one_test['N189']=int(cus4)+5;db_save_one_test['N190']=int(cus4)+5;db_save_one_test['K205']=int(cus4)+5;db_save_one_test['E214']=int(cus4)+5
 
         db_custom1['H1']=c_stat
         db_custom1['H6']=b_stat
@@ -3470,6 +3711,8 @@ def save_custom(ele_type,cool_con,cus1,cus2,cus3,cus4,cus6,cus7,cus8,cus9,cus10,
         load_preset1.close()
         load_excel3.save("DATA.xlsx")
         load_excel3.close()
+        load_excel3_test.save("DATA_test.xlsx")
+        load_excel3_test.close()
         custom_window.destroy()
         global auto_saved
         if auto_saved!=1:
@@ -3704,20 +3947,6 @@ def change_savelist(changed_savelist_name):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## 실시간 갱신 카운터 (1: 계산 카운트 / 2: 경우의 수 카운트)
 def update_count():
     global count_num, count_all, show_number, all_list_list_num
@@ -3880,9 +4109,20 @@ def show_timeline(name,server):
         now_1='20200101T0000'
         now_2='20200101T0000'
         now_3='20200101T0000'
+        now_4='20200101T0000'
+        now_5='20200101T0000'
+        now_6='20200101T0000'
+        now_7='20200101T0000'
+        now_8='20200101T0000'
+        now_9='20200101T0000'
         now2='20200101T0000'
         now3='20200101T0000'
-        now4='20200101T0000' ## 현재 11월 13일까지 조회 가능
+        now4='20200101T0000' 
+        now5='20200101T0000'
+        now6='20200101T0000'
+        now7='20200101T0000'
+        now8='20200101T0000'
+        now9='20200101T0000' ## 현재 21년 9월까지 조회 가능
         if int(time_now[0:8]) >= 20200316:
             now='20200315T2359'
             now_1='20200316T0000'
@@ -3895,9 +4135,30 @@ def show_timeline(name,server):
             now3='20200815T2359'
             now_3='20200816T0000'
             now4=time.strftime('%Y%m%dT%H%M', time.localtime(time.time()))
+        if int(time_now[0:8]) >= 20201102:
+            now4='20201101T2359'
+            now_4='20201102T0000'
+            now5=time.strftime('%Y%m%dT%H%M', time.localtime(time.time()))
+        if int(time_now[0:8]) >= 20210116:
+            now5='20210115T2359'
+            now_5='20210116T0000'
+            now6=time.strftime('%Y%m%dT%H%M', time.localtime(time.time()))
+        if int(time_now[0:8]) >= 20210402:
+            now6='20210401T2359'
+            now_6='20210402T0000'
+            now7=time.strftime('%Y%m%dT%H%M', time.localtime(time.time()))
+        if int(time_now[0:8]) >= 20210616:
+            now7='20210615T2359'
+            now_7='20210616T0000'
+            now8=time.strftime('%Y%m%dT%H%M', time.localtime(time.time()))
+        if int(time_now[0:8]) >= 20210902:
+            now8='20210901T2359'
+            now_8='20210902T0000'
+            now9=time.strftime('%Y%m%dT%H%M', time.localtime(time.time()))
         time_code='504,505,506,507,508,510,511,512,513,514'
         timeline_list=[]
-        for nows in [[now,start_time],[now2,now_1],[now3,now_2],[now4,now_3]]:
+        for nows in [[now,start_time],[now2,now_1],[now3,now_2],[now4,now_3],[now5,now_4]
+                     ,[now6,now_5],[now7,now_6],[now8,now_7],[now9,now_8]]:
             if nows[0] != '20200101T0000':
                 timeline=urllib.request.urlopen('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/timeline?limit=100&code='+time_code+'&startDate='+nows[1]+'&endDate='+nows[0]+'&apikey='+apikey)
                 timeline2=loads(timeline.read().decode("utf-8"))['timeline']
@@ -3912,9 +4173,11 @@ def show_timeline(name,server):
                     show_next=timeline_next2['next']
             
         all_item=[]
+        print(len(timeline_list))
         for now in timeline_list:
             item=now['data']['itemId']
             all_item.append(item)
+        
         xl=openpyxl.load_workbook("DATA.xlsx", data_only=True)
         sh=xl['one']
         
@@ -4477,28 +4740,69 @@ file_list_wep = os.listdir("image_wep")
 for i in file_list_wep:
     image_list_wep[calc_list_wep.wep_image_filename.get(i[:-4])]=PhotoImage(file="image_wep/{}".format(i))
 image_item_void=PhotoImage(file="ext_img/00000.png")
+##sever_list=['카인','디레지에','바칼','힐더','안톤','카시야스','프레이','시로코']
+##tkinter.Label(self,font=mid_font,fg="white",bg=dark_sub, text="<딜러 프로필 생성기>").place(x=301,y=401)
+##tkinter.Label(self,fg="white",bg=dark_sub, text="서버명=").place(x=296,y=433)
+##tkinter.Label(self,fg="white",bg=dark_sub, text="캐릭명=").place(x=296,y=460)
+##sever_in=tkinter.ttk.Combobox(self,width=9,values=sever_list);sever_in.place(x=346,y=435)
+##sever_in.set('카인')
+##cha_Entry=tkinter.Entry(self,width=12);cha_Entry.place(x=346,y=462)
+##sever_in.bind('<Return>',lambda e:show_profile(str(cha_Entry.get()),str(sever_in.get())))
+##cha_Entry.bind('<Return>',lambda e:show_profile(str(cha_Entry.get()),str(sever_in.get())))
+##generate_cha=PhotoImage(file="ext_img/generate_cha.png")
+##tkinter.Button(self,image=generate_cha,command=lambda:show_profile(str(cha_Entry.get()),str(sever_in.get())),borderwidth=0,activebackground=dark_sub,bg=dark_sub).place(x=440,y=434)
 
-sever_list=['카인','디레지에','바칼','힐더','안톤','카시야스','프레이','시로코']
-tkinter.Label(self,font=mid_font,fg="white",bg=dark_sub, text="<딜러 프로필 생성기>").place(x=301,y=401)
-tkinter.Label(self,fg="white",bg=dark_sub, text="서버명=").place(x=296,y=433)
-tkinter.Label(self,fg="white",bg=dark_sub, text="캐릭명=").place(x=296,y=460)
-sever_in=tkinter.ttk.Combobox(self,width=9,values=sever_list);sever_in.place(x=346,y=435)
-sever_in.set('카인')
-cha_Entry=tkinter.Entry(self,width=12);cha_Entry.place(x=346,y=462)
-sever_in.bind('<Return>',lambda e:show_profile(str(cha_Entry.get()),str(sever_in.get())))
-cha_Entry.bind('<Return>',lambda e:show_profile(str(cha_Entry.get()),str(sever_in.get())))
-generate_cha=PhotoImage(file="ext_img/generate_cha.png")
-tkinter.Button(self,image=generate_cha,command=lambda:show_profile(str(cha_Entry.get()),str(sever_in.get())),borderwidth=0,activebackground=dark_sub,bg=dark_sub).place(x=440,y=434)
 
-tkinter.Label(self,text='엔터로도 조회됩니다',font=guide_font,fg='white',bg=dark_sub).place(x=332,y=482)
-cha_caution_text="""장비%:  12부위장비+칭호클쳐의
-           수준을 표현한 % (쿨감O)
-           (계산기 값과 유사)
-          
-세팅%:  위를 제외한 나머지의
-           투자/세팅 실효율%
-           (노증극세팅이 100%)"""
-tkinter.Label(self,text=cha_caution_text,font=small_font,fg='white',bg=dark_sub,anchor='nw',justify='left').place(x=512,y=405)
+##tkinter.Label(self,text='엔터로도 조회됩니다',font=guide_font,fg='white',bg=dark_sub).place(x=332,y=482)
+##cha_caution_text="""장비%:  12부위장비+칭호클쳐의
+##           수준을 표현한 % (쿨감O)
+##         (계산기 값과 유사)
+##        
+##세팅%:  위를 제외한 나머지의
+##         투자/세팅 실효율%
+##         (노증극세팅이 100%)"""
+##tkinter.Label(self,text=cha_caution_text,font=small_font,fg='white',bg=dark_sub,anchor='nw',justify='left').place(x=512,y=405)
+
+##테스트 모드 추가
+def tg_first_server():
+    if test_tg.get()==0:
+        select_custom_wep['state']='disable'
+        select_custom_12['state']='disable'
+        select_custom_23['state']='disable'
+        select_custom_31['state']='disable'
+    elif test_tg.get()==1:
+        select_custom_wep['state']='normal'
+        select_custom_12['state']='normal'
+        select_custom_23['state']='normal'
+        select_custom_31['state']='normal'
+tkinter.Label(self,font=mid_font,fg="white",bg=dark_sub, text="<퍼스트서버 모드>").place(x=321,y=401)
+test_tg=IntVar()
+select_test=tkinter.Checkbutton(self,variable=test_tg,bg=dark_sub,activebackground=dark_sub,bd=0, command=tg_first_server)
+select_test.place(x=302,y=437)
+tkinter.Label(self,text="12/25 중국 퍼스트서버 수치 반영",font=guide_font,fg='white',bg=dark_sub,bd=0).place(x=302+18,y=437+1)
+tkinter.Label(self,text="주의: 본 기능의 계산값은 예고 없이 수시로 변경될 수 있습니다.",font=guide_font,fg='white',
+              bg=dark_sub,bd=0).place(x=307,y=551-114+45)
+tkinter.Label(self,font=mid_font,fg="white",bg=dark_sub, text="<검은 연옥>").place(x=555,y=401)
+custom_wep_tg=IntVar()
+custom_12_tg=IntVar()
+custom_23_tg=IntVar()
+custom_31_tg=IntVar()
+select_custom_wep=tkinter.Checkbutton(self,variable=custom_wep_tg,bg=dark_sub,activebackground=dark_sub,bd=0)
+select_custom_wep.place(x=550,y=434)
+tkinter.Label(self,text="무기",font=guide_font,fg='white',bg=dark_sub,bd=0).place(x=550+18,y=434+1)
+select_custom_12=tkinter.Checkbutton(self,variable=custom_12_tg,bg=dark_sub,activebackground=dark_sub,bd=0)
+select_custom_12.place(x=550+70,y=434)
+tkinter.Label(self,text="하의",font=guide_font,fg='white',bg=dark_sub,bd=0).place(x=550+70+18,y=434+1)
+select_custom_23=tkinter.Checkbutton(self,variable=custom_23_tg,bg=dark_sub,activebackground=dark_sub,bd=0)
+select_custom_23.place(x=550,y=434+21)
+tkinter.Label(self,text="반지",font=guide_font,fg='white',bg=dark_sub,bd=0).place(x=550+18,y=434+21+1)
+select_custom_31=tkinter.Checkbutton(self,variable=custom_31_tg,bg=dark_sub,activebackground=dark_sub,bd=0)
+select_custom_31.place(x=550+70,y=434+21)
+tkinter.Label(self,text="보장",font=guide_font,fg='white',bg=dark_sub,bd=0).place(x=550+70+18,y=434+21+1)
+select_custom_wep['state']='disable'
+select_custom_12['state']='disable'
+select_custom_23['state']='disable'
+select_custom_31['state']='disable'
 
 select_perfect=tkinter.ttk.Combobox(self,values=['풀셋모드(매우빠름)','메타몽풀셋모드','단품제외(보통)','단품포함(느림)','세트필터↓(매우느림)'],width=15)
 select_perfect.place(x=145+605,y=11)

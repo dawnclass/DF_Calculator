@@ -203,7 +203,7 @@ def make_set_list(equ_list,set_list):
     return tuple(set_on)
 
 ##딜러용
-def hard_coding_dealer(base_array,betterang,for_calc,coolper,skiper):
+def hard_coding_dealer(base_array,betterang,for_calc,coolper,skiper, isTest):
     hard_coding=for_calc.count
     if hard_coding('1201')==1 and hard_coding('32200')==1:
         base_array[3]=base_array[3]-5
@@ -215,18 +215,38 @@ def hard_coding_dealer(base_array,betterang,for_calc,coolper,skiper):
         if hard_coding('32230')==0:
             base_array[9]=base_array[9]-40
     if hard_coding('15340')==1 or hard_coding('23340')==1 or hard_coding('33340')==1 or hard_coding('33341')==1:
-        if hard_coding('1341')==0 and hard_coding('1342') ==0:
-            if hard_coding('15340')==1:
-                base_array[9]=base_array[9]-20
-            elif hard_coding('23340')==1:
-                base_array[2]=base_array[2]-10
-            elif hard_coding('33340')==1:
-                base_array[6]=base_array[6]-5
-            else:
-                base_array[9]=base_array[9]-4
-                base_array[2]=base_array[2]-2
-                base_array[6]=base_array[6]-1
-                base_array[8]=base_array[8]-1.93
+        if isTest==1:
+            if hard_coding('1341')==0 and hard_coding('1342') ==0:
+                if hard_coding('15340')==1:
+                    base_array[9]=base_array[9]-20
+                elif hard_coding('23340')==1:
+                    base_array[2]=base_array[2]-10
+                elif hard_coding('33340')==1:
+                    base_array[6]=base_array[6]-9.167
+                else:
+                    base_array[9]=base_array[9]-2
+                    base_array[2]=base_array[2]-1
+                    base_array[6]=base_array[6]-10
+                    base_array[8]=base_array[8]-0.5333
+            elif hard_coding('1342')==0 and hard_coding('33341')==1:
+                base_array[8]=base_array[8]-0.5333
+
+        elif isTest==0:
+            if hard_coding('1341')==0 and hard_coding('1342') ==0:
+                if hard_coding('15340')==1:
+                    base_array[9]=base_array[9]-20
+                elif hard_coding('23340')==1:
+                    base_array[2]=base_array[2]-10
+                elif hard_coding('33340')==1:
+                    base_array[6]=base_array[6]-5
+                else:
+                    base_array[9]=base_array[9]-4
+                    base_array[2]=base_array[2]-2
+                    base_array[6]=base_array[6]-6
+                    base_array[8]=base_array[8]-0.9333333333333
+            elif hard_coding('1342')==0 and hard_coding('33341')==1:
+                base_array[8]=base_array[8]-0.9333333333333
+            
     if hard_coding('11111')==1:
         if hard_coding('1112')==1 or hard_coding('1113')==1:
             coolper=(1-(100-coolper)/100*(100-11)/100)*100
@@ -253,6 +273,11 @@ def hard_coding_dealer(base_array,betterang,for_calc,coolper,skiper):
         if hard_coding('11440')!=1: ##3셋 공3% 모공5% 감소
             base_array[7]=base_array[7]-3
             base_array[6]=base_array[6]-5
+
+    if hard_coding('11091')==1 and isTest==0:
+        if hard_coding('1093')!=1:
+            skiper=skiper*(1.04/1.053)
+            
     return [base_array,coolper,skiper]
 
 def inv_auto_dealer(base_array,only_bon,inv2_on_tg,inv_type_list):

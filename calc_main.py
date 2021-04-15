@@ -1,5 +1,5 @@
-now_version="4.3.1"
-ver_time='201226'
+now_version="4.3.9"
+ver_time='200311'
 
 #-*- coding: utf-8 -*-
 ## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
@@ -22,14 +22,16 @@ import itertools
 import threading
 import time
 import numpy as np
+from numpy import var
 from collections import Counter
 from math import floor
 import webbrowser
 import cv2
 from PIL import Image,ImageTk,ImageEnhance,ImageGrab,ImageDraw,ImageFont
 import random
+import copy
 import calc_update
-import calc_list_wep,calc_list_job,calc_fullset,calc_setlist,calc_gif,calc_profile,calc_result
+import calc_list_wep,calc_list_job,calc_fullset,calc_setlist,calc_gif,calc_result
 from calc_calc import make_setopt_num,make_set_list,hard_coding_dealer,inv_auto_dealer,make_all_equ_list
 
 
@@ -108,7 +110,6 @@ except:
 
 
 load_excel1=load_workbook("DATA.xlsx", data_only=True)
-load_excel1_test=load_workbook("DATA_test.xlsx", data_only=True)
 load_preset0=load_workbook("preset.xlsx", data_only=True)
 db_custom=load_preset0["custom"]
 db_save=load_preset0["one"]
@@ -151,18 +152,6 @@ for row in level_db.rows:
     row_value_cut = row_value[2:]
     opt_leveling[level_db.cell(jk,1).value]=row_value_cut ## DB 불러오기 ##
     jk=jk+1
-
-try:
-    level_db_test=load_excel1_test["leveling"]
-    jkk=1;opt_leveling_test={}
-    for row in level_db_test.rows:
-        row_value=[]
-        for cell in row:
-            row_value.append(cell.value)
-        row_value_cut = row_value[2:]
-        opt_leveling_test[level_db_test.cell(jkk,1).value]=row_value_cut ## test DB 불러오기 ##
-        jkk=jkk+1
-except: pass
 
 save_name_list=[]
 for i in range(1,21):
@@ -270,20 +259,7 @@ def calc(mode):
     showsta(text="조합 알고리즘 구동 준비중...")
     start_time = time.time()
 
-    ## 테스팅 버전 체크
-    global isTest
-    isTest=test_tg.get()
-
-    if isTest==0:
-        load_excel=load_workbook("DATA.xlsx",data_only=True)
-    elif isTest==1:
-        tkinter.messagebox.showinfo('경고',"본 기능은 퍼스트서버 선 체험 기능입니다. 실제 본 서버에 반영되는 값은 상당히 다를 수 있으니 참고로만 보세요.")
-        load_excel=load_workbook("DATA_test.xlsx",data_only=True)
-
-    isCustomWep=custom_wep_tg.get()*isTest
-    isCustom12=custom_12_tg.get()*isTest
-    isCustom23=custom_23_tg.get()*isTest
-    isCustom31=custom_31_tg.get()*isTest
+    load_excel=load_workbook("DATA.xlsx",data_only=True)
 
     ## 갱신된 DB 불러오기 ##
     global opt_one, name_one
@@ -462,7 +438,7 @@ def calc(mode):
 
     know_dict={}
     ##단품산물
-    for know_one in know_list:
+    for know_one in calc_setlist.know_list:
         if eval('select_item["tg{}"]'.format(know_one)) == 1:
             eval('list{}.append(str({}))'.format(know_one[0:2],know_one))
             if know_one[0:2] =='11':
@@ -524,7 +500,7 @@ def calc(mode):
     ##버퍼 선입력 버프 옵션
     extra_cper=0;extra_bstat=0;extra_clvl=0
     extra_blvl=0;extra_batt=0;extra_cstat=0
-    extra_stat=0
+    extra_stat=0;extra_2clvl=0;extra_3clvl=0
 
     #칭호
     global style_calced,creature_calced
@@ -590,9 +566,9 @@ def calc(mode):
             if inv_select3_2.get()[-2:-1]=="상":
                 extra_bstat=(extra_bstat/100+1)*1.03*100-100;extra_cstat=extra_cstat+60
             elif inv_select3_2.get()[-2:-1]=="중":
-                extra_bstat=(extra_bstat/100+1)*1.03*100-100;extra_cstat=extra_cstat+40
+                extra_bstat=(extra_bstat/100+1)*1.03*100-100;extra_cstat=extra_cstat+50
             elif inv_select3_2.get()[-2:-1]=="하":
-                extra_bstat=(extra_bstat/100+1)*1.03*100-100;extra_cstat=extra_cstat+20
+                extra_bstat=(extra_bstat/100+1)*1.03*100-100;extra_cstat=extra_cstat+40
         elif inv_select3_1.get()=="축스탯%/1각%":
             if inv_select3_2.get()[-2:-1]=="상":
                 extra_bstat=(extra_bstat/100+1)*1.04*100-100;extra_cper=(extra_cper/100+1)*1.03*100-100
@@ -690,7 +666,89 @@ def calc(mode):
         inv3_val=""
         inv4_opt="미부여"
         inv4_val=""
-    
+
+    #연옥 변환 선기입 (직접 선택)
+    pur_select_index=[0,0,0,0]
+    global pur_tg
+    pur_ult_up_tg=0
+    if pur_tg==2:
+        pass
+    if pur_tg==1:
+        ckk=0
+        for now_select in [pur_select_wep,pur_select_1,pur_select_2,pur_select_3]:
+            if now_select.get()=="증뎀 / 축스탯% 1각+":
+                pur_select_index[ckk]=2
+                if ckk==0:
+                    extra_bstat=(extra_bstat/100+1)*1.03*100-100;extra_cstat=extra_cstat+60
+                else:
+                    extra_bstat=(extra_bstat/100+1)*1.04*100-100;extra_cstat=extra_cstat+40
+            elif now_select.get()=="크증 / 축스탯% 1각%":
+                pur_select_index[ckk]=3
+                if ckk==0:
+                    extra_bstat=(extra_bstat/100+1)*1.05*100-100;extra_cper=(extra_cper/100+1)*1.03*100-100
+                else:
+                    extra_bstat=(extra_bstat/100+1)*1.05*100-100;extra_cper=(extra_cper/100+1)*1.02*100-100
+            elif now_select.get()=="추뎀 / 축앞뎀% 1각+":
+                pur_select_index[ckk]=4
+                if ckk==0:
+                    extra_batt=(extra_batt/100+1)*1.04*100-100;extra_cstat=extra_cstat+30
+                else:
+                    extra_batt=(extra_batt/100+1)*1.04*100-100;extra_cstat=extra_cstat+25
+            elif now_select.get()=="모공 / 축앞뎀% 1각%":
+                pur_select_index[ckk]=6
+                if ckk==0:
+                    extra_batt=(extra_batt/100+1)*1.02*100-100;extra_cper=(extra_cper/100+1)*1.05*100-100
+                else:
+                    extra_batt=(extra_batt/100+1)*1.02*100-100;extra_cper=(extra_cper/100+1)*1.04*100-100
+            elif now_select.get()=="공% / 축렙+1 1각+":
+                pur_select_index[ckk]=7
+                if ckk==0:
+                    extra_blvl=extra_blvl+1;extra_cstat=extra_cstat+50
+                else:
+                    extra_blvl=extra_blvl+1;extra_cstat=extra_cstat+40
+            elif now_select.get()=="공% / 축스탯% 1각렙+1":
+                pur_select_index[ckk]=7
+                if ckk==0:
+                    extra_clvl=extra_clvl+1;extra_bstat=(extra_bstat/100+1)*1.04*100-100
+            elif now_select.get()=="스탯 / 마을스탯+":
+                pur_select_index[ckk]=8
+                if ckk==0:
+                    extra_stat=extra_stat+180
+                else:
+                    extra_stat=extra_stat+160
+            elif now_select.get()=="각성 2렙+증뎀(버퍼옵X)":
+                pur_select_index[ckk]=2
+                extra_clvl=extra_clvl+2;extra_2clvl=extra_2clvl+2;extra_3clvl=extra_3clvl+2
+                pur_ult_up_tg=1
+            elif now_select.get()=="각성 2렙+크증(버퍼옵X)":
+                pur_select_index[ckk]=3
+                extra_clvl=extra_clvl+2;extra_2clvl=extra_2clvl+2;extra_3clvl=extra_3clvl+2
+                pur_ult_up_tg=1
+            elif now_select.get()=="각성 2렙+추뎀(버퍼옵X)":
+                pur_select_index[ckk]=4
+                extra_clvl=extra_clvl+2;extra_2clvl=extra_2clvl+2;extra_3clvl=extra_3clvl+2
+                pur_ult_up_tg=1
+            elif now_select.get()=="각성 2렙+모공(버퍼옵X)":
+                pur_select_index[ckk]=6
+                extra_clvl=extra_clvl+2;extra_2clvl=extra_2clvl+2;extra_3clvl=extra_3clvl+2
+                pur_ult_up_tg=1
+            elif now_select.get()=="각성 2렙+공%(버퍼옵X)":
+                pur_select_index[ckk]=7
+                extra_clvl=extra_clvl+2;extra_2clvl=extra_2clvl+2;extra_3clvl=extra_3clvl+2
+                pur_ult_up_tg=1
+            elif now_select.get()=="각성 2렙+스탯(버퍼옵X)":
+                pur_select_index[ckk]=8
+                extra_clvl=extra_clvl+2;extra_2clvl=extra_2clvl+2;extra_3clvl=extra_3clvl+2
+                pur_ult_up_tg=1
+            ckk+=1
+            
+    pur_ult_force_tg=0
+    if pur_ult_force.get() == '태생유지':
+        pur_ult_force_tg=0
+    elif pur_ult_force.get() == '각성강제':
+        pur_ult_force_tg=1
+    elif pur_ult_force.get() == '각성해제':  
+        pur_ult_force_tg=2
     all_list_num=0
     all_list_list_num=0
     all_list_list=[]
@@ -1021,65 +1079,11 @@ def calc(mode):
 
     ##세트산물 계산##                
     #########################################################################################################################
-        know_set_list=['22400150','22400250','22400350','22400450','22400550','21400640','31400750',
-                       '31400850','31400950','31401050','31401150','32401240','32401340','32401440']
-        know_bang1_list=['22400150','22400250','22400350','22400450','22400550']
-        know_bang2_list=['31400750','31400850','31400950','31401050','31401150']
-        know_acc_list=['32401240','32401340','32401440']
+
         know_jin_list=['11410100','11410110','11410120','11410130','11410140','11410150',
                        '21420100','21420110','21420120','21420130','21420140','21420150',
                        '33430100','33430110','33430120','33430130','33430140','33430150']
-
-        for i in know_set_list: ##경우1:산물 하나
-            if select_item['tg'+i]==1:
-                if int(i[4:6]) <6:
-                    items0=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_0,[i],list23,list31,list32,list33_0,list40_0]
-                    items1=[]
-                    items2=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_1,[i],list23,list31,list32,list33_0,list40_0]
-                    items3=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_0,[i],list23,list31,list32,list33_1,list40_0]
-                elif int(i[4:6])==6:
-                    items0=[list11_0,list12,list13,list14,list15,[i],list22,list23,['99990'],['99990'],['99990'],list40_0]
-                    items1=[list11_1,list12,list13,list14,list15,[i],list22,list23,['99990'],['99990'],['99990'],list40_0]
-                    items2=[]
-                    items3=[]
-                elif int(i[4:6]) <12:
-                    items0=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_0,list22,list23,[i],list32,list33_0,list40_0]
-                    items1=[]
-                    items2=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_1,list22,list23,[i],list32,list33_0,list40_0]
-                    items3=[['99990'],['99990'],['99990'],['99990'],['99990'],list21_0,list22,list23,[i],list32,list33_1,list40_0]
-                elif int(i[4:6]) <15:
-                    items0=[list11_0,list12,list13,list14,list15,list31,[i],list33_0,['99990'],['99990'],['99990'],list40_0]
-                    items1=[list11_1,list12,list13,list14,list15,list31,[i],list33_0,['99990'],['99990'],['99990'],list40_0]
-                    items2=[]
-                    items3=[list11_0,list12,list13,list14,list15,list31,[i],list33_1,['99990'],['99990'],['99990'],list40_0]
-                all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
-
-        know_bang1_on=[]
-        for i in know_bang1_list:
-            if select_item['tg'+i]==1:
-                know_bang1_on.append(i)
-        if select_item['tg21400640']==1:  ##경우2:만유(팔찌)+방어구(목걸이)
-            items0=[['99990'],['99990'],['99990'],['99990'],['99990'],['21400640'],know_bang1_on,list23,['99990'],['99990'],['99990'],list40_0]
-            items1=[]
-            items2=[]
-            items3=[]
-            all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
-                    
-        know_acc_on=[]
-        know_bang2_on=[]
-        for i in know_acc_list:
-            if select_item['tg'+i]==1:
-                know_acc_on.append(i)
-        for i in know_bang2_list:
-            if select_item['tg'+i]==1:
-                know_bang2_on.append(i)
-        if len(know_acc_list)!=0 and len(know_bang2_on)!=0:  ##경우3: 악세(법석)+방어구(보장)
-            items0=[['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],know_bang2_on,know_acc_on,list33_0,list40_0]
-            items1=[]
-            items2=[]
-            items3=[['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],['99990'],know_bang2_on,know_acc_on,list33_1,list40_0]
-            all_list_list.append(calc_setlist.make_list(items0,items1,items2,items3))
-            
+        
         jin_sang=[]
         jin_pal=[]
         jin_gui=[]
@@ -1184,15 +1188,15 @@ def calc(mode):
             
     global exit_calc
     showsta(text='계산 시작')
-    save_list={} #딜러1번
-    save_list0={} #딜러2번
-    save_list1={} #버퍼1번
-    save_list2={} #버퍼2번
-    save_list3={} #버퍼3번
+    save_list={};temp_save_list=[0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1] #딜러1번
+    save_list0={};temp_save_list0=[0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1] #딜러2번
+    save_list1={};temp_save_list1=[0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1] #버퍼1번
+    save_list2={};temp_save_list2=[0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1] #버퍼2번
+    save_list3={};temp_save_list3=[0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1] #버퍼3번
     max_setopt=0
     loop_counter=0
 
-    customText={2:"증뎀", 3:"크증", 4:"추뎀", 6:"모공", 7:"공%", 8:"스탯%", 27:"각성"}
+    customTextAll={2:"증뎀", 3:"크증", 4:"추뎀", 6:"모공", 7:"공%", 8:"스탯", 27:"각성"}
 
     for calc_wep_num in range(len(wep_num)):
     
@@ -1212,8 +1216,9 @@ def calc(mode):
                         if exit_calc==1:
                             showsta(text='중지됨')
                             return
-                        set_list=make_setopt_num(calc_now,1)[0]
-                        setopt_num=make_setopt_num(calc_now,1)[1]
+                        ttt=make_setopt_num(calc_now,1)
+                        set_list=ttt[0]
+                        setopt_num=ttt[1]
                         if setopt_num >= max_setopt-set_perfect :
                             if setopt_num >= max_setopt: max_setopt = setopt_num
                             base_array=np.array([0,0,extra_dam,extra_cri,extra_bon,0,extra_all,extra_att,extra_sta,ele_in,0,1,0,0,0,0,0,0,extra_pas2,0,0,0,0,0,0,0,0,0])
@@ -1240,7 +1245,7 @@ def calc(mode):
                             for i in range(oneone):
                                 base_array=base_array+oneonelist[i]
                             
-                            hard_code_result=hard_coding_dealer(base_array,betterang,for_calc,coolper,skiper,isTest)
+                            hard_code_result=hard_coding_dealer(base_array,betterang,for_calc,coolper,skiper)
                             base_array=hard_code_result[0]
                             coolper=hard_code_result[1]
                             skiper=hard_code_result[2]
@@ -1252,100 +1257,120 @@ def calc(mode):
                             base_array[4]=base_array[4]+base_array[5]*(base_array[9]*0.0045+1.05)
                             
                             ## 옵션 커스텀
-                            customWepText="미변환"
-                            custom12Text="미변환"
-                            custom23Text="미변환"
-                            custom31Text="미변환"
-                            if isCustomWep==1:
+                            customText=["미변환","미변환","미변환","미변환"]
+                            customValue=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0]]
+                            changing_value_list=[0,0,0,0]
+                            if pur_tg!=0:
                                 for code in for_calc:
                                     if len(code)==6:
                                         now_temp_opt=getone(code)
                                         now_index=now_temp_opt[50]
+                                        customValue[0][0]=now_index
                                         now_change_value=now_temp_opt[51]
                                         if now_index==0:
-                                            break
+                                            pass
+                                        elif now_index==106: ##원초
+                                            base_array[6]=base_array[6]+now_change_value
+                                            changing_value_list[0]=0
                                         elif now_index!=27:
+                                            customText[0]=customTextAll.get(now_index)+" > "
                                             base_array[now_index]=base_array[now_index]-now_change_value
+                                            changing_value_list[0]=now_change_value+16
+                                            if (pur_tg==1 and pur_ult_up_tg==1) or (pur_tg==2 and pur_ult_force_tg==1):
+                                                base_array[27]=base_array[27]+2
+                                                base_array[25]=base_array[25]+2
+                                                base_array[23]=base_array[23]+2
+                                                changing_value_list[0]=16
+                                                customText[0]=customText[0]+"각성+"
+                                            else:
+                                                changing_value_list[0]=now_change_value+16
+                                        elif now_index==27:
+                                            customText[0]=customTextAll.get(now_index)+" > "
+                                            if (pur_tg==1 and pur_ult_up_tg==0) or (pur_tg==2 and pur_ult_force_tg==2):
+                                                base_array[27]=base_array[27]-2
+                                                base_array[25]=base_array[25]-2
+                                                base_array[23]=base_array[23]-2
+                                                changing_value_list[0]=30
+                                            else:
+                                                customText[0]=customText[0]+"각성+"
+                                                changing_value_list[0]=16
                                         else:
-                                            now_change_value=0
-                                        changing_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
-                                        for kk in [2,3,4,6,7,8]:
-                                            if min(changing_opt_list)==base_array[kk]:
-                                                base_array[kk]=base_array[kk]+now_change_value+16
-                                                if kk==4:
-                                                    only_bon=only_bon+16
-                                                if now_index!=27:
-                                                    customWepText=customText.get(now_index)+" > "+customText.get(kk)
-                                                else:
-                                                    customWepText=customText.get(now_index)+" + "+customText.get(kk)
-                                                break
+                                            changing_value_list[0]=0
                                         break
-                            if isCustom12==1:
                                 for code in for_calc:
                                     if code[0:2]=="12":
                                         now_temp_opt=getone(code)
                                         now_index=now_temp_opt[50]
+                                        customValue[1][0]=now_index
                                         now_change_value=now_temp_opt[51]
                                         if now_index==0:
                                             break
+                                        customText[1]=customTextAll.get(now_index)+" > "
+                                        changing_value_list[1]=now_change_value+8
                                         base_array[now_index]=base_array[now_index]-now_change_value
-                                        changing_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
-                                        for kk in [2,3,4,6,7,8]:
-                                            if min(changing_opt_list)==base_array[kk]:
-                                                base_array[kk]=base_array[kk]+now_change_value+8
-                                                if kk==4:
-                                                    only_bon=only_bon+8
-                                                custom12Text=customText.get(now_index)+" > "+customText.get(kk)
-                                                break
                                         break
-                            if isCustom23==1:
                                 for code in for_calc:
                                     if code[0:2]=="23":
                                         now_temp_opt=getone(code)
                                         now_index=now_temp_opt[50]
+                                        customValue[2][0]=now_index
                                         now_change_value=now_temp_opt[51]
                                         if now_index==0:
                                             break
+                                        customText[2]=customTextAll.get(now_index)+" > "
+                                        changing_value_list[2]=now_change_value+8
                                         base_array[now_index]=base_array[now_index]-now_change_value
-                                        changing_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
-                                        for kk in [2,3,4,6,7,8]:
-                                            if min(changing_opt_list)==base_array[kk]:
-                                                base_array[kk]=base_array[kk]+now_change_value+8
-                                                if kk==4:
-                                                    only_bon=only_bon+8
-                                                custom23Text=customText.get(now_index)+" > "+customText.get(kk)
-                                                break
                                         break
-                            if isCustom31==1:
                                 for code in for_calc:
                                     if code[0:2]=="31":
                                         now_temp_opt=getone(code)
                                         now_index=now_temp_opt[50]
+                                        customValue[3][0]=now_index
                                         now_change_value=now_temp_opt[51]
                                         if now_index==0:
                                             break
+                                        customText[3]=customTextAll.get(now_index)+" > "
+                                        changing_value_list[3]=now_change_value+8
                                         base_array[now_index]=base_array[now_index]-now_change_value
+                                        break
+                                if pur_tg==1: ##수동
+                                    ttkh=0
+                                    for now_opt_index in pur_select_index:
+                                        if changing_value_list[ttkh]==0:
+                                            continue
+                                        base_array[now_opt_index]=base_array[now_opt_index]+changing_value_list[ttkh]
+                                        if now_opt_index==4:
+                                            only_bon=only_bon+changing_value_list[ttkh]
+                                        customText[ttkh]=customText[ttkh]+customTextAll.get(now_opt_index)
+                                        ttkh+=1
+                                elif pur_tg==2: ##자동
+                                    for pur_i in range(0,4):
                                         changing_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
+                                        now_max_changing_value=max(changing_value_list)
+                                        if now_max_changing_value==0:
+                                            break
+                                        now_max_changing_index=changing_value_list.index(now_max_changing_value)
                                         for kk in [2,3,4,6,7,8]:
                                             if min(changing_opt_list)==base_array[kk]:
-                                                base_array[kk]=base_array[kk]+now_change_value+8
+                                                base_array[kk]=base_array[kk]+now_max_changing_value
                                                 if kk==4:
-                                                    only_bon=only_bon+8
-                                                custom31Text=customText.get(now_index)+" > "+customText.get(kk)
+                                                    only_bon=only_bon+now_max_changing_value
+                                                customValue[now_max_changing_index][1]=kk
+                                                customValue[now_max_changing_index][2]=now_max_changing_value
+                                                customText[now_max_changing_index]=customText[now_max_changing_index]+customTextAll.get(kk)
+                                                changing_value_list[now_max_changing_index]=0
                                                 break
-                                        break
-                                    
                             ## 잔향
                             if inv_tg ==2:
-                                inv_auto=inv_auto_dealer(base_array,only_bon,inv2_on_tg,inv_type_list)
+                                inv_auto=inv_auto_dealer(base_array,only_bon,inv2_on_tg)
                                 base_array=inv_auto[0]
                                 only_bon=inv_auto[1]
                                 inv1_opt=inv_auto[2]
                                 inv2_opt=inv_auto[3]
                                 inv1_val=inv_auto[4]
                                 inv2_val=inv_auto[5]
+                                customValue[4]=inv_auto[6]
 
-                                
                             actlvl=((base_array[active_eff_one]+base_array[22]*job_lv1+base_array[23]*job_lv2+base_array[24]*job_lv3+
                                     base_array[25]*job_lv4+base_array[26]*job_lv5+base_array[27]*job_lv6)/100+1)
                             actlvl2=base_array[22]*(0.5-silmari*0.06)*0.0213+base_array[24]*(0.5-silmari*0.06)*0.04+base_array[24]*(0.1484-silmari*0.0284)*0.0674+1
@@ -1368,8 +1393,14 @@ def calc(mode):
                             damage_only_equ=damage/paslvl/wep_pre_calced[calc_wep_num]
                             
                             inv_string="잔향부여= "+inv1_opt+"("+str(inv1_val)+"%) / "+inv2_opt+"("+str(inv2_val)+"%)"
-                            save_list[final_damage]=[calc_wep,base_array,damage,damage_not_ele,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage2,wep_name_list_temp[calc_wep_num],[customWepText,custom12Text,custom23Text,custom31Text]]
-                            save_list0[final_damage2]=[calc_wep,base_array,damage,damage_not_ele2,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage,wep_name_list_temp[calc_wep_num],[customWepText,custom12Text,custom23Text,custom31Text]]
+                            if final_damage > min(temp_save_list):
+                                save_list[final_damage]=[calc_wep,base_array,damage,damage_not_ele,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage2,wep_name_list_temp[calc_wep_num],customText,customValue]
+                                temp_save_list.remove(min(temp_save_list))
+                                temp_save_list.append(final_damage)
+                            if final_damage2 > min(temp_save_list0):
+                                save_list0[final_damage2]=[calc_wep,base_array,damage,damage_not_ele2,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage,wep_name_list_temp[calc_wep_num],customText,customValue]
+                                temp_save_list0.remove(min(temp_save_list0))
+                                temp_save_list0.append(final_damage2)
                             count_num=count_num+1
                         else:
                             count_all=count_all+1
@@ -1410,7 +1441,7 @@ def calc(mode):
                             for i in range(oneone):
                                 base_array=base_array+oneonelist[i]
                             
-                            hard_code_result=hard_coding_dealer(base_array,betterang,for_calc,coolper,skiper,isTest)
+                            hard_code_result=hard_coding_dealer(base_array,betterang,for_calc,coolper,skiper)
                             base_array=hard_code_result[0]
                             coolper=hard_code_result[1]
                             skiper=hard_code_result[2]
@@ -1422,98 +1453,119 @@ def calc(mode):
                             base_array[4]=base_array[4]+base_array[5]*(base_array[9]*0.0045+1.05)
                             
                             ## 옵션 커스텀
-                            customWepText="미변환"
-                            custom12Text="미변환"
-                            custom23Text="미변환"
-                            custom31Text="미변환"
-                            if isCustomWep==1:
+                            customText=["미변환","미변환","미변환","미변환"]
+                            customValue=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0]]
+                            changing_value_list=[0,0,0,0]
+                            if pur_tg!=0:
                                 for code in for_calc:
                                     if len(code)==6:
                                         now_temp_opt=getone(code)
                                         now_index=now_temp_opt[50]
+                                        customValue[0][0]=now_index
                                         now_change_value=now_temp_opt[51]
                                         if now_index==0:
-                                            break
+                                            pass
+                                        elif now_index==106: ##원초
+                                            base_array[6]=base_array[6]+now_change_value
+                                            changing_value_list[0]=0
                                         elif now_index!=27:
+                                            customText[0]=customTextAll.get(now_index)+" > "
                                             base_array[now_index]=base_array[now_index]-now_change_value
+                                            changing_value_list[0]=now_change_value+16
+                                            if (pur_tg==1 and pur_ult_up_tg==1) or (pur_tg==2 and pur_ult_force_tg==1):
+                                                base_array[27]=base_array[27]+2
+                                                base_array[25]=base_array[25]+2
+                                                base_array[23]=base_array[23]+2
+                                                changing_value_list[0]=16
+                                                customText[0]=customText[0]+"각성+"
+                                            else:
+                                                changing_value_list[0]=now_change_value+16
+                                        elif now_index==27:
+                                            customText[0]=customTextAll.get(now_index)+" > "
+                                            if (pur_tg==1 and pur_ult_up_tg==0) or (pur_tg==2 and pur_ult_force_tg==2):
+                                                base_array[27]=base_array[27]-2
+                                                base_array[25]=base_array[25]-2
+                                                base_array[23]=base_array[23]-2
+                                                changing_value_list[0]=30
+                                            else:
+                                                customText[0]=customText[0]+"각성+"
+                                                changing_value_list[0]=16
                                         else:
-                                            now_change_value=0
-                                        changing_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
-                                        for kk in [2,3,4,6,7,8]:
-                                            if min(changing_opt_list)==base_array[kk]:
-                                                base_array[kk]=base_array[kk]+now_change_value+16
-                                                if kk==4:
-                                                    only_bon=only_bon+16
-                                                if now_index!=27:
-                                                    customWepText=customText.get(now_index)+" > "+customText.get(kk)
-                                                else:
-                                                    customWepText=customText.get(now_index)+" + "+customText.get(kk)
-                                                break
+                                            changing_value_list[0]=0
                                         break
-                            if isCustom12==1:
                                 for code in for_calc:
                                     if code[0:2]=="12":
                                         now_temp_opt=getone(code)
                                         now_index=now_temp_opt[50]
+                                        customValue[1][0]=now_index
                                         now_change_value=now_temp_opt[51]
                                         if now_index==0:
                                             break
+                                        customText[1]=customTextAll.get(now_index)+" > "
+                                        changing_value_list[1]=now_change_value+8
                                         base_array[now_index]=base_array[now_index]-now_change_value
-                                        changing_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
-                                        for kk in [2,3,4,6,7,8]:
-                                            if min(changing_opt_list)==base_array[kk]:
-                                                base_array[kk]=base_array[kk]+now_change_value+8
-                                                if kk==4:
-                                                    only_bon=only_bon+8
-                                                custom12Text=customText.get(now_index)+" > "+customText.get(kk)
-                                                break
                                         break
-                            if isCustom23==1:
                                 for code in for_calc:
                                     if code[0:2]=="23":
                                         now_temp_opt=getone(code)
                                         now_index=now_temp_opt[50]
+                                        customValue[2][0]=now_index
                                         now_change_value=now_temp_opt[51]
                                         if now_index==0:
                                             break
+                                        customText[2]=customTextAll.get(now_index)+" > "
+                                        changing_value_list[2]=now_change_value+8
                                         base_array[now_index]=base_array[now_index]-now_change_value
-                                        changing_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
-                                        for kk in [2,3,4,6,7,8]:
-                                            if min(changing_opt_list)==base_array[kk]:
-                                                base_array[kk]=base_array[kk]+now_change_value+8
-                                                if kk==4:
-                                                    only_bon=only_bon+8
-                                                custom23Text=customText.get(now_index)+" > "+customText.get(kk)
-                                                break
                                         break
-                            if isCustom31==1:
                                 for code in for_calc:
                                     if code[0:2]=="31":
                                         now_temp_opt=getone(code)
                                         now_index=now_temp_opt[50]
+                                        customValue[3][0]=now_index
                                         now_change_value=now_temp_opt[51]
                                         if now_index==0:
                                             break
+                                        customText[3]=customTextAll.get(now_index)+" > "
+                                        changing_value_list[3]=now_change_value+8
                                         base_array[now_index]=base_array[now_index]-now_change_value
+                                        break
+                                if pur_tg==1: ##수동
+                                    ttkh=0
+                                    for now_opt_index in pur_select_index:
+                                        if changing_value_list[ttkh]==0:
+                                            continue
+                                        base_array[now_opt_index]=base_array[now_opt_index]+changing_value_list[ttkh]
+                                        if now_opt_index==4:
+                                            only_bon=only_bon+changing_value_list[ttkh]
+                                        customText[ttkh]=customText[ttkh]+customTextAll.get(now_opt_index)
+                                        ttkh+=1
+                                elif pur_tg==2: ##자동
+                                    for pur_i in range(0,4):
                                         changing_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
+                                        now_max_changing_value=max(changing_value_list)
+                                        if now_max_changing_value==0:
+                                            break
+                                        now_max_changing_index=changing_value_list.index(now_max_changing_value)
                                         for kk in [2,3,4,6,7,8]:
                                             if min(changing_opt_list)==base_array[kk]:
-                                                base_array[kk]=base_array[kk]+now_change_value+8
+                                                base_array[kk]=base_array[kk]+now_max_changing_value
                                                 if kk==4:
-                                                    only_bon=only_bon+8
-                                                custom31Text=customText.get(now_index)+" > "+customText.get(kk)
+                                                    only_bon=only_bon+now_max_changing_value
+                                                customValue[now_max_changing_index][1]=kk
+                                                customValue[now_max_changing_index][2]=now_max_changing_value
+                                                customText[now_max_changing_index]=customText[now_max_changing_index]+customTextAll.get(kk)
+                                                changing_value_list[now_max_changing_index]=0
                                                 break
-                                        break
-                                    
                             ## 잔향
                             if inv_tg ==2:
-                                inv_auto=inv_auto_dealer(base_array,only_bon,inv2_on_tg,inv_type_list)
+                                inv_auto=inv_auto_dealer(base_array,only_bon,inv2_on_tg)
                                 base_array=inv_auto[0]
                                 only_bon=inv_auto[1]
                                 inv1_opt=inv_auto[2]
                                 inv2_opt=inv_auto[3]
                                 inv1_val=inv_auto[4]
                                 inv2_val=inv_auto[5]
+                                customValue[4]=inv_auto[6]
 
                             actlvl=((base_array[active_eff_one]+base_array[22]*job_lv1+base_array[23]*job_lv2+base_array[24]*job_lv3+
                                     base_array[25]*job_lv4+base_array[26]*job_lv5+base_array[27]*job_lv6)/100+1)
@@ -1537,8 +1589,14 @@ def calc(mode):
                             damage_only_equ=damage/paslvl/wep_pre_calced[calc_wep_num]
                             
                             inv_string="잔향부여= "+inv1_opt+"("+str(inv1_val)+"%) / "+inv2_opt+"("+str(inv2_val)+"%)"
-                            save_list[final_damage]=[calc_wep,base_array,damage,damage_not_ele,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage2,wep_name_list_temp[calc_wep_num],[customWepText,custom12Text,custom23Text,custom31Text]]
-                            save_list0[final_damage2]=[calc_wep,base_array,damage,damage_not_ele2,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage,wep_name_list_temp[calc_wep_num],[customWepText,custom12Text,custom23Text,custom31Text]]
+                            if final_damage > min(temp_save_list):
+                                save_list[final_damage]=[calc_wep,base_array,damage,damage_not_ele,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage2,wep_name_list_temp[calc_wep_num],customText,customValue]
+                                temp_save_list.remove(min(temp_save_list))
+                                temp_save_list.append(final_damage)
+                            if final_damage2 > min(temp_save_list0):
+                                save_list0[final_damage2]=[calc_wep,base_array,damage,damage_not_ele2,inv_string,[ult_1,ult_2,ult_3,ult_skiper],damage_only_equ,final_damage,wep_name_list_temp[calc_wep_num],customText,customValue]
+                                temp_save_list0.remove(min(temp_save_list0))
+                                temp_save_list0.append(final_damage2)
                             count_num=count_num+1
                         else:
                             count_all=count_all+1
@@ -1617,7 +1675,7 @@ def calc(mode):
                                 stat_pas0lvl_b=lvlget('pas0')[int(base_array[11])+base_pas0_b]+lvlget('hol_pas0_1')[int(base_array[12])]
                                 stat_pas0lvl_c=lvlget('pas0')[int(base_array[11])+base_pas0_c]+lvlget('hol_pas0_1')[int(base_array[12])]
                                 stat_pas1lvl=lvlget('hol_pas1')[int(base_array[13])]+base_array[17]
-                                stat_pas2lvl=lvlget('hol_act2')[int(base_array[15])]
+                                stat_pas2lvl=lvlget('hol_act2')[int(base_array[15])+extra_2clvl]
                                 stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
                                 stat_b=base_array[0]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]+base_stat_d
                                 stat_c=base_array[0]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]
@@ -1626,8 +1684,8 @@ def calc(mode):
                                 b_mag_calc=int(b_base_att*(b_mag/100+1)*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
                                 b_ind_calc=int(b_base_att*(b_ind/100+1)*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
                                 b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
-                                c_calc2=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.1+0.01*int(base_array[22]))*(c_per/100+1)*(stat_c/750+1))
-                                c_calc=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.25+0.01*int(base_array[22]))*(c_per/100+1)*(stat_c/750+1))
+                                c_calc2=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.1+0.01*int(base_array[22]+extra_3clvl))*(c_per/100+1)*(stat_c/750+1))
+                                c_calc=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.25+0.01*int(base_array[22]+extra_3clvl))*(c_per/100+1)*(stat_c/750+1))
                                 pas1_calc=int(lvlget('hol_pas1_out')[int(base_array[13])]+273)
                                 pas1_out=str(pas1_calc)+"("+str(int(20+base_array[13]))+"렙)"
                                 save1='스탯='+str(b_stat_calc)+"\n앞뎀="+str(b_average)+"\n\n적용스탯= "+str(int(stat_b))+"\n적용레벨= "+str(int(base_array[8]))+"렙"
@@ -1635,17 +1693,24 @@ def calc(mode):
 
                             else:
                                 if jobup_select.get()[4:7] == "세라핌":
-                                    amuguna=1.25+0.01*int(base_array[22])
-                                    amuguna2=1.1+0.01*int(base_array[22])
-                                    crux=1.131
+                                    amuguna=1.25+0.01*int(base_array[22]+extra_3clvl)
+                                    amuguna2=1.1+0.01*int(base_array[22]+extra_3clvl)
+                                    crux=1
                                     crux2=255+int(base_array[12])*6
+                                    b_base_att=lvlget('se_b_atta')[int(base_array[8])]
+                                    b_base_stat=lvlget('se_b_stat')[int(base_array[8])]
                                 if jobup_select.get()[4:7] == "헤카테":
-                                    amuguna=1.25+0.01*int(base_array[22])
-                                    amuguna2=1.1+0.01*int(base_array[22])
+                                    if pur_tg==1 and hard_coding("111040")==1:
+                                        extra_now_3clvl=extra_3clvl-2
+                                    else:
+                                        extra_now_3clvl=extra_3clvl
+                                    amuguna=1.25+0.01*int(base_array[22]+extra_now_3clvl)
+                                    amuguna2=1.1+0.01*int(base_array[22]+extra_now_3clvl)
                                     crux=1
                                     crux2=0
-                                    
-                                b_base_att=lvlget('se_b_atta')[int(base_array[8])]
+                                    b_base_att=lvlget('he_b_atta')[int(base_array[8])]
+                                    b_base_stat=lvlget('he_b_stat')[int(base_array[8])]
+                                
                                 stat_pas0lvl_b=lvlget('pas0')[int(base_array[11])+int(base_pas0_b)]
                                 stat_pas0lvl_c=lvlget('pas0')[int(base_array[11])+int(base_pas0_c)]
                                 stat_pas1lvl=lvlget('se_pas1')[int(base_array[13])]+base_array[18]
@@ -1653,7 +1718,7 @@ def calc(mode):
                                 stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
                                 stat_b=base_array[1]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+base_stat_d+amuguna_stat
                                 stat_c=base_array[1]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+amuguna_stat
-                                b_stat_calc=int(lvlget('se_b_stat')[int(base_array[8])]*(b_stat/100+1)*(stat_b/b_value+1)*aria*crux)+crux2
+                                b_stat_calc=int(b_base_stat*(b_stat/100+1)*(stat_b/b_value+1)*aria*crux)+crux2
                                 b_phy_calc=int(b_base_att*(b_phy/100+1)*(stat_b/b_value+1)*aria*crux)
                                 b_mag_calc=int(b_base_att*(b_mag/100+1)*(stat_b/b_value+1)*aria*crux)
                                 b_ind_calc=int(b_base_att*(b_ind/100+1)*(stat_b/b_value+1)*aria*crux)
@@ -1664,6 +1729,7 @@ def calc(mode):
                                 save1='스탯='+str(b_stat_calc)+"("+str(int(b_stat_calc/aria))+")\n앞뎀="+str(b_average)+"("+str(int(b_average/aria))+")\n\n적용스탯= "+str(int(stat_b))+"\n적용레벨= "+str(int(base_array[8]))+"렙"
                                 c_calc2=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna2*(c_per/100+1)*(stat_c/750+1))
                                 save2='스탯= '+str(c_calc)+'('+str(c_calc2)+')'+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
+                                
                             ##1축 2포 3합
 
                             final_save_list=[save1,save2,pas1_out]
@@ -1675,10 +1741,18 @@ def calc(mode):
                             final_buf2_2=((15000+c_calc2)/250+1)*2650*(base_array[21]/100+1)
                             final_buf3=((15000+pas1_calc+c_calc+b_stat_calc)/250+1)*(2650+b_average)*(base_array[21]/100+1)
                             final_buf3_2=((15000+pas1_calc+c_calc2+b_stat_calc)/250+1)*(2650+b_average)*(base_array[21]/100+1)
-                            save_list1[final_buf1]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf1,wep_name_list_temp[calc_wep_num],final_buf_list]
-                            save_list2[final_buf2]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf2_2,wep_name_list_temp[calc_wep_num],final_buf_list]
-                            save_list3[final_buf3]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf3_2,wep_name_list_temp[calc_wep_num],final_buf_list]
-                            
+                            if final_buf1 > min(temp_save_list1):
+                                save_list1[final_buf1]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf1,wep_name_list_temp[calc_wep_num],final_buf_list]
+                                temp_save_list1.remove(min(temp_save_list1))
+                                temp_save_list1.append(final_buf1)
+                            if final_buf2 > min(temp_save_list2):
+                                save_list2[final_buf2]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf2_2,wep_name_list_temp[calc_wep_num],final_buf_list]
+                                temp_save_list2.remove(min(temp_save_list2))
+                                temp_save_list2.append(final_buf2)
+                            if final_buf3 > min(temp_save_list3):
+                                save_list3[final_buf3]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf3_2,wep_name_list_temp[calc_wep_num],final_buf_list]
+                                temp_save_list3.remove(min(temp_save_list3))
+                                temp_save_list3.append(final_buf3)
                             count_num=count_num+1
                         else:
                             count_all=count_all+1
@@ -1713,13 +1787,13 @@ def calc(mode):
                                 b_ind=(b_ind/100+1)*(no_cut[5]/100+1)*100-100
                                 c_per=(c_per/100+1)*(no_cut[7]/100+1)*100-100
                                 oneonelist.append(no_cut)
-                                
+                            
                             if jobup_select.get()[4:7] == "세인트":
                                 b_base_att=lvlget('hol_b_atta')[int(base_array[8])]
                                 stat_pas0lvl_b=lvlget('pas0')[int(base_array[11])+base_pas0_b]+lvlget('hol_pas0_1')[int(base_array[12])]
                                 stat_pas0lvl_c=lvlget('pas0')[int(base_array[11])+base_pas0_c]+lvlget('hol_pas0_1')[int(base_array[12])]
                                 stat_pas1lvl=lvlget('hol_pas1')[int(base_array[13])]+base_array[17]
-                                stat_pas2lvl=lvlget('hol_act2')[int(base_array[15])]
+                                stat_pas2lvl=lvlget('hol_act2')[int(base_array[15])+extra_2clvl]
                                 stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
                                 stat_b=base_array[0]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]+base_stat_d
                                 stat_c=base_array[0]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+19*base_array[10]
@@ -1728,8 +1802,8 @@ def calc(mode):
                                 b_mag_calc=int(b_base_att*(b_mag/100+1)*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
                                 b_ind_calc=int(b_base_att*(b_ind/100+1)*(stat_b/620+1)+lvlget('hol_act0')[int(base_array[12])])+42
                                 b_average=int((b_phy_calc+b_mag_calc+b_ind_calc)/3)
-                                c_calc2=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.1+0.01*int(base_array[22]))*(c_per/100+1)*(stat_c/750+1))
-                                c_calc=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.25+0.01*int(base_array[22]))*(c_per/100+1)*(stat_c/750+1))
+                                c_calc2=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.1+0.01*int(base_array[22]+extra_3clvl))*(c_per/100+1)*(stat_c/750+1))
+                                c_calc=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*(1.25+0.01*int(base_array[22]+extra_3clvl))*(c_per/100+1)*(stat_c/750+1))
                                 pas1_calc=int(lvlget('hol_pas1_out')[int(base_array[13])]+273)
                                 pas1_out=str(pas1_calc)+"("+str(int(20+base_array[13]))+"렙)"
                                 save1='스탯='+str(b_stat_calc)+"\n앞뎀="+str(b_average)+"\n\n적용스탯= "+str(int(stat_b))+"\n적용레벨= "+str(int(base_array[8]))+"렙"
@@ -1737,17 +1811,24 @@ def calc(mode):
 
                             else:
                                 if jobup_select.get()[4:7] == "세라핌":
-                                    amuguna=1.25+0.01*int(base_array[22])
-                                    amuguna2=1.1+0.01*int(base_array[22])
-                                    crux=1.131
+                                    amuguna=1.25+0.01*int(base_array[22]+extra_3clvl)
+                                    amuguna2=1.1+0.01*int(base_array[22]+extra_3clvl)
+                                    crux=1
                                     crux2=255+int(base_array[12])*6
+                                    b_base_att=lvlget('se_b_atta')[int(base_array[8])]
+                                    b_base_stat=lvlget('se_b_stat')[int(base_array[8])]
                                 if jobup_select.get()[4:7] == "헤카테":
-                                    amuguna=1.25+0.01*int(base_array[22])
-                                    amuguna2=1.1+0.01*int(base_array[22])
+                                    if pur_tg==1 and hard_coding("111040")==1:
+                                        extra_now_3clvl=extra_3clvl-2
+                                    else:
+                                        extra_now_3clvl=extra_3clvl
+                                    amuguna=1.25+0.01*int(base_array[22]+extra_now_3clvl)
+                                    amuguna2=1.1+0.01*int(base_array[22]+extra_now_3clvl)
                                     crux=1
                                     crux2=0
-                                    
-                                b_base_att=lvlget('se_b_atta')[int(base_array[8])]
+                                    b_base_att=lvlget('he_b_atta')[int(base_array[8])]
+                                    b_base_stat=lvlget('he_b_stat')[int(base_array[8])]
+                                
                                 stat_pas0lvl_b=lvlget('pas0')[int(base_array[11])+int(base_pas0_b)]
                                 stat_pas0lvl_c=lvlget('pas0')[int(base_array[11])+int(base_pas0_c)]
                                 stat_pas1lvl=lvlget('se_pas1')[int(base_array[13])]+base_array[18]
@@ -1755,7 +1836,7 @@ def calc(mode):
                                 stat_pas3lvl=lvlget('pas3')[int(base_array[16])]
                                 stat_b=base_array[1]+stat_pas0lvl_b+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+base_stat_d+amuguna_stat
                                 stat_c=base_array[1]+stat_pas0lvl_c+stat_pas1lvl+stat_pas2lvl+stat_pas3lvl+amuguna_stat
-                                b_stat_calc=int(lvlget('se_b_stat')[int(base_array[8])]*(b_stat/100+1)*(stat_b/b_value+1)*aria*crux)+crux2
+                                b_stat_calc=int(b_base_stat*(b_stat/100+1)*(stat_b/b_value+1)*aria*crux)+crux2
                                 b_phy_calc=int(b_base_att*(b_phy/100+1)*(stat_b/b_value+1)*aria*crux)
                                 b_mag_calc=int(b_base_att*(b_mag/100+1)*(stat_b/b_value+1)*aria*crux)
                                 b_ind_calc=int(b_base_att*(b_ind/100+1)*(stat_b/b_value+1)*aria*crux)
@@ -1767,7 +1848,7 @@ def calc(mode):
                                 c_calc2=int((lvlget('c_stat')[int(base_array[9])]+base_array[6])*amuguna2*(c_per/100+1)*(stat_c/750+1))
                                 save2='스탯= '+str(c_calc)+'('+str(c_calc2)+')'+"\n\n적용스탯= "+str(int(stat_c))+"\n적용레벨= "+str(int(base_array[9]))+"렙"
                             ##1축 2포 3합
-                            
+
                             final_save_list=[save1,save2,pas1_out]
 
                             final_buf_list=[b_stat_calc,b_average,c_calc,pas1_calc]
@@ -1777,9 +1858,18 @@ def calc(mode):
                             final_buf2_2=((15000+c_calc2)/250+1)*2650*(base_array[21]/100+1)
                             final_buf3=((15000+pas1_calc+c_calc+b_stat_calc)/250+1)*(2650+b_average)*(base_array[21]/100+1)
                             final_buf3_2=((15000+pas1_calc+c_calc2+b_stat_calc)/250+1)*(2650+b_average)*(base_array[21]/100+1)
-                            save_list1[final_buf1]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf1,wep_name_list_temp[calc_wep_num],final_buf_list]
-                            save_list2[final_buf2]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf2_2,wep_name_list_temp[calc_wep_num],final_buf_list]
-                            save_list3[final_buf3]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf3_2,wep_name_list_temp[calc_wep_num],final_buf_list]
+                            if final_buf1 > min(temp_save_list1):
+                                save_list1[final_buf1]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf1,wep_name_list_temp[calc_wep_num],final_buf_list]
+                                temp_save_list1.remove(min(temp_save_list1))
+                                temp_save_list1.append(final_buf1)
+                            if final_buf2 > min(temp_save_list2):
+                                save_list2[final_buf2]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf2_2,wep_name_list_temp[calc_wep_num],final_buf_list]
+                                temp_save_list2.remove(min(temp_save_list2))
+                                temp_save_list2.append(final_buf2)
+                            if final_buf3 > min(temp_save_list3):
+                                save_list3[final_buf3]=[list(calc_wep),final_save_list,inv_string,base_array,final_buf3_2,wep_name_list_temp[calc_wep_num],final_buf_list]
+                                temp_save_list3.remove(min(temp_save_list3))
+                                temp_save_list3.append(final_buf3)
                             
                             count_num=count_num+1
                         else:
@@ -1798,21 +1888,125 @@ def calc(mode):
 
         ranking=[]
         ranking0=[]
-        for j in range(0,5):
+        for j in range(0,10):
             try:
                 now_max=max(list(save_list.keys()))
-                ranking.append((now_max,save_list.get(now_max)))
+                ranking.append([now_max,save_list.get(now_max)])
                 del save_list[now_max]
             except ValueError as error:
                 pass
-        for j in range(0,5):
+        for j in range(0,10):
             try:
                 now_max=max(list(save_list0.keys()))
-                ranking0.append((now_max,save_list0.get(now_max)))
+                ranking0.append([now_max,save_list0.get(now_max)])
                 del save_list0[now_max]
             except ValueError as error:
                 pass
         ranking=[ranking,ranking0]
+        
+        ## 연옥/잔향 최적화 재계산
+        if pur_tg==2:
+            showsta(text='연옥 최적화 중')
+            g_s_tg=0
+            for now_rank_list in ranking:
+                #print("")
+                for now_rank in now_rank_list:
+                    now_rank_copy=copy.deepcopy(now_rank)
+                    now_base_array=now_rank_copy[1][1]
+                    now_custom_text=now_rank_copy[1][9]
+                    original_damage=((now_base_array[2]/100+1)*(now_base_array[3]/100+1)*(now_base_array[4]/100+1)*
+                                     (now_base_array[6]/100+1)*(now_base_array[7]/100+1)*(now_base_array[8]/100+1))
+                    original_damage_ratio=now_rank_copy[0]/original_damage
+                    #print("최적화 이전 장비%="+str(int(now_rank_copy[0]*100))+"%")
+                    #print("최적화 이전 변환="+str(now_rank_copy[1][9]))
+                    #print("최적화 이전 변환="+str(now_rank_copy[1][10]))
+                    #print(now_rank_copy[1][4])
+                    #print("")
+                    #print("")
+                    now_custom_value=now_rank_copy[1][10]
+                    original_value=[0,0,now_base_array[2],now_base_array[3],now_base_array[4],0,now_base_array[6],now_base_array[7],now_base_array[8]]
+                    average=sum(original_value)/6
+                    inv_string=now_rank[1][4]
+                    temp_changing_list=[0,0,0,0,10,5];
+                    for pur_i in range(0,4):
+                        now_index=now_custom_value[pur_i][1]
+                        original_value[now_index]-=now_custom_value[pur_i][2]
+                        temp_changing_list[pur_i]=now_custom_value[pur_i][2]
+                    if inv_tg==2:
+                        original_value[now_custom_value[4][0]]-=10
+                        if inv2_on_tg==1:
+                            original_value[now_custom_value[4][1]]-=5
+                    
+                    temp_list=[2,3,4,6,7,8]
+                    for opt_i in [2,3,4,6,7,8]:
+                        if original_value[opt_i] >= average:
+                            temp_list.remove(opt_i)
+                    case_list=[temp_list,temp_list,temp_list,temp_list]
+                    if inv_tg==2:
+                        case_list.append(temp_list)
+                        if inv2_on_tg==1:
+                            case_list.append(temp_list)
+                    all_case_list=list(itertools.product(*case_list))
+                    now_max_damage=original_damage
+                    now_max_change_list=copy.deepcopy(now_custom_value)
+                    for now_case in all_case_list:
+                        
+                        now_temp_value=copy.deepcopy(original_value)
+                        tt_i=0
+                        for v_i in now_case:
+                            now_temp_value[v_i]+=temp_changing_list[tt_i]
+                            tt_i+=1
+                        now_damage=((now_temp_value[2]/100+1)*(now_temp_value[3]/100+1)*(now_temp_value[4]/100+1)*
+                                    (now_temp_value[6]/100+1)*(now_temp_value[7]/100+1)*(now_temp_value[8]/100+1))
+                        if now_max_damage < now_damage:
+                            now_max_damage=now_damage
+                            for ii in range(0,4):
+                                now_max_change_list[ii][1]=now_case[ii]
+                            for opt_i in [2,3,4,6,7,8]:
+                                now_base_array[opt_i]=now_temp_value[opt_i]
+                            if inv_tg==2:
+                                #print("잔향이 부여됨"+str(now_case))
+                                inv_string="잔향부여= "+customTextAll.get(now_case[4])+"(10%) / "
+                                if inv2_on_tg==1:
+                                    inv_string=inv_string+customTextAll.get(now_case[5])+"(5%)"
+                                else:
+                                    inv_string=inv_string+"미충족(X%)"
+                            #print("최적화 개시="+str(int(original_damage_ratio*now_damage*100))+"%")
+
+                    for ii in range(0,4):
+                        if now_max_change_list[ii][0]!=0 and now_max_change_list[ii][1]!=0:
+                            now_custom_text[ii]=now_custom_text[ii][:-2]
+                            now_custom_text[ii]+=customTextAll.get(now_max_change_list[ii][1])
+                    now_rank[0]=original_damage_ratio*now_max_damage
+                    changing_damage_ratio=now_max_damage/original_damage
+                    now_rank[1][3]=now_rank[1][3]*changing_damage_ratio
+                    now_rank[1][6]=now_rank[1][6]*changing_damage_ratio
+                    now_rank[1][7]=now_rank[1][7]*changing_damage_ratio
+                    now_rank[1][1]=now_base_array
+                    now_rank[1][9]=now_custom_text
+                    if inv_tg==2:
+                        now_rank[1][4]=inv_string
+                    
+                    #print("최종 최적화 데미지="+str(int(original_damage_ratio*now_max_damage*100))+"%")
+                    #print("최적화 이후 변환="+str(now_rank[1][9]))
+                    #print(now_rank[1][4])
+                    #print("")
+
+                ## 순위 재정렬
+                now_damage_list=[]
+                for j in range(0,10):
+                    try: now_damage_list.append(now_rank_list[j][0])
+                    except: break
+                ranking_new=[]
+                for j in range(0, len(now_damage_list)):
+                    now_max=max(now_damage_list)
+                    now_max_index=now_damage_list.index(now_max)
+                    ranking_new.append(ranking[g_s_tg][now_max_index])
+                    now_damage_list[now_max_index]=0
+                ranking[g_s_tg]=ranking_new
+                    
+                g_s_tg+=1
+        
         show_result(ranking,'deal',ele_skill,cool_eff)
 
 
@@ -1931,8 +2125,6 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
     canvas_res.create_text(122,50,text="<직업>",font=guide_font,fill='white')
     canvas_res.create_text(122,70,text=job_name,font=guide_font,fill='white')
     canvas_res.create_text(122,87,text=job_up_name,font=guide_font,fill='white')
-    know_set_list=['22400150','22400250','22400350','22400450','22400550','21400640','31400750',
-                   '31400850','31400950','31401050','31401150','32401240','32401340','32401440']
 
     ele_change_toggle=0
     global rank_setting,rank0_setting
@@ -2053,44 +2245,6 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
             except IndexError as error:
                 pass
 
-        for i in range(0,5):
-            try:
-                for j in rank_setting[i]:
-                    for k in know_set_list:
-                        if j==k:
-                            if int(j[4:6])<12 and int(j[4:6])!=6:
-                                result_image_on[i]['11']=image_list['n11'+j[4:6]];result_image_tag[i]['11']='n11'+j[4:6]
-                                result_image_on[i]['12']=image_list['n12'+j[4:6]];result_image_tag[i]['12']='n12'+j[4:6]
-                                result_image_on[i]['13']=image_list['n13'+j[4:6]];result_image_tag[i]['13']='n13'+j[4:6]
-                                result_image_on[i]['14']=image_list['n14'+j[4:6]];result_image_tag[i]['14']='n14'+j[4:6]
-                                result_image_on[i]['15']=image_list['n15'+j[4:6]];result_image_tag[i]['15']='n15'+j[4:6]
-                            elif int(j[4:6])==6:
-                                result_image_on[i]['31']=image_list['n31'+j[4:6]];result_image_tag[i]['31']='n31'+j[4:6]
-                                result_image_on[i]['32']=image_list['n32'+j[4:6]];result_image_tag[i]['32']='n32'+j[4:6]
-                                result_image_on[i]['33']=image_list['n33'+j[4:6]];result_image_tag[i]['33']='n33'+j[4:6]
-                            elif int(j[4:6])<15:
-                                result_image_on[i]['21']=image_list['n21'+j[4:6]];result_image_tag[i]['21']='n21'+j[4:6]
-                                result_image_on[i]['22']=image_list['n22'+j[4:6]];result_image_tag[i]['22']='n22'+j[4:6]
-                                result_image_on[i]['23']=image_list['n23'+j[4:6]];result_image_tag[i]['23']='n23'+j[4:6]
-                for j in rank0_setting[i]:
-                    for k in know_set_list:
-                        if j==k:
-                            if int(j[4:6])<12 and int(j[4:6])!=6:
-                                result0_image_on[i]['11']=image_list['n11'+j[4:6]];result0_image_tag[i]['11']='n11'+j[4:6]
-                                result0_image_on[i]['12']=image_list['n12'+j[4:6]];result0_image_tag[i]['12']='n12'+j[4:6]
-                                result0_image_on[i]['13']=image_list['n13'+j[4:6]];result0_image_tag[i]['13']='n13'+j[4:6]
-                                result0_image_on[i]['14']=image_list['n14'+j[4:6]];result0_image_tag[i]['14']='n14'+j[4:6]
-                                result0_image_on[i]['15']=image_list['n15'+j[4:6]];result0_image_tag[i]['15']='n15'+j[4:6]
-                            elif int(j[4:6])==6:
-                                result0_image_on[i]['31']=image_list['n31'+j[4:6]];result0_image_tag[i]['31']='n31'+j[4:6]
-                                result0_image_on[i]['32']=image_list['n32'+j[4:6]];result0_image_tag[i]['32']='n32'+j[4:6]
-                                result0_image_on[i]['33']=image_list['n33'+j[4:6]];result0_image_tag[i]['33']='n33'+j[4:6]
-                            elif int(j[4:6])<15:
-                                result0_image_on[i]['21']=image_list['n21'+j[4:6]];result0_image_tag[i]['21']='n21'+j[4:6]
-                                result0_image_on[i]['22']=image_list['n22'+j[4:6]];result0_image_tag[i]['22']='n22'+j[4:6]
-                                result0_image_on[i]['23']=image_list['n23'+j[4:6]];result0_image_tag[i]['23']='n23'+j[4:6]
-            except:
-                pass
         # 0추스탯 1추공 2증 3크 4추
         # 6모 7공 8스탯 9속강 10지속 11스증 12특수
         # 13공속 14크확 / 15 특수액티브 / 16~19 패시브 /20 그로기포함/21 2각캐특수액티브 /22~27 액티브레벨링
@@ -2168,7 +2322,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
             except:
                 pass
 
-        res_wep=canvas_res.create_text(12,22,text=rank_wep_name[0],font=guide_font,fill='white',anchor='w')
+        res_wep=canvas_res.create_text(50,22,text=rank_wep_name[0],font=guide_font,fill='white',anchor='w')
         if int(ele_skill) != 0:
             ele_change_toggle=1
             res_ele=canvas_res.create_text(122,149,text="자속강X="+str(rank_dam_noele[0])+"%",fill='white',font=small_font)
@@ -2178,6 +2332,7 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
         res_stat3=canvas_res.create_text(145+24,361,text=rank_stat3[0],fill='white')
         res_inv=canvas_res.create_text(122,174,text=rank_inv[0],font=guide_font,fill='white')
 
+        res_wep_tag=canvas_res.create_image(27,23,image=rank_wep_img[0])
         res_img11=canvas_res.create_image(57,57,image=result_image_on[0]['11'])
         res_img12=canvas_res.create_image(27,87,image=result_image_on[0]['12'])
         res_img13=canvas_res.create_image(27,57,image=result_image_on[0]['13'])
@@ -2507,17 +2662,11 @@ def show_result(rank_list,job_type,ele_skill,cool_eff):
     if length>4:
         res_bt5.place(x=486,y=20+78*4)
     
-    show_tag_but=tkinter.Button(result_window,command=lambda:show_set_name(job_type),image=show_tag_img,bg=dark_sub,borderwidth=0,activebackground=dark_sub)
-    show_tag_but.place(x=173,y=158-26)
-    show_tag_but.image=show_tag_img
-    
     capture_but=tkinter.Button(result_window,command=lambda:capture_screen(result_window),image=capture_img,bg=dark_sub,borderwidth=0,activebackground=dark_sub)
     capture_but.place(x=173-164,y=158-26)
     capture_but.image=capture_img
     canvas_res.image=result_bg,random_npc_img
     res_bt1.image=show_detail_img
-
-    res_wep_tag=canvas_res.create_image(0,0,image=result_wep_tag,anchor="nw")
 
     global result_first_run
     result_first_run=0
@@ -2545,7 +2694,6 @@ def show_result_dealer():
     global rank1_list,rank0_list
     global rank_for_calc_eff,rank0_for_calc_eff
     global rank_custom_text, rank0_custom_text
-    global isTest
     set_list=[]
     cool_list=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ##최종값
     cool_list1=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ##쿨감
@@ -2591,10 +2739,7 @@ def show_result_dealer():
     penalty_score=0;bonus_score=0;utility_score=0
 
     for now_equ in now_list_list:
-        if isTest==0:
-            now_equ_opt=opt_leveling.get(now_equ)
-        else:
-            now_equ_opt=opt_leveling_test.get(now_equ)
+        now_equ_opt=opt_leveling.get(now_equ)
         for i in range(0,18):
             penalty_score+=now_equ_opt[54]
             bonus_score+=now_equ_opt[55]
@@ -2764,8 +2909,8 @@ def show_result_dealer():
         eff_equ_name=eff_setbox.create_text(80,13,text="",font=small_font,anchor='c')
         eff_set_name=eff_setbox.create_text(80,28,text="",font=small_font,anchor='c',fill='green3')
         eff_image=eff_setbox.create_image(30,66,image=img_equ_none,anchor='c')
-        eff_guide=eff_setbox.create_text(106,55,text="옵션 변환",font=small_font,anchor='c')
-        eff_value=eff_setbox.create_text(106,73,text="",font=guide_font,anchor='c')
+        eff_guide=eff_setbox.create_text(104,55,text="옵션 변환",font=small_font,anchor='c')
+        eff_value=eff_setbox.create_text(104,73,text="",font=guide_font,anchor='c')
     
     global res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43,res_wep_tag
     
@@ -2816,7 +2961,7 @@ def show_result_dealer():
                 now_set_name="-"
 
             if code=="111":
-                eff_place_x=-3+15; eff_place_y=30;
+                eff_place_x=-3+15; eff_place_y=35;
                 part_str="무기"
                 eff_setbox.itemconfig(eff_value,text=now_custom_text[0])
             elif code=="11":
@@ -3025,7 +3170,7 @@ def change_groggy(ele_skill):
     threading.Timer(0.07, change_groggy2,args=(ele_skill,)).start()
     threading.Timer(0, time_delayy).start()
 def change_groggy2(ele_skill):
-    global res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43
+    global res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43, res_wep_tag
     global res_dam,res_stat,res_stat2,res_stat3,res_inv,res_cool_what,res_wep
     global tg_groggy,groggy,res_cool_what,cool_eff_text
     global stop_gif,stop_gif2,result_window
@@ -3082,6 +3227,7 @@ def change_groggy2(ele_skill):
     canvas_res.itemconfig(res_stat2,text=change_stat2[0])
     canvas_res.itemconfig(res_stat3,text=change_stat3[0])            
     canvas_res.itemconfig(res_inv,text=change_inv[0])
+    canvas_res.itemconfig(res_wep_tag,image=wep_img_changed[0])
     canvas_res.itemconfig(res_img11,image=image_changed[0]['11'])
     canvas_res.itemconfig(res_img12,image=image_changed[0]['12'])
     canvas_res.itemconfig(res_img13,image=image_changed[0]['13'])
@@ -3151,7 +3297,7 @@ def change_rank2(now,job_type,ele_skill):
         global rank0_stat,rank0_stat2,rank0_stat3,result0_image_on,rank0_dam_noele, rank0_inv
         global result0_image_gif, result0_image_gif_tg,result0_siroco_gif,result0_siroco_gif_tg
         global tg_groggy
-        global rank_wep_name,rank0_wep_name
+        global rank_wep_name,rank0_wep_name,res_wep_tag
         try:
             if tg_groggy==0:
                 image_changed=result_image_on[now]
@@ -3167,6 +3313,7 @@ def change_rank2(now,job_type,ele_skill):
                 siroco_gif_changed=result_siroco_gif
                 image_gif_changed_tg=result_image_gif_tg
                 siroco_gif_changed_tg=result_siroco_gif_tg
+                wep_img_changed=rank_wep_img
                 
                 
             elif tg_groggy==1:
@@ -3183,7 +3330,7 @@ def change_rank2(now,job_type,ele_skill):
                 siroco_gif_changed=result0_siroco_gif
                 image_gif_changed_tg=result0_image_gif_tg
                 siroco_gif_changed_tg=result0_siroco_gif_tg
-                
+                wep_img_changed=rank0_wep_img
                 
             
             canvas_res.itemconfig(res_dam,text=c_rank_dam[now])
@@ -3191,6 +3338,7 @@ def change_rank2(now,job_type,ele_skill):
             canvas_res.itemconfig(res_stat2,text=c_rank_stat2[now])
             canvas_res.itemconfig(res_stat3,text=c_rank_stat3[now])
             canvas_res.itemconfig(res_inv,text=c_rank_inv[now])
+            canvas_res.itemconfig(res_wep_tag,image=wep_img_changed[now])
             if ele_skill !=0:
                 canvas_res.itemconfig(res_ele,text="자속강X="+str(c_rank_dam_noele[now])+"%")
             show_result_dealer()
@@ -3266,93 +3414,6 @@ def change_rank2(now,job_type,ele_skill):
         result_window.after(0,play_gif,0,now,1,res_img42,siroco_gif_changed,0,1,1)
     if siroco_gif_changed_tg[now][2]==1:
         result_window.after(0,play_gif,0,now,2,res_img43,siroco_gif_changed,0,1,1)
-    
-## 에픽 이미지 세트옵션 보이기 전환
-def show_set_name(job_type):
-    global image_list,canvas_res,res_img11,res_img12,res_img13,res_img14,res_img15,res_img21,res_img22,res_img23,res_img31,res_img32,res_img33,res_img41,res_img42,res_img43, now_rank_num
-    global set_name_toggle, image_list_tag, result_image_on, result_image_tag,result0_image_tag, pause_gif, result_window
-    if job_type == "deal":
-        global result_image_tag
-        if tg_groggy==0:
-            temp_image_tag=result_image_tag
-        elif tg_groggy==1:
-            temp_image_tag=result0_image_tag
-        if set_name_toggle ==0:
-            set_name_toggle=1
-            pause_gif=1
-            canvas_res.itemconfig(res_img11,image=image_list_tag[temp_image_tag[now_rank_num]['11']])
-            canvas_res.itemconfig(res_img12,image=image_list_tag[temp_image_tag[now_rank_num]['12']])
-            canvas_res.itemconfig(res_img13,image=image_list_tag[temp_image_tag[now_rank_num]['13']])
-            canvas_res.itemconfig(res_img14,image=image_list_tag[temp_image_tag[now_rank_num]['14']])
-            canvas_res.itemconfig(res_img15,image=image_list_tag[temp_image_tag[now_rank_num]['15']])
-            canvas_res.itemconfig(res_img21,image=image_list_tag[temp_image_tag[now_rank_num]['21']])
-            canvas_res.itemconfig(res_img22,image=image_list_tag[temp_image_tag[now_rank_num]['22']])
-            canvas_res.itemconfig(res_img23,image=image_list_tag[temp_image_tag[now_rank_num]['23']])
-            canvas_res.itemconfig(res_img31,image=image_list_tag[temp_image_tag[now_rank_num]['31']])
-            canvas_res.itemconfig(res_img32,image=image_list_tag[temp_image_tag[now_rank_num]['32']])
-            canvas_res.itemconfig(res_img33,image=image_list_tag[temp_image_tag[now_rank_num]['33']])
-            canvas_res.itemconfig(res_img41,image=image_list_tag[temp_image_tag[now_rank_num]['41']])
-            canvas_res.itemconfig(res_img42,image=image_list_tag[temp_image_tag[now_rank_num]['42']])
-            canvas_res.itemconfig(res_img43,image=image_list_tag[temp_image_tag[now_rank_num]['43']])
-        elif set_name_toggle ==1:
-            set_name_toggle=0
-            pause_gif=0
-            canvas_res.itemconfig(res_img11,image=image_list[temp_image_tag[now_rank_num]['11']])
-            canvas_res.itemconfig(res_img12,image=image_list[temp_image_tag[now_rank_num]['12']])
-            canvas_res.itemconfig(res_img13,image=image_list[temp_image_tag[now_rank_num]['13']])
-            canvas_res.itemconfig(res_img14,image=image_list[temp_image_tag[now_rank_num]['14']])
-            canvas_res.itemconfig(res_img15,image=image_list[temp_image_tag[now_rank_num]['15']])
-            canvas_res.itemconfig(res_img21,image=image_list[temp_image_tag[now_rank_num]['21']])
-            canvas_res.itemconfig(res_img22,image=image_list[temp_image_tag[now_rank_num]['22']])
-            canvas_res.itemconfig(res_img23,image=image_list[temp_image_tag[now_rank_num]['23']])
-            canvas_res.itemconfig(res_img31,image=image_list[temp_image_tag[now_rank_num]['31']])
-            canvas_res.itemconfig(res_img32,image=image_list[temp_image_tag[now_rank_num]['32']])
-            canvas_res.itemconfig(res_img33,image=image_list[temp_image_tag[now_rank_num]['33']])
-            canvas_res.itemconfig(res_img41,image=image_list[temp_image_tag[now_rank_num]['41']])
-            canvas_res.itemconfig(res_img42,image=image_list[temp_image_tag[now_rank_num]['42']])
-            canvas_res.itemconfig(res_img43,image=image_list[temp_image_tag[now_rank_num]['43']])
-    elif job_type == "buf":
-        global result_image_on1_tag,result_image_on2_tag,result_image_on3_tag, rank_type_buf
-        if rank_type_buf==1:
-            temp_image_tag=result_image_on1_tag
-        elif rank_type_buf==2:
-            temp_image_tag=result_image_on2_tag
-        elif rank_type_buf==3:
-            temp_image_tag=result_image_on3_tag
-        if set_name_toggle ==0:
-            set_name_toggle=1
-            pause_gif=1
-            canvas_res.itemconfig(res_img11,image=image_list_tag[temp_image_tag[now_rank_num]['11']])
-            canvas_res.itemconfig(res_img12,image=image_list_tag[temp_image_tag[now_rank_num]['12']])
-            canvas_res.itemconfig(res_img13,image=image_list_tag[temp_image_tag[now_rank_num]['13']])
-            canvas_res.itemconfig(res_img14,image=image_list_tag[temp_image_tag[now_rank_num]['14']])
-            canvas_res.itemconfig(res_img15,image=image_list_tag[temp_image_tag[now_rank_num]['15']])
-            canvas_res.itemconfig(res_img21,image=image_list_tag[temp_image_tag[now_rank_num]['21']])
-            canvas_res.itemconfig(res_img22,image=image_list_tag[temp_image_tag[now_rank_num]['22']])
-            canvas_res.itemconfig(res_img23,image=image_list_tag[temp_image_tag[now_rank_num]['23']])
-            canvas_res.itemconfig(res_img31,image=image_list_tag[temp_image_tag[now_rank_num]['31']])
-            canvas_res.itemconfig(res_img32,image=image_list_tag[temp_image_tag[now_rank_num]['32']])
-            canvas_res.itemconfig(res_img33,image=image_list_tag[temp_image_tag[now_rank_num]['33']])
-            canvas_res.itemconfig(res_img41,image=image_list_tag[temp_image_tag[now_rank_num]['41']])
-            canvas_res.itemconfig(res_img42,image=image_list_tag[temp_image_tag[now_rank_num]['42']])
-            canvas_res.itemconfig(res_img43,image=image_list_tag[temp_image_tag[now_rank_num]['43']])
-        elif set_name_toggle ==1:
-            set_name_toggle=0
-            pause_gif=0
-            canvas_res.itemconfig(res_img11,image=image_list[temp_image_tag[now_rank_num]['11']])
-            canvas_res.itemconfig(res_img12,image=image_list[temp_image_tag[now_rank_num]['12']])
-            canvas_res.itemconfig(res_img13,image=image_list[temp_image_tag[now_rank_num]['13']])
-            canvas_res.itemconfig(res_img14,image=image_list[temp_image_tag[now_rank_num]['14']])
-            canvas_res.itemconfig(res_img15,image=image_list[temp_image_tag[now_rank_num]['15']])
-            canvas_res.itemconfig(res_img21,image=image_list[temp_image_tag[now_rank_num]['21']])
-            canvas_res.itemconfig(res_img22,image=image_list[temp_image_tag[now_rank_num]['22']])
-            canvas_res.itemconfig(res_img23,image=image_list[temp_image_tag[now_rank_num]['23']])
-            canvas_res.itemconfig(res_img31,image=image_list[temp_image_tag[now_rank_num]['31']])
-            canvas_res.itemconfig(res_img32,image=image_list[temp_image_tag[now_rank_num]['32']])
-            canvas_res.itemconfig(res_img33,image=image_list[temp_image_tag[now_rank_num]['33']])
-            canvas_res.itemconfig(res_img41,image=image_list[temp_image_tag[now_rank_num]['41']])
-            canvas_res.itemconfig(res_img42,image=image_list[temp_image_tag[now_rank_num]['42']])
-            canvas_res.itemconfig(res_img43,image=image_list[temp_image_tag[now_rank_num]['43']])
 
 
 ## 버퍼용 축복/1각/종합 버프력 전환
@@ -3629,68 +3690,53 @@ def costum(auto):
 def save_custom(ele_type,cool_con,cus1,cus2,cus3,cus4,cus6,cus7,cus8,cus9,cus10,cus11,cus12,c_stat,b_stat,b_style_lvl,c_style_lvl,b_plt,b_cri,ele1,ele2,ele3,ele4,ele5,ele6,aria_up,cool_con2):
     try:
         load_excel3=load_workbook("DATA.xlsx")
-        load_excel3_test=load_workbook("DATA_test.xlsx")
         load_preset1=load_workbook("preset.xlsx")
         db_custom1=load_preset1["custom"]
         db_save_one=load_excel3["one"]
-        db_save_one_test=load_excel3_test["one"]
         
         db_custom1['B1']=ele_type
         if ele_type == '화':
             db_save_one['L181']=0;db_save_one['L165']=0;db_save_one['L149']=24;db_save_one['L129']=0
             db_save_one['L429']=0;db_save_one['L430']=0;db_save_one['L431']=20;db_save_one['L433']=0
-            db_save_one_test['L181']=0;db_save_one_test['L165']=0;db_save_one_test['L149']=24;db_save_one_test['L129']=0
-            db_save_one_test['L429']=0;db_save_one_test['L430']=0;db_save_one_test['L431']=20;db_save_one_test['L433']=0
         elif ele_type == '수':
             db_save_one['L181']=0;db_save_one['L165']=24;db_save_one['L149']=0;db_save_one['L129']=0
             db_save_one['L429']=20;db_save_one['L430']=0;db_save_one['L431']=0;db_save_one['L433']=0
-            db_save_one_test['L181']=0;db_save_one_test['L165']=24;db_save_one_test['L149']=0;db_save_one_test['L129']=0
-            db_save_one_test['L429']=20;db_save_one_test['L430']=0;db_save_one_test['L431']=0;db_save_one_test['L433']=0
         elif ele_type == '명':
             db_save_one['L181']=24;db_save_one['L165']=0;db_save_one['L149']=0;db_save_one['L129']=0
             db_save_one['L429']=0;db_save_one['L430']=20;db_save_one['L431']=0;db_save_one['L433']=0
-            db_save_one_test['L181']=24;db_save_one_test['L165']=0;db_save_one_test['L149']=0;db_save_one_test['L129']=0
-            db_save_one_test['L429']=0;db_save_one_test['L430']=20;db_save_one_test['L431']=0;db_save_one_test['L433']=0
         elif ele_type == '암':
             db_save_one['L181']=0;db_save_one['L165']=0;db_save_one['L149']=0;db_save_one['L129']=24
             db_save_one['L429']=0;db_save_one['L430']=0;db_save_one['L431']=0;db_save_one['L433']=20
-            db_save_one_test['L181']=0;db_save_one_test['L165']=0;db_save_one_test['L149']=0;db_save_one_test['L129']=24
-            db_save_one_test['L429']=0;db_save_one_test['L430']=0;db_save_one_test['L431']=0;db_save_one_test['L433']=20
         
         db_custom1['B3']=float(cus1);
-        db_save_one['O164']=float(cus1);db_save_one_test['O164']=float(cus1);
+        db_save_one['O164']=float(cus1);
         db_custom1['B4']=float(cus2);
-        db_save_one['O180']=float(cus2);db_save_one_test['O180']=float(cus2);
+        db_save_one['O180']=float(cus2);
         db_custom1['B5']=float(cus6);
         db_save_one['O100']=float(cus6);db_save_one['O101']=float(cus6);
-        db_save_one_test['O100']=float(cus6);db_save_one_test['O101']=float(cus6);
         db_custom1['B6']=float(cus7);
-        db_save_one['O127']=float(cus7);db_save_one_test['O127']=float(cus7);
+        db_save_one['O127']=float(cus7);
         db_custom1['B7']=float(cus8);
-        db_save_one['O147']=float(cus8);db_save_one_test['O147']=float(cus8);
+        db_save_one['O147']=float(cus8);
         db_custom1['B8']=float(cus9);
-        db_save_one['O163']=float(cus9);db_save_one_test['O163']=float(cus9);
+        db_save_one['O163']=float(cus9);
         db_custom1['B9']=float(cus10);
-        db_save_one['O179']=float(cus10);db_save_one_test['O179']=float(cus10);
+        db_save_one['O179']=float(cus10);
         db_custom1['B10']=float(cus11);
-        db_save_one['O295']=float(cus11);db_save_one_test['O295']=float(cus11);
+        db_save_one['O295']=float(cus11);
         db_custom1['B11']=float(cus12);
         db_save_one['O296']=float(cus12);db_save_one['O297']=float(cus12);
-        db_save_one_test['O296']=float(cus12);db_save_one_test['O297']=float(cus12);
         db_custom1['B12']=cus3
         db_custom1['B2']=cool_con
         db_custom1['B20']=cool_con2
         if cus3=='전설↓':
-            db_save_one['J86']=34;db_save_one['F120']=34;db_save_one['N140']=34;db_save_one['L156']=68;db_save_one['K172']=34;db_save_one['G276']=40;
-            db_save_one_test['J86']=34;db_save_one_test['F120']=34;db_save_one_test['N140']=34;db_save_one_test['L156']=68;db_save_one_test['K172']=34;db_save_one_test['G276']=40;
-            db_save_one_test['BB120']=34
+            db_save_one['J86']=34;db_save_one['F120']=34;db_save_one['N140']=34;db_save_one['L156']=68;db_save_one['K172']=34;db_save_one['G276']=28;
+            db_save_one['BB120']=34
         else:
-            db_save_one['J86']=35;db_save_one['F120']=35;db_save_one['N140']=35;db_save_one['L156']=72;db_save_one['K172']=35;db_save_one['G276']=41;
-            db_save_one_test['J86']=35;db_save_one_test['F120']=35;db_save_one_test['N140']=35;db_save_one_test['L156']=72;db_save_one_test['K172']=35;db_save_one_test['G276']=41;
-            db_save_one_test['BB120']=35
+            db_save_one['J86']=35;db_save_one['F120']=35;db_save_one['N140']=35;db_save_one['L156']=72;db_save_one['K172']=35;db_save_one['G276']=29;
+            db_save_one['BB120']=35
         db_custom1['B13']=cus4
-        db_save_one['N189']=int(cus4)+4;db_save_one['N190']=int(cus4)+4;db_save_one['K205']=int(cus4)+4;db_save_one['E214']=int(cus4)+4
-        db_save_one_test['N189']=int(cus4)+5;db_save_one_test['N190']=int(cus4)+5;db_save_one_test['K205']=int(cus4)+5;db_save_one_test['E214']=int(cus4)+5
+        db_save_one['N189']=int(cus4)+5;db_save_one['N190']=int(cus4)+5;db_save_one['K205']=int(cus4)+5;db_save_one['E214']=int(cus4)+5
 
         db_custom1['H1']=c_stat
         db_custom1['H6']=b_stat
@@ -3711,8 +3757,6 @@ def save_custom(ele_type,cool_con,cus1,cus2,cus3,cus4,cus6,cus7,cus8,cus9,cus10,
         load_preset1.close()
         load_excel3.save("DATA.xlsx")
         load_excel3.close()
-        load_excel3_test.save("DATA_test.xlsx")
-        load_excel3_test.close()
         custom_window.destroy()
         global auto_saved
         if auto_saved!=1:
@@ -3766,7 +3810,7 @@ def load_checklist():
             check_set(i)
         def load_inv():
             if inv_select3_1.get()=="축스탯%/1각":
-                inv_select3_2['values']=['3%/60(상)','3%/40(중)','3%/20(하)']
+                inv_select3_2['values']=['3%/60(상)','3%/50(중)','3%/40(하)']
             elif inv_select3_1.get()=="축스탯%/1각%":
                 inv_select3_2['values']=['4%/3%(상)','3%/3%(중)','2%/3%(하)']
             elif inv_select3_1.get()=="축앞뎀%/1각":
@@ -4237,10 +4281,6 @@ def show_timeline(name,server):
 
 ## 선택한 모든 장비 체크 초기화
 def reset():
-    know_list2=['13390150','22390240','23390450','33390750','21390340','31390540','32390650',
-                '11390850','12390950','13391050','14391150','15391250']
-    know_set_list=['22400150','22400250','22400350','22400450','22400550','21400640','31400750',
-                   '31400850','31400950','31401050','31401150','32401240','32401340','32401440']
     know_jin_list=['11410100','11410110','11410120','11410130','11410140','11410150',
                    '21420100','21420110','21420120','21420130','21420140','21420150',
                    '33430100','33430110','33430120','33430130','33430140','33430150']
@@ -4258,7 +4298,7 @@ def reset():
                 select_item['tg{}1'.format(i)]=0
             except KeyError as error:
                 passss=1
-    for i in know_list2+know_set_list+know_jin_list:
+    for i in calc_setlist.know_list+know_jin_list:
         select_item['tg{}'.format(i)]=0
     check_equipment()
     wep_list_reset()
@@ -4285,18 +4325,29 @@ def click_equipment(code):
 
 ## 실제 저장 토글값과 이미지 표시값 동기화
 def check_equipment():
-    global select_item,select_13390150,select_22390240,select_23390450,select_33390750,select_21390340,select_31390540,select_32390650
+    global select_11390850,select_11390860,select_11390870
+    global select_12390950,select_12390960,select_12390970
+    global select_13391050,select_13391060,select_13391070
+    global select_13390150,select_13390160,select_13390170
+    global select_14391150,select_14391160,select_14391170
+    global select_15391250,select_15391260,select_15391270
+    global select_21391340,select_21391350,select_21391360,select_21391370
+    global select_22391440,select_22391450,select_22391460,select_22391470
+    global select_23391540,select_23391550,select_23391560,select_23391570
+    global select_31391640,select_31391650,select_31391660,select_31391670
+    global select_32391740,select_32391750,select_32391760,select_32391770
+    global select_33391840,select_33391850,select_33391860,select_33391870
+    global select_21390340,select_21390350,select_21390360,select_21390370
+    global select_22390240,select_22390250,select_22390260,select_22390270
+    global select_23390450,select_23390460,select_23390470
+    global select_31390540,select_31390550,select_31390560,select_31390570
+    global select_32390650,select_32390660,select_32390670
+    global select_33390750,select_33390760,select_33390770
     global select_22400150,select_22400250,select_22400350,select_22400450,select_22400550,select_21400640,select_31400750
     global select_31400850,select_31400950,select_31401050,select_31401150,select_32401240,select_32401340,select_32401440
     global select_11410100,select_11410110,select_11410120,select_11410130,select_11410140,select_11410150
     global select_21420100,select_21420110,select_21420120,select_21420130,select_21420140,select_21420150
     global select_33430100,select_33430110,select_33430120,select_33430130,select_33430140,select_33430150
-    global select_11390850,select_12390950,select_13391050,select_14391150,select_15391250
-
-    know_list2=['13390150','22390240','23390450','33390750','21390340','31390540','32390650',
-                '11390850','12390950','13391050','14391150','15391250']
-    know_set_list=['22400150','22400250','22400350','22400450','22400550','21400640','31400750',
-                   '31400850','31400950','31401050','31401150','32401240','32401340','32401440']
     know_jin_list=['11410100','11410110','11410120','11410130','11410140','11410150',
                    '21420100','21420110','21420120','21420130','21420140','21420150',
                    '33430100','33430110','33430120','33430130','33430140','33430150']
@@ -4308,7 +4359,7 @@ def check_equipment():
                 eval('select_{}'.format(i))['image']=image_list[str(i)]
         except:
             pass
-    for i in know_list2+know_set_list+know_jin_list:
+    for i in calc_setlist.know_list+know_jin_list:
         try:
             if eval("select_item['tg{}']".format(i))==0:
                 eval('select_{}'.format(i))['image']=image_list2[str(i)]
@@ -4474,232 +4525,7 @@ def stop_calc():
 
 
 
-
-
-
-
-
-
-
-
-
-## 딜러 프로필 보기 기능
-def show_profile2(name,server):
-    try:
-        def_result=calc_profile.make_profile(name,server)
-    except:
-        tkinter.messagebox.showerror('에러',"API조회 에러(네트워크 오류)")
-        return
-    if def_result=={'error':'Not found'}:
-        tkinter.messagebox.showerror('에러',"서버/캐릭명을 확인하세요.")
-        return
-    if def_result=={'error':'buffer'}:
-        tkinter.messagebox.showerror('에러',"버퍼는 지원하지 않습니다.")
-        return
-    setting_str=def_result[0]
-    setting_dict=def_result[1]
-
-    profile_window=tkinter.Toplevel(self)
-    profile_window.geometry("415x277")
-    profile_window.resizable(False,False)
-    canvas = Canvas(profile_window, width=417, height=297, bd=0)
-    canvas.place(x=-2,y=-2)
-    cha_bg=tkinter.PhotoImage(file='ext_img/bg_info.png')
-    canvas.create_image(0,0,image=cha_bg,anchor='nw')
-    cha_img=tkinter.PhotoImage(file='my_cha.png')
-    canvas.create_image(123,70,image=cha_img)
-    image_on={}
-    def play_gif_cha(count_frame,now_pc,show_res,gif_list):
-        #now_pc:0(상의,하의),1(팔찌,반지),2(귀걸,보장)
-        #show_res:이미지 재생될 canvas 객체
-        now_frame=gif_list[now_pc][int(count_frame)]
-        count_frame += 1
-        canvas.itemconfig(show_res,image=now_frame)
-        if count_frame >=len(gif_list[now_pc]):
-            profile_window.after(100, play_gif_cha, 0,now_pc,show_res,gif_list)
-        else:
-            profile_window.after(100, play_gif_cha, count_frame,now_pc,show_res,gif_list)
-    global image_list
-    cha_god_gif=[None,None,None]
-    for i in [11,12,13,14,15,21,22,23,31,32,33]:
-        for j in setting_dict['장비']:
-            if len(j)!=6:
-                if j[0:2] == str(i):
-                    image_on[str(i)]=image_list[j]
-                if len(j)==5 and j[4]=='1':
-                    cha_god_gif[int(j[0])-1]=calc_gif.img_gif(j,0)
-    cha_siroco_gif=[None,None,None]
-    for i in setting_dict['장비']:
-        if len(i)==4 and i[0]=='4':
-            image_on['41']=image_list['415'+i[1]+'0']
-            image_on['42']=image_list['425'+i[2]+'0']
-            image_on['43']=image_list['435'+i[3]+'0']
-            if i[1]!='0':
-                cha_siroco_gif[0]=calc_gif.img_gif('415'+i[1]+'0',1)
-            if i[2]!='0':
-                cha_siroco_gif[1]=calc_gif.img_gif('425'+i[2]+'0',1)
-            if i[3]!='0':
-                cha_siroco_gif[2]=calc_gif.img_gif('435'+i[3]+'0',1)
-    img11=canvas.create_image(57,52,image=image_on['11'])
-    img12=canvas.create_image(27,82,image=image_on['12'])
-    img13=canvas.create_image(27,52,image=image_on['13'])
-    img14=canvas.create_image(57,82,image=image_on['14'])
-    img15=canvas.create_image(27,112,image=image_on['15'])
-    img21=canvas.create_image(189,52,image=image_on['21'])
-    img22=canvas.create_image(219,52,image=image_on['22'])
-    img23=canvas.create_image(219,82,image=image_on['23'])
-    img31=canvas.create_image(189,82,image=image_on['31'])
-    img32=canvas.create_image(219,112,image=image_on['32'])
-    img33=canvas.create_image(189,112,image=image_on['33'])
-    img41=canvas.create_image(27,82,image=image_on['41'])
-    img42=canvas.create_image(219,82,image=image_on['42'])
-    img43=canvas.create_image(189,82,image=image_on['43'])
-    for i in range(0,3):
-        if i==0: show_res1=img11;show_res2=img41
-        elif i==1: show_res1=img21;show_res2=img42
-        elif i==2: show_res1=img33;show_res2=img43
-        if cha_god_gif[i]!=None: play_gif_cha(0,i,show_res1,cha_god_gif)
-        if cha_siroco_gif[i]!=None: play_gif_cha(0,i,show_res2,cha_siroco_gif)
-    
-
-    canvas.create_text(233,17,text=setting_dict['무기명'],font=guide_font,fill='white',anchor='e')
-    canvas.create_text(10,170,text=setting_dict['캐릭명'],fill='white',anchor='w')
-    canvas.create_text(10,185,text=setting_dict['직업명'],fill='white',anchor='w')
-    canvas.create_text(233,170,text=setting_dict['모험단'],fill='white',anchor='e')
-    canvas.create_text(233,185,text=server,fill='white',anchor='e')
-    
-    show_font=tkinter.font.Font(family="맑은 고딕", size=15, weight='bold')
-
-    if float(setting_dict['종합점수'][:-1]) >=110: rank_color='gold2'
-    elif float(setting_dict['종합점수'][:-1]) >=100: rank_color='deep sky blue'
-    elif float(setting_dict['종합점수'][:-1]) >=80: rank_color='white'
-    else: rank_color='silver'
-        
-    
-    canvas.create_text(18,217,text='장비%=',font=show_font,fill='white',anchor='w')
-    canvas.create_text(18+73,217,text=setting_dict['장비딜'],font=show_font,fill='white',anchor='w')
-    canvas.create_text(20+189,220,text='쿨감기대값\n='+setting_dict['쿨감'],font=small_font,fill='white', anchor='c')
-    canvas.create_text(18,252,text='세팅%=',font=show_font,fill='white',anchor='w')
-    canvas.create_text(18+73,252,text=setting_dict['종합점수'],font=show_font,fill=rank_color,anchor='w')
-
-    canvas.create_text(254,22,text='강화/스탯\n',font=guide_font,fill='white',anchor='w')
-    canvas.create_text(254,6+25,text=setting_dict['스탯'],font=mid_font,fill='white',anchor='w')
-    canvas.create_text(254+83,14,text='무기='+setting_dict['무기강화'],font=guide_font,fill='white',anchor='w')
-    canvas.create_text(254+83,33,text='스탯='+setting_dict['스탯상세'],font=guide_font,fill='white',anchor='w')
-    
-    canvas.create_text(254,22+50,text='속강작\n',font=guide_font,fill='white',anchor='w')
-    canvas.create_text(254,6+75,text=setting_dict['속강'],font=mid_font,fill='white',anchor='w')
-    if setting_dict['속강종류']=='화': ele_type='火'; ele_color='red'
-    elif setting_dict['속강종류']=='수': ele_type='水'; ele_color='blue'
-    elif setting_dict['속강종류']=='명': ele_type='明'; ele_color='yellow'
-    elif setting_dict['속강종류']=='암': ele_type='暗'; ele_color='purple'
-    elif setting_dict['속강종류']=='모': ele_type='某'; ele_color='white'
-    canvas.create_text(254+83,22+50,text=ele_type,font=mid_font,fill=ele_color,anchor='w')
-    canvas.create_text(254+83+23,22+50,text='+'+setting_dict['속강상세'],font=mid_font,fill='white',anchor='w')
-    
-    canvas.create_text(254,22+100,text='딜플티\n',font=guide_font,fill='white',anchor='w')
-    canvas.create_text(254,6+125,text=setting_dict['플티'],font=mid_font,fill='white',anchor='w')
-    plt_img=[0,0]
-    for i in [0,1]:
-        if setting_dict['플티상세'][i]=='S': plt_img[i]=tkinter.PhotoImage(file='ext_img/plt_best.png')
-        elif setting_dict['플티상세'][i]=='A': plt_img[i]=tkinter.PhotoImage(file='ext_img/plt_good.png')
-        elif setting_dict['플티상세'][i]=='B': plt_img[i]=tkinter.PhotoImage(file='ext_img/plt_active.png')
-        elif setting_dict['플티상세'][i]=='C': plt_img[i]=tkinter.PhotoImage(file='ext_img/plt_common.png')
-        else: plt_img[i]=tkinter.PhotoImage(file='ext_img/plt_nope.png')
-    img_plt1=canvas.create_image(350,124,image=plt_img[0]);img_plt2=canvas.create_image(390,124,image=plt_img[1])
-    
-    canvas.create_text(254,22+150,text='룬/탈리\n',font=guide_font,fill='white',anchor='w')
-    canvas.create_text(254,6+175,text=setting_dict['탈리'],font=mid_font,fill='white',anchor='w')
-    tal_img=[0,0]
-    for i in [0,1]:
-        if setting_dict['탈리상세'][i]=='S': tal_img[i]=tkinter.PhotoImage(file='ext_img/talisman_unique.png')
-        elif setting_dict['탈리상세'][i]=='A': tal_img[i]=tkinter.PhotoImage(file='ext_img/talisman_rare.png')
-        elif setting_dict['탈리상세'][i]=='B': tal_img[i]=tkinter.PhotoImage(file='ext_img/talisman_common.png')
-        else: tal_img[i]=tkinter.PhotoImage(file='ext_img/talisman_nope.png')
-    img_tal1=canvas.create_image(350,170,image=tal_img[0]);img_tal2=canvas.create_image(390,170,image=tal_img[1])
-    rune_img=[0,0,0,0,0,0]
-    for i in range(0,6):
-        if i>=3: shift=8
-        else: shift=0
-        if setting_dict['룬상세'][i]=='S': rune_color='purple'
-        elif setting_dict['룬상세'][i]=='A': rune_color='deep sky blue'
-        elif setting_dict['룬상세'][i]=='B': rune_color='silver'
-        else: rune_color='black'
-        rune_img[i]=canvas.create_rectangle(336+i*11+shift,184,336+6+i*11+shift,184+7,fill=rune_color,width=0)
-    
-    canvas.create_text(254,22+200,text='스위칭\n',font=guide_font,fill='white',anchor='w')
-    canvas.create_text(254,6+225,text=setting_dict['스위칭'],font=mid_font,fill='white',anchor='w')
-    canvas.create_text(254+83,22+191,text=setting_dict['스위칭상세'],font=guide_font,fill='white',anchor='w')
-    canvas.create_text(254+83+30,22+210,text=setting_dict['스위칭최대'],font=guide_font,fill='white',anchor='w')
-
-
-    capture_img=tkinter.PhotoImage(file='ext_img/capture_img.png')
-    capture_but=tkinter.Button(profile_window,command=lambda:calc_profile.make_profile_image(name,server,def_result),image=capture_img,bg=dark_sub,borderwidth=0,activebackground=dark_sub,anchor='nw')
-    capture_but.place(x=378,y=248)
-    def profile_detail():
-        tkinter.messagebox.showinfo('세부보기',setting_str,parent=profile_window)
-    show_detail_img=tkinter.PhotoImage(file='ext_img/show_detail2.png')
-    show_detail=tkinter.Button(profile_window,command=profile_detail,image=show_detail_img,bg=dark_sub,borderwidth=0,activebackground=dark_sub,anchor='nw')
-    show_detail.place(x=179,y=239)
-
-    canvas.create_text(255,262,text='[ESC키로 닫기 가능]',font=guide_font,fill='white',anchor='w')
-    
-    capture_but.image=capture_img
-    show_detail.image=show_detail_img
-    canvas.image=cha_bg,cha_img,plt_img[0],plt_img[1],tal_img[0],tal_img[1]
-    place_center(profile_window,0)
-    def exit_p(e):
-        profile_window.destroy()
-    profile_window.focus_set()
-    profile_window.bind("<Escape>", exit_p)
-
-def show_profile(name,server):
-    threading.Thread(target=show_profile2,args=(name,server),daemon=True).start()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## GUI ############################################################################################################################
-know_list=['13390150','22390240','23390450','33390750','21390340','31390540','32390650',
-           '11390850','12390950','13391050','14391150','15391250']
-know_set_list=['22400150','22400250','22400350','22400450','22400550','21400640','31400750',
-               '31400850','31400950','31401050','31401150','32401240','32401340','32401440']
 know_jin_list=['11410100','11410110','11410120','11410130','11410140','11410150',
                '21420100','21420110','21420120','21420130','21420140','21420150',
                '33430100','33430110','33430120','33430130','33430140','33430150']
@@ -4763,46 +4589,61 @@ image_item_void=PhotoImage(file="ext_img/00000.png")
 ##         (노증극세팅이 100%)"""
 ##tkinter.Label(self,text=cha_caution_text,font=small_font,fg='white',bg=dark_sub,anchor='nw',justify='left').place(x=512,y=405)
 
-##테스트 모드 추가
-def tg_first_server():
-    if test_tg.get()==0:
-        select_custom_wep['state']='disable'
-        select_custom_12['state']='disable'
-        select_custom_23['state']='disable'
-        select_custom_31['state']='disable'
-    elif test_tg.get()==1:
-        select_custom_wep['state']='normal'
-        select_custom_12['state']='normal'
-        select_custom_23['state']='normal'
-        select_custom_31['state']='normal'
-tkinter.Label(self,font=mid_font,fg="white",bg=dark_sub, text="<퍼스트서버 모드>").place(x=321,y=401)
-test_tg=IntVar()
-select_test=tkinter.Checkbutton(self,variable=test_tg,bg=dark_sub,activebackground=dark_sub,bd=0, command=tg_first_server)
-select_test.place(x=302,y=437)
-tkinter.Label(self,text="12/25 중국 퍼스트서버 수치 반영",font=guide_font,fg='white',bg=dark_sub,bd=0).place(x=302+18,y=437+1)
-tkinter.Label(self,text="주의: 본 기능의 계산값은 예고 없이 수시로 변경될 수 있습니다.",font=guide_font,fg='white',
-              bg=dark_sub,bd=0).place(x=307,y=551-114+45)
-tkinter.Label(self,font=mid_font,fg="white",bg=dark_sub, text="<검은 연옥>").place(x=555,y=401)
-custom_wep_tg=IntVar()
-custom_12_tg=IntVar()
-custom_23_tg=IntVar()
-custom_31_tg=IntVar()
-select_custom_wep=tkinter.Checkbutton(self,variable=custom_wep_tg,bg=dark_sub,activebackground=dark_sub,bd=0)
-select_custom_wep.place(x=550,y=434)
-tkinter.Label(self,text="무기",font=guide_font,fg='white',bg=dark_sub,bd=0).place(x=550+18,y=434+1)
-select_custom_12=tkinter.Checkbutton(self,variable=custom_12_tg,bg=dark_sub,activebackground=dark_sub,bd=0)
-select_custom_12.place(x=550+70,y=434)
-tkinter.Label(self,text="하의",font=guide_font,fg='white',bg=dark_sub,bd=0).place(x=550+70+18,y=434+1)
-select_custom_23=tkinter.Checkbutton(self,variable=custom_23_tg,bg=dark_sub,activebackground=dark_sub,bd=0)
-select_custom_23.place(x=550,y=434+21)
-tkinter.Label(self,text="반지",font=guide_font,fg='white',bg=dark_sub,bd=0).place(x=550+18,y=434+21+1)
-select_custom_31=tkinter.Checkbutton(self,variable=custom_31_tg,bg=dark_sub,activebackground=dark_sub,bd=0)
-select_custom_31.place(x=550+70,y=434+21)
-tkinter.Label(self,text="보장",font=guide_font,fg='white',bg=dark_sub,bd=0).place(x=550+70+18,y=434+21+1)
-select_custom_wep['state']='disable'
-select_custom_12['state']='disable'
-select_custom_23['state']='disable'
-select_custom_31['state']='disable'
+##검은 연옥
+def update_pur(event):
+    global pur_tg
+    if pur_mode.get()=="미변환" or pur_mode.get()=="최적변환(버퍼X)":
+        if pur_mode.get()=="미변환":
+            pur_tg=0
+        elif pur_mode.get()=="최적변환(버퍼X)":
+            pur_tg=2
+        pur_select_wep['state']='disabled'
+        pur_select_1['state']='disabled'
+        pur_select_2['state']='disabled'
+        pur_select_3['state']='disabled'
+    elif pur_mode.get()=="선택변환":
+        pur_tg=1
+        pur_select_wep['state']='normal'
+        pur_select_1['state']='normal'
+        pur_select_2['state']='normal'
+        pur_select_3['state']='normal'
+pur_mode_list=["미변환","선택변환","최적변환(버퍼X)"]
+pur_mode=tkinter.ttk.Combobox(self,width=10,values=pur_mode_list)
+pur_mode.place(x=372,y=437); pur_mode.set("미변환")
+pur_mode.bind("<<ComboboxSelected>>",update_pur)
+
+pur_type_list_wep=["증뎀 / 축스탯% 1각+",
+                   "크증 / 축스탯% 1각%",
+                   "추뎀 / 축앞뎀% 1각+",
+                   "모공 / 축앞뎀% 1각%",
+                   "공% / 축스탯% 1각렙+1",
+                   "스탯 / 마을스탯+",
+                   "각성 2렙+증뎀(버퍼옵X)",
+                   "각성 2렙+크증(버퍼옵X)",
+                   "각성 2렙+추뎀(버퍼옵X)",
+                   "각성 2렙+모공(버퍼옵X)",
+                   "각성 2렙+공%(버퍼옵X)",
+                   "각성 2렙+스탯(버퍼옵X)"]
+pur_select_wep=tkinter.ttk.Combobox(self,width=18,values=pur_type_list_wep)
+pur_select_wep.place(x=525,y=404); pur_select_wep.set("증뎀 / 축스탯% 1각+")
+pur_type_list=["증뎀 / 축스탯% 1각+",
+                   "크증 / 축스탯% 1각%",
+                   "추뎀 / 축앞뎀% 1각+",
+                   "모공 / 축앞뎀% 1각%",
+                   "공% / 축렙+1 1각+",
+                   "스탯 / 마을스탯+"]
+pur_select_1=tkinter.ttk.Combobox(self,width=18,values=pur_type_list)
+pur_select_1.place(x=525,y=430); pur_select_1.set("증뎀 / 축스탯% 1각+")
+pur_select_2=tkinter.ttk.Combobox(self,width=18,values=pur_type_list)
+pur_select_2.place(x=525,y=456); pur_select_2.set("증뎀 / 축스탯% 1각+")
+pur_select_3=tkinter.ttk.Combobox(self,width=18,values=pur_type_list)
+pur_select_3.place(x=525,y=482); pur_select_3.set("증뎀 / 축스탯% 1각+")
+update_pur(0)
+tkinter.Label(self,text='최적변환 각성 강제 여부',font=small_font,fg="white",bg=dark_sub).place(x=317,y=462)
+pur_ult_force=tkinter.ttk.Combobox(self,values=['태생유지','각성강제','각성해제'],width=15)
+pur_ult_force.set('태생유지')
+pur_ult_force.place(x=322,y=482)
+
 
 select_perfect=tkinter.ttk.Combobox(self,values=['풀셋모드(매우빠름)','메타몽풀셋모드','단품제외(보통)','단품포함(느림)','세트필터↓(매우느림)'],width=15)
 select_perfect.place(x=145+605,y=11)
@@ -5019,7 +4860,7 @@ def update_inv(event):
 
 def update_inv_buf(event):
     if inv_select3_1.get()=="축스탯%/1각":
-        inv_select3_2['values']=['3%/60(상)','3%/40(중)','3%/20(하)']
+        inv_select3_2['values']=['3%/60(상)','3%/50(중)','3%/40(하)']
         inv_select3_2.set('3%/60(상)')
     elif inv_select3_1.get()=="축스탯%/1각%":
         inv_select3_2['values']=['4%/3%(상)','3%/3%(중)','2%/3%(하)']
@@ -5069,7 +4910,7 @@ inv_select2_2=tkinter.ttk.Combobox(self,width=3,values=inv_value_list2);inv_sele
 
 inv_type_list2=["축스탯%/1각","축스탯%/1각%","축앞뎀%/1각","축앞뎀%/1각%","전직패","축스탯%/1각+1"]
 inv_type_list2_1=["축스탯%/1각","축스탯%/1각%","축앞뎀%/1각","축앞뎀%/1각%","전직패","축+1/1각"]
-inv_value_list3=['3%/60(상)','3%/40(중)','3%/20(하)']
+inv_value_list3=['3%/60(상)','3%/50(중)','3%/40(하)']
 inv_value_list3_1=['3%/40(상)','3%/30(중)','3%/20(하)']
 inv_select3_1=tkinter.ttk.Combobox(self,width=12,values=inv_type_list2);inv_select3_1.place(x=785,y=385);inv_select3_1.set("축스탯%/1각")
 inv_select3_2=tkinter.ttk.Combobox(self,width=12,values=inv_value_list3);inv_select3_2.place(x=785,y=412);inv_select3_2.set('3%/60(상)')
@@ -5117,35 +4958,18 @@ select_43550.place(x=710+10+71+62,y=445+120+95)
 
 
 ##지혜의 산물
-know_set_list=['22400150','22400250','22400350','22400450','22400550','21400640','31400750',
-               '31400850','31400950','31401050','31401150','32401240','32401340','32401440']
 know_jin_list=['11410100','11410110','11410120','11410130','11410140','11410150',
                '21420100','21420110','21420120','21420130','21420140','21420150',
                '33430100','33430110','33430120','33430130','33430140','33430150']
-select_item['tg13390150']=0;select_item['tg22400150']=0;select_item['tg31400850']=0
-select_item['tg22390240']=0;select_item['tg22400250']=0;select_item['tg31400950']=0
-select_item['tg23390450']=0;select_item['tg22400350']=0;select_item['tg31401050']=0
-select_item['tg33390750']=0;select_item['tg22400450']=0;select_item['tg31401150']=0
-select_item['tg21390340']=0;select_item['tg22400550']=0;select_item['tg32401240']=0
-select_item['tg31390540']=0;select_item['tg21400640']=0;select_item['tg32401340']=0
-select_item['tg32390650']=0;select_item['tg31400750']=0;select_item['tg32401440']=0
-select_item['tg11390850']=0;select_item['tg12390950']=0;select_item['tg13391050']=0;
-select_item['tg14391150']=0;select_item['tg15391250']=0;
+for i in calc_setlist.know_list+know_jin_list:
+        select_item['tg'+i]=0
 
-select_item['tg11410100']=0;select_item['tg11410110']=0;select_item['tg11410120']=0
-select_item['tg11410130']=0;select_item['tg11410140']=0;select_item['tg11410150']=0
-select_item['tg21420100']=0;select_item['tg21420110']=0;select_item['tg21420120']=0
-select_item['tg21420130']=0;select_item['tg21420140']=0;select_item['tg21420150']=0
-select_item['tg33430100']=0;select_item['tg33430110']=0;select_item['tg33430120']=0
-select_item['tg33430130']=0;select_item['tg33430140']=0;select_item['tg33430150']=0
 def know_epic():
-    global select_item,select_13390150,select_22390240,select_23390450,select_33390750,select_21390340,select_31390540,select_32390650
     global select_22400150,select_22400250,select_22400350,select_22400450,select_22400550,select_21400640,select_31400750
     global select_31400850,select_31400950,select_31401050,select_31401150,select_32401240,select_32401340,select_32401440
     global select_11410100,select_11410110,select_11410120,select_11410130,select_11410140,select_11410150
     global select_21420100,select_21420110,select_21420120,select_21420130,select_21420140,select_21420150
     global select_33430100,select_33430110,select_33430120,select_33430130,select_33430140,select_33430150
-    global select_11390850,select_12390950,select_13391050,select_14391150,select_15391250
     global know_window
     try:
         know_window.destroy()
@@ -5157,123 +4981,202 @@ def know_epic():
     know_window.resizable(False, False)
     know_window.configure(bg=dark_main)
     know_image_list={}
-    for i in know_list+know_set_list+know_jin_list:
+    for i in calc_setlist.know_list+know_jin_list:
         if select_item['tg'+i]==0:
             know_image_list[i]=image_list2[i]
         else:
             know_image_list[i]=image_list[i]
-    select_13390150=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['13390150'],command=lambda:click_equipment(13390150))
-    select_13390150.place(x=303-290,y=20)
-    select_22390240=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['22390240'],command=lambda:click_equipment(22390240))
-    select_22390240.place(x=333-290,y=20)
-    select_23390450=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['23390450'],command=lambda:click_equipment(23390450))
-    select_23390450.place(x=363-290,y=20)
-    select_33390750=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['33390750'],command=lambda:click_equipment(33390750))
-    select_33390750.place(x=393-290,y=20)
-    select_21390340=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['21390340'],command=lambda:click_equipment(21390340))
-    select_21390340.place(x=424-290,y=20)
-    select_31390540=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['31390540'],command=lambda:click_equipment(31390540))
-    select_31390540.place(x=454-290,y=20)
-    select_32390650=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['32390650'],command=lambda:click_equipment(32390650))
-    select_32390650.place(x=484-290,y=20)
+    global select_11390850,select_11390860,select_11390870
+    global select_12390950,select_12390960,select_12390970
+    global select_13391050,select_13391060,select_13391070
+    global select_13390150,select_13390160,select_13390170
+    global select_14391150,select_14391160,select_14391170
+    global select_15391250,select_15391260,select_15391270
+    global select_21391340,select_21391350,select_21391360,select_21391370
+    global select_22391440,select_22391450,select_22391460,select_22391470
+    global select_23391540,select_23391550,select_23391560,select_23391570
+    global select_31391640,select_31391650,select_31391660,select_31391670
+    global select_32391740,select_32391750,select_32391760,select_32391770
+    global select_33391840,select_33391850,select_33391860,select_33391870
+    global select_21390340,select_21390350,select_21390360,select_21390370
+    global select_22390240,select_22390250,select_22390260,select_22390270
+    global select_23390450,select_23390460,select_23390470
+    global select_31390540,select_31390550,select_31390560,select_31390570
+    global select_32390650,select_32390660,select_32390670
+    global select_33390750,select_33390760,select_33390770
+
     select_11390850=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['11390850'],command=lambda:click_equipment(11390850))
-    select_11390850.place(x=484-290+80,y=20)
+    select_11390850.place(x=20,y=20)
+    select_11390860=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['11390860'],command=lambda:click_equipment(11390860))
+    select_11390860.place(x=20+50,y=20)
+    select_11390870=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['11390870'],command=lambda:click_equipment(11390870))
+    select_11390870.place(x=20+80,y=20)
     select_12390950=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['12390950'],command=lambda:click_equipment(12390950))
-    select_12390950.place(x=484-290+110,y=20)
+    select_12390950.place(x=20,y=20+40)
+    select_12390960=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['12390960'],command=lambda:click_equipment(12390960))
+    select_12390960.place(x=20+50,y=20+40)
+    select_12390970=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['12390970'],command=lambda:click_equipment(12390970))
+    select_12390970.place(x=20+80,y=20+40)
     select_13391050=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['13391050'],command=lambda:click_equipment(13391050))
-    select_13391050.place(x=484-290+140,y=20)
+    select_13391050.place(x=20,y=20+80)
+    select_13391060=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['13391060'],command=lambda:click_equipment(13391060))
+    select_13391060.place(x=20+50,y=20+80)
+    select_13391070=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['13391070'],command=lambda:click_equipment(13391070))
+    select_13391070.place(x=20+80,y=20+80)
+    select_13390150=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['13390150'],command=lambda:click_equipment(13390150))
+    select_13390150.place(x=20,y=20+120)
+    select_13390160=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['13390160'],command=lambda:click_equipment(13390160))
+    select_13390160.place(x=20+50,y=20+120)
+    select_13390170=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['13390170'],command=lambda:click_equipment(13390170))
+    select_13390170.place(x=20+80,y=20+120)
     select_14391150=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['14391150'],command=lambda:click_equipment(14391150))
-    select_14391150.place(x=484-290+170,y=20)
+    select_14391150.place(x=20,y=20+160)
+    select_14391160=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['14391160'],command=lambda:click_equipment(14391160))
+    select_14391160.place(x=20+50,y=20+160)
+    select_14391170=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['14391170'],command=lambda:click_equipment(14391170))
+    select_14391170.place(x=20+80,y=20+160)
     select_15391250=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['15391250'],command=lambda:click_equipment(15391250))
-    select_15391250.place(x=484-290+200,y=20)
+    select_15391250.place(x=20,y=20+200)
+    select_15391260=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['15391260'],command=lambda:click_equipment(15391260))
+    select_15391260.place(x=20+50,y=20+200)
+    select_15391270=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['15391270'],command=lambda:click_equipment(15391270))
+    select_15391270.place(x=20+80,y=20+200)
+    select_21391340=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['21391340'],command=lambda:click_equipment(21391340))
+    select_21391340.place(x=20+160,y=20)
+    select_21391350=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['21391350'],command=lambda:click_equipment(21391350))
+    select_21391350.place(x=20+160+50,y=20)
+    select_21391360=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['21391360'],command=lambda:click_equipment(21391360))
+    select_21391360.place(x=20+160+80,y=20)
+    select_21391370=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['21391370'],command=lambda:click_equipment(21391370))
+    select_21391370.place(x=20+160+110,y=20)
+    select_22391440=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['22391440'],command=lambda:click_equipment(22391440))
+    select_22391440.place(x=20+160,y=20+40)
+    select_22391450=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['22391450'],command=lambda:click_equipment(22391450))
+    select_22391450.place(x=20+160+50,y=20+40)
+    select_22391460=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['22391460'],command=lambda:click_equipment(22391460))
+    select_22391460.place(x=20+160+80,y=20+40)
+    select_22391470=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['22391470'],command=lambda:click_equipment(22391470))
+    select_22391470.place(x=20+160+110,y=20+40)
+    select_23391540=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['23391540'],command=lambda:click_equipment(23391540))
+    select_23391540.place(x=20+160,y=20+80)
+    select_23391550=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['23391550'],command=lambda:click_equipment(23391550))
+    select_23391550.place(x=20+160+50,y=20+80)
+    select_23391560=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['23391560'],command=lambda:click_equipment(23391560))
+    select_23391560.place(x=20+160+80,y=20+80)
+    select_23391570=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['23391570'],command=lambda:click_equipment(23391570))
+    select_23391570.place(x=20+160+110,y=20+80)
+    select_31391640=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['31391640'],command=lambda:click_equipment(31391640))
+    select_31391640.place(x=20+160,y=20+120)
+    select_31391650=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['31391650'],command=lambda:click_equipment(31391650))
+    select_31391650.place(x=20+160+50,y=20+120)
+    select_31391660=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['31391660'],command=lambda:click_equipment(31391660))
+    select_31391660.place(x=20+160+80,y=20+120)
+    select_31391670=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['31391670'],command=lambda:click_equipment(31391670))
+    select_31391670.place(x=20+160+110,y=20+120)
+    select_32391740=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['32391740'],command=lambda:click_equipment(32391740))
+    select_32391740.place(x=20+160,y=20+160)
+    select_32391750=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['32391750'],command=lambda:click_equipment(32391750))
+    select_32391750.place(x=20+160+50,y=20+160)
+    select_32391760=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['32391760'],command=lambda:click_equipment(32391760))
+    select_32391760.place(x=20+160+80,y=20+160)
+    select_32391770=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['32391770'],command=lambda:click_equipment(32391770))
+    select_32391770.place(x=20+160+110,y=20+160)
+    select_33391840=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['33391840'],command=lambda:click_equipment(33391840))
+    select_33391840.place(x=20+160,y=20+200)
+    select_33391850=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['33391850'],command=lambda:click_equipment(33391850))
+    select_33391850.place(x=20+160+50,y=20+200)
+    select_33391860=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['33391860'],command=lambda:click_equipment(33391860))
+    select_33391860.place(x=20+160+80,y=20+200)
+    select_33391870=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['33391870'],command=lambda:click_equipment(33391870))
+    select_33391870.place(x=20+160+110,y=20+200)
+    select_21390340=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['21390340'],command=lambda:click_equipment(21390340))
+    select_21390340.place(x=20+340,y=20+0)
+    select_21390350=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['21390350'],command=lambda:click_equipment(21390350))
+    select_21390350.place(x=20+340+50,y=20)
+    select_21390360=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['21390360'],command=lambda:click_equipment(21390360))
+    select_21390360.place(x=20+340+80,y=20)
+    select_21390370=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['21390370'],command=lambda:click_equipment(21390370))
+    select_21390370.place(x=20+340+110,y=20)
+    select_22390240=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['22390240'],command=lambda:click_equipment(22390240))
+    select_22390240.place(x=20+340,y=20+40)
+    select_22390250=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['22390250'],command=lambda:click_equipment(22390250))
+    select_22390250.place(x=20+340+50,y=20+40)
+    select_22390260=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['22390260'],command=lambda:click_equipment(22390260))
+    select_22390260.place(x=20+340+80,y=20+40)
+    select_22390270=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['22390270'],command=lambda:click_equipment(22390270))
+    select_22390270.place(x=20+340+110,y=20+40)
+    select_23390450=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['23390450'],command=lambda:click_equipment(23390450))
+    select_23390450.place(x=20+340,y=20+80)
+    select_23390460=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['23390460'],command=lambda:click_equipment(23390460))
+    select_23390460.place(x=20+340+50,y=20+80)
+    select_23390470=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['23390470'],command=lambda:click_equipment(23390470))
+    select_23390470.place(x=20+340+80,y=20+80)
+    select_31390540=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['31390540'],command=lambda:click_equipment(31390540))
+    select_31390540.place(x=20+340,y=20+120)
+    select_31390550=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['31390550'],command=lambda:click_equipment(31390550))
+    select_31390550.place(x=20+340+50,y=20+120)
+    select_31390560=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['31390560'],command=lambda:click_equipment(31390560))
+    select_31390560.place(x=20+340+80,y=20+120)
+    select_31390570=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['31390570'],command=lambda:click_equipment(31390570))
+    select_31390570.place(x=20+340+110,y=20+120)
+    select_32390650=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['32390650'],command=lambda:click_equipment(32390650))
+    select_32390650.place(x=20+340,y=20+160)
+    select_32390660=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['32390660'],command=lambda:click_equipment(32390660))
+    select_32390660.place(x=20+340+50,y=20+160)
+    select_32390670=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['32390670'],command=lambda:click_equipment(32390670))
+    select_32390670.place(x=20+340+80,y=20+160)
+    select_33390750=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['33390750'],command=lambda:click_equipment(33390750))
+    select_33390750.place(x=20+340,y=20+200)
+    select_33390760=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['33390760'],command=lambda:click_equipment(33390760))
+    select_33390760.place(x=20+340+50,y=20+200)
+    select_33390770=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['33390770'],command=lambda:click_equipment(33390770))
+    select_33390770.place(x=20+340+80,y=20+200)
 
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['201']).place(x=303-290,y=70)
-    select_22400150=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['22400150'],command=lambda:click_equipment(22400150))
-    select_22400150.place(x=303-290+63,y=70)
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['202']).place(x=303-290,y=70+40)
-    select_22400250=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['22400250'],command=lambda:click_equipment(22400250))
-    select_22400250.place(x=303-290+63,y=70+40)
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['203']).place(x=303-290,y=70+80)
-    select_22400350=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['22400350'],command=lambda:click_equipment(22400350))
-    select_22400350.place(x=303-290+63,y=70+80)
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['204']).place(x=303-290,y=70+120)
-    select_22400450=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['22400450'],command=lambda:click_equipment(22400450))
-    select_22400450.place(x=303-290+63,y=70+120)
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['205']).place(x=303-290,y=70+160)
-    select_22400550=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['22400550'],command=lambda:click_equipment(22400550))
-    select_22400550.place(x=303-290+63,y=70+160)
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['206']).place(x=303-290,y=70+200)
-    select_21400640=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['21400640'],command=lambda:click_equipment(21400640))
-    select_21400640.place(x=303-290+63,y=70+200)
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['207']).place(x=303-290,y=70+240)
-    select_31400750=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['31400750'],command=lambda:click_equipment(31400750))
-    select_31400750.place(x=303-290+63,y=70+240)
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['208']).place(x=120,y=70)
-    select_31400850=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['31400850'],command=lambda:click_equipment(31400850))
-    select_31400850.place(x=120+63,y=70)
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['209']).place(x=120,y=70+40)
-    select_31400950=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['31400950'],command=lambda:click_equipment(31400950))
-    select_31400950.place(x=120+63,y=70+40)
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['210']).place(x=120,y=70+80)
-    select_31401050=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['31401050'],command=lambda:click_equipment(31401050))
-    select_31401050.place(x=120+63,y=70+80)
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['211']).place(x=120,y=70+120)
-    select_31401150=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['31401150'],command=lambda:click_equipment(31401150))
-    select_31401150.place(x=120+63,y=70+120)
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['212']).place(x=120,y=70+160)
-    select_32401240=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['32401240'],command=lambda:click_equipment(32401240))
-    select_32401240.place(x=120+63,y=70+160)
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['213']).place(x=120,y=70+200)
-    select_32401340=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['32401340'],command=lambda:click_equipment(32401340))
-    select_32401340.place(x=120+63,y=70+200)
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['214']).place(x=120,y=70+240)
-    select_32401440=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['32401440'],command=lambda:click_equipment(32401440))
-    select_32401440.place(x=120+63,y=70+240)
 
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['215']).place(x=250,y=69+200)
+    tkinter.Label(know_window,bg=dark_main,image=image_list_set['215']).place(x=12,y=69+200)
     select_11410100=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['11410100'],command=lambda:click_equipment(11410100))
-    select_11410100.place(x=280+45,y=70+200)
+    select_11410100.place(x=42+45,y=70+200)
     select_11410110=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['11410110'],command=lambda:click_equipment(11410110))
-    select_11410110.place(x=280+75,y=70+200)
+    select_11410110.place(x=42+75,y=70+200)
     select_11410120=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['11410120'],command=lambda:click_equipment(11410120))
-    select_11410120.place(x=280+105,y=70+200)
+    select_11410120.place(x=42+105,y=70+200)
     select_11410130=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['11410130'],command=lambda:click_equipment(11410130))
-    select_11410130.place(x=280+135,y=70+200)
+    select_11410130.place(x=42+135,y=70+200)
     select_11410140=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['11410140'],command=lambda:click_equipment(11410140))
-    select_11410140.place(x=280+165,y=70+200)
+    select_11410140.place(x=42+165,y=70+200)
     select_11410150=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['11410150'],command=lambda:click_equipment(11410150))
-    select_11410150.place(x=280+195,y=70+200)
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['216']).place(x=250,y=69+240)
+    select_11410150.place(x=42+195,y=70+200)
+    tkinter.Label(know_window,bg=dark_main,image=image_list_set['216']).place(x=12,y=69+240)
     select_21420100=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['21420100'],command=lambda:click_equipment(21420100))
-    select_21420100.place(x=280+45,y=70+240)
+    select_21420100.place(x=42+45,y=70+240)
     select_21420110=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['21420110'],command=lambda:click_equipment(21420110))
-    select_21420110.place(x=280+75,y=70+240)
+    select_21420110.place(x=42+75,y=70+240)
     select_21420120=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['21420120'],command=lambda:click_equipment(21420120))
-    select_21420120.place(x=280+105,y=70+240)
+    select_21420120.place(x=42+105,y=70+240)
     select_21420130=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['21420130'],command=lambda:click_equipment(21420130))
-    select_21420130.place(x=280+135,y=70+240)
+    select_21420130.place(x=42+135,y=70+240)
     select_21420140=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['21420140'],command=lambda:click_equipment(21420140))
-    select_21420140.place(x=280+165,y=70+240)
+    select_21420140.place(x=42+165,y=70+240)
     select_21420150=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['21420150'],command=lambda:click_equipment(21420150))
-    select_21420150.place(x=280+195,y=70+240)
-    tkinter.Label(know_window,bg=dark_main,image=image_list_set['217']).place(x=250,y=69+280)
+    select_21420150.place(x=42+195,y=70+240)
+    tkinter.Label(know_window,bg=dark_main,image=image_list_set['217']).place(x=12,y=69+280)
     select_33430100=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['33430100'],command=lambda:click_equipment(33430100))
-    select_33430100.place(x=280+45,y=70+280)
+    select_33430100.place(x=42+45,y=70+280)
     select_33430110=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['33430110'],command=lambda:click_equipment(33430110))
-    select_33430110.place(x=280+75,y=70+280)
+    select_33430110.place(x=42+75,y=70+280)
     select_33430120=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['33430120'],command=lambda:click_equipment(33430120))
-    select_33430120.place(x=280+105,y=70+280)
+    select_33430120.place(x=42+105,y=70+280)
     select_33430130=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['33430130'],command=lambda:click_equipment(33430130))
-    select_33430130.place(x=280+135,y=70+280)
+    select_33430130.place(x=42+135,y=70+280)
     select_33430140=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['33430140'],command=lambda:click_equipment(33430140))
-    select_33430140.place(x=280+165,y=70+280)
+    select_33430140.place(x=42+165,y=70+280)
     select_33430150=tkinter.Button(know_window,relief='flat',borderwidth=0,activebackground=dark_main,bg=dark_main,image=know_image_list['33430150'],command=lambda:click_equipment(33430150))
-    select_33430150.place(x=280+195,y=70+280)
+    select_33430150.place(x=42+195,y=70+280)
 
-    tkinter.Label(know_window,bg=dark_main,fg='white',text=("세트 산물은 증/크증이 겹치는 경우가 있습니다.\n칭호/크리쳐 선택에 유의하세요.\n(중복안되게 계산식 처리 해놨음)\n\n"
-                                                            +"불마/엘드 셋의 '마딜 전용'옵션은\n따로 구분되어 계산되지 않습니다.\n알아서 빼주세요.\n\n"
-                                                            +"스탯 옵션은 버프+가호 받은 기준입니다.\n가호 미적용 스탯이 많은 산물 특성상,\n수련방 솔플 효율과 굉장히 다를수 있습니다.")).place(x=250,y=70)
-
+    
+    tkinter.Label(know_window,bg=dark_main,fg='white',text=("단품 산물 계산은 경우의 수를 최대한 줄이고\n정확도를 '세트필터↓(매우느림)'으로 돌리세요.\n\n풀셋모드 반영은 작업중입니다.\n\n"+
+                                                            "산물은 무조건 업그레이드 기준으로 반영합니다.\n(연옥 업그레이드 및 극옵션 기준)")).place(x=270,y=270)
+    
 know_image=PhotoImage(file="set_name/know_name.png")
 tkinter.Button(self,bg=dark_main,image=know_image,command=know_epic).place(x=302,y=520)
 

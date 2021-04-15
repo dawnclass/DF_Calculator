@@ -198,12 +198,10 @@ def make_set_list(equ_list,set_list):
         now_set=setcount(i)
         if now_set>1:
             setapp(i+str(floor(now_set*0.7)))
-    if onecount('32390650')==1:
-        if onecount('21390340')==1 or onecount('31390540')==1: setapp('1401')
     return tuple(set_on)
 
 ##딜러용
-def hard_coding_dealer(base_array,betterang,for_calc,coolper,skiper, isTest):
+def hard_coding_dealer(base_array,betterang,for_calc,coolper,skiper):
     hard_coding=for_calc.count
     if hard_coding('1201')==1 and hard_coding('32200')==1:
         base_array[3]=base_array[3]-5
@@ -215,37 +213,21 @@ def hard_coding_dealer(base_array,betterang,for_calc,coolper,skiper, isTest):
         if hard_coding('32230')==0:
             base_array[9]=base_array[9]-40
     if hard_coding('15340')==1 or hard_coding('23340')==1 or hard_coding('33340')==1 or hard_coding('33341')==1:
-        if isTest==1:
-            if hard_coding('1341')==0 and hard_coding('1342') ==0:
-                if hard_coding('15340')==1:
-                    base_array[9]=base_array[9]-20
-                elif hard_coding('23340')==1:
-                    base_array[2]=base_array[2]-10
-                elif hard_coding('33340')==1:
-                    base_array[6]=base_array[6]-9.167
-                else:
-                    base_array[9]=base_array[9]-2
-                    base_array[2]=base_array[2]-1
-                    base_array[6]=base_array[6]-10
-                    base_array[8]=base_array[8]-0.5333
-            elif hard_coding('1342')==0 and hard_coding('33341')==1:
+        if hard_coding('1341')==0 and hard_coding('1342') ==0:
+            if hard_coding('15340')==1:
+                base_array[9]=base_array[9]-20
+            elif hard_coding('23340')==1:
+                base_array[2]=base_array[2]-10
+            elif hard_coding('33340')==1:
+                base_array[6]=base_array[6]-9.167
+            else:
+                base_array[9]=base_array[9]-2
+                base_array[2]=base_array[2]-1
+                base_array[6]=base_array[6]-10
                 base_array[8]=base_array[8]-0.5333
+        elif hard_coding('1342')==0 and hard_coding('33341')==1:
+            base_array[8]=base_array[8]-0.5333
 
-        elif isTest==0:
-            if hard_coding('1341')==0 and hard_coding('1342') ==0:
-                if hard_coding('15340')==1:
-                    base_array[9]=base_array[9]-20
-                elif hard_coding('23340')==1:
-                    base_array[2]=base_array[2]-10
-                elif hard_coding('33340')==1:
-                    base_array[6]=base_array[6]-5
-                else:
-                    base_array[9]=base_array[9]-4
-                    base_array[2]=base_array[2]-2
-                    base_array[6]=base_array[6]-6
-                    base_array[8]=base_array[8]-0.9333333333333
-            elif hard_coding('1342')==0 and hard_coding('33341')==1:
-                base_array[8]=base_array[8]-0.9333333333333
             
     if hard_coding('11111')==1:
         if hard_coding('1112')==1 or hard_coding('1113')==1:
@@ -273,21 +255,26 @@ def hard_coding_dealer(base_array,betterang,for_calc,coolper,skiper, isTest):
         if hard_coding('11440')!=1: ##3셋 공3% 모공5% 감소
             base_array[7]=base_array[7]-3
             base_array[6]=base_array[6]-5
-
-    if hard_coding('11091')==1 and isTest==0:
-        if hard_coding('1093')!=1:
-            skiper=skiper*(1.04/1.053)
+    if hard_coding('32390650')==1 or hard_coding('32390660')==1 or hard_coding('32390670')==1:
+        if (hard_coding('21390340')==1 or hard_coding('31390540')==1 or
+            hard_coding('21390350')==1 or hard_coding('31390550')==1 or
+            hard_coding('21390360')==1 or hard_coding('31390560')==1 or
+            hard_coding('21390370')==1 or hard_coding('31390570')==1):
+            base_array[4]=base_array[4]+7
             
     return [base_array,coolper,skiper]
 
-def inv_auto_dealer(base_array,only_bon,inv2_on_tg,inv_type_list):
+inv_type_list=["증뎀","크증","추뎀","모공","공%","스탯"]
+def inv_auto_dealer(base_array,only_bon,inv2_on_tg):
     inv1_val=10
     inv2_val=5
     qqq=0
+    opt_list=[0,0]
     inv_opt_list=[base_array[2],base_array[3],base_array[4],base_array[6],base_array[7],base_array[8]]
     for i in [2,3,4,6,7,8]:
         if min(inv_opt_list)==base_array[i]:
             base_array[i]=base_array[i]+10
+            opt_list[0]=i
             inv1_opt=inv_type_list[qqq]
             if i==4: only_bon=only_bon+10
             break
@@ -298,10 +285,12 @@ def inv_auto_dealer(base_array,only_bon,inv2_on_tg,inv_type_list):
         for i in [2,3,4,6,7,8]:
             if min(inv_opt_list)==base_array[i]:
                 base_array[i]=base_array[i]+5
+                opt_list[1]=i
                 inv2_opt=inv_type_list[qqq2]
                 if i==4: only_bon=only_bon+5
                 break
             qqq2=qqq2+1
     else:
         inv2_opt="미충족";inv2_val=" X "
-    return [base_array,only_bon,inv1_opt,inv2_opt,inv1_val,inv2_val]
+    return [base_array,only_bon,inv1_opt,inv2_opt,inv1_val,inv2_val,opt_list]
+    

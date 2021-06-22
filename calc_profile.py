@@ -1,3 +1,7 @@
+#-*- coding: utf-8 -*-
+## 코드를 무단으로 복제하여 개조 및 배포하지 말 것##
+## Copyright ⓒ 2020 Dawnclass(새벽반) dawnclass16@naver.com
+
 import tkinter
 import requests
 import urllib.request
@@ -10,12 +14,22 @@ from collections import Counter
 import numpy as np
 from math import floor
 import random
+import cv2
+from PIL import Image,ImageTk,ImageEnhance,ImageGrab,ImageDraw,ImageFont
+import time
 
-apikey_list=['TQS79U4MT11jswCLHq7G260XzXU0JhGC',
-             'TkbkrKVzWIC1eXRrzg18sghsEq5LRLyg',
-             'E76OXHxYMK3iizK0XQLZbvsNQGKpVtFY']
-
-apikey=random.choice(apikey_list)
+try:
+    import calc_api_key
+    apikey=calc_api_key.get_api_key()
+except:
+    try:
+        api_txt_file=open("API_key.txt","r")
+        apikey = api_txt_file.readline()
+        if apikey=="":
+            pass
+        api_txt_file.close()
+    except:
+        pass
 
 with open('skillDB/item_code_list.json','r', encoding='utf-8') as item_code_list:
     item_code_list=json.load(item_code_list)
@@ -41,6 +55,9 @@ def load_api(URL):
     api_dic = async_result.get()
     return api_dic
 
+def delete_spacing(string):
+    return string.replace(" ","")
+
 def make_profile(name,server):
     dark_knight_pas2=0
     server_dict={'안톤':'anton','바칼':'bakal','카인':'cain','카시야스':'casillas',
@@ -55,7 +72,7 @@ def make_profile(name,server):
         return {'error':'Not found'}
     else:
         stat_dic=load_api('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/status?apikey=' + apikey)
-        #print('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/equip/equipment?apikey='+ apikey)
+        #print('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/status?apikey=' + apikey)
         equipment_dic=load_api('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/equip/equipment?apikey='+ apikey)
         avatar_dic=load_api('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/equip/avatar?apikey='+ apikey)
         pet_dic=load_api('https://api.neople.co.kr/df/servers/'+sever_code+'/characters/'+cha_id+'/equip/creature?apikey='+ apikey)
@@ -66,7 +83,8 @@ def make_profile(name,server):
         adventure_name=swiequ_dic['adventureName']
         class_name=swiequ_dic['jobName']
         job_name=swiequ_dic['jobGrowName']
-        if job_name=='세라핌' or  job_name=='헤카테':
+        job_name=delete_spacing(job_name)
+        if job_name=='세라핌' or  job_name=='眞인챈트리스':
             return {'error':'buffer'}
         job_id=swiequ_dic['jobId']
         job_calc_name=job_detail[class_name][job_name][6]
@@ -84,34 +102,34 @@ def make_profile(name,server):
             swiper_list=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         swiper_value=job_detail[class_name][job_name][0]-1
         max_swiper=job_detail[class_name][job_name][1]
-        if job_name=='세인트':
+        if class_name=='프리스트(남)' and job_name=='眞크루세이더':
             if len(swiper_list)!=18:
                 return {'error':'buffer'}
         ##1번 스위칭박스
-        if job_name=='眞 베가본드':
+        if job_name=='眞베가본드':
             now_swiper=5*float(swiper_list[swiper_value])
             max_swiper=5*float(max_swiper)
             swi_score=(100+now_swiper)/(100+max_swiper)
             show_swi=str(round(now_swiper,1))+'% / '
-        elif class_name=='격투가(남)' and job_name=='眞 넨마스터':
+        elif class_name=='격투가(남)' and job_name=='眞넨마스터':
             now_swiele=int(swiper_list[1])
             max_ele_eff=((now_ele+86)*0.0045+1.05)/(now_ele*0.0045+1.05)
             now_ele_eff=((now_ele+now_swiele)*0.0045+1.05)/(now_ele*0.0045+1.05)
             now_swiper=float(swiper_list[swiper_value])
             swi_score=(100+now_swiper)/(100+max_swiper)*now_ele_eff/max_ele_eff
             show_swi=str(round(now_swiper,1))+'% / +'+str(int(now_swiele))+' / '
-        elif class_name=='격투가(여)' and job_name=='眞 넨마스터':
+        elif class_name=='격투가(여)' and job_name=='眞넨마스터':
             now_swiele=int(swiper_list[3])
             max_ele_eff=((now_ele+86)*0.0045+1.05)/(now_ele*0.0045+1.05)
             now_ele_eff=((now_ele+now_swiele)*0.0045+1.05)/(now_ele*0.0045+1.05)
             now_swiper=float(swiper_list[swiper_value])
             swi_score=(100+now_swiper)/(100+max_swiper)*now_ele_eff/max_ele_eff
             show_swi=str(round(now_swiper,1))+'% / +'+str(int(now_swiele))+' / '
-        elif class_name=='격투가(여)' and job_name=='眞 스트리트 파이터':
+        elif class_name=='격투가(여)' and job_name=='眞스트리트파이터':
             now_swiper=50+5.882352941176470588235294117647*float(swiper_list[swiper_value])/100
             swi_score=now_swiper/100
             show_swi=str(round(float(swiper_list[swiper_value]),1))+'% / '
-        elif class_name=='프리스트(남)' and job_name=='저스티스':
+        elif class_name=='프리스트(남)' and job_name=='眞인파이터':
             max_swiper=max_swiper*1.5
             now_swiper=float(swiper_list[swiper_value])*1.5
             swi_score=(100+now_swiper)/(100+max_swiper)
@@ -168,7 +186,7 @@ def make_profile(name,server):
                         if now_opt["explain"][0:5]=="힘, 지능" and list(now_opt["explain"]).count('%')==0:
                             god_stat=now_opt["explain"][6:];god_stat=god_stat[:-3]
                             api_stat=api_stat-int(god_stat)
-        api_stat=api_stat+max([stat_dic["status"][2]["value"],stat_dic["status"][3]["value"]])
+        api_stat=api_stat+max([stat_dic["status"][4]["value"],stat_dic["status"][5]["value"]])
         max_stat=job_detail[class_name][job_name][3]
         stat_dif=api_stat-max_stat
         stat_score=1+stat_dif/100*0.0078
@@ -486,6 +504,7 @@ def make_profile(name,server):
                 title_api=load_api('https://api.neople.co.kr/df/items/'+title_id+'?apikey=' + apikey)
                 title_opt=title_api.get("itemExplain")
                 if title_opt[0:15]=='공격 시 데미지 10% 증가': fixed_dam=10
+                elif title_opt[0:15]=='공격 시 데미지 15% 증가': fixed_dam=15
                 elif title_opt[0:20]=='크리티컬 공격 시 데미지 10% 증가': fixed_cri=10
                 elif title_opt[0:14]=='공격 시 10% 추가데미지': extra_bon=extra_bon+10
                 title_opt2=title_api.get("itemStatus")
@@ -493,17 +512,29 @@ def make_profile(name,server):
                     for now_opt in title_opt2:
                         if eleup_type.count(now_opt.get("name"))!=0:
                             ele_in=ele_in+now_opt.get("value")
+                            if now_opt.get("value")==27:
+                                ele_in=ele_in+5
                             break
         pet_info=pet_dic.get("creature")
         try:
             per_name=pet_info["itemName"]
-            if per_name[-5:]=='[노련한]': fixed_cri=18;extra_pas2=extra_pas2+1
-            if per_name[-5:]=='[강인한]': extra_all=extra_all+15
             if per_name=='서퍼 웰시코기': extra_all=extra_all+15
-            if per_name=='강인한 이그니스': extra_final=extra_final+10.7
-            if per_name=='명석한 아쿠아젤로': extra_final=extra_final+10.7
-            if per_name=='명석한 루메누스': extra_final=extra_final+10.7
-            if per_name=='강인한 테네브리스': extra_final=extra_final+10.7
+            elif per_name=='강인한 이그니스': extra_final=extra_final+10.7
+            elif per_name=='명석한 아쿠아젤로': extra_final=extra_final+10.7
+            elif per_name=='명석한 루메누스': extra_final=extra_final+10.7
+            elif per_name=='강인한 테네브리스': extra_final=extra_final+10.7
+            elif per_name=='초열의 주술사 미호': extra_final=extra_final+10.7
+            elif per_name=='빙설의 마법사 루나': extra_final=extra_final+10.7
+            elif per_name=='고대의 용사 리처드': extra_final=extra_final+10.7
+            elif per_name=='SD 팩': extra_final=extra_final+10.7
+            elif per_name=='쁘띠 바스테트': extra_final=extra_final+10.7
+            elif per_name=='쁘띠 샴': extra_final=extra_final+10.7
+            elif per_name=='SD 프레이-이시스': extra_att=extra_att+18;extra_pas2=extra_pas2+1
+            elif per_name=='SD 이시스-프레이': extra_att=extra_att+18;extra_pas2=extra_pas2+1
+            elif per_name=='뇌광의 사수 빅토리아': extra_att=extra_att+18;extra_pas2=extra_pas2+1
+            elif per_name=='폭풍을 부르는 성녀 글로리아': extra_att=extra_att+18;extra_pas2=extra_pas2+1
+            elif per_name[-5:]=='[노련한]': fixed_cri=18;extra_pas2=extra_pas2+1
+            elif per_name[-5:]=='[강인한]': extra_all=extra_all+15
         except: pass
         
         equ_exist=[];wep_exist=0
@@ -782,67 +813,67 @@ def make_profile(name,server):
 """
 job_detail={
     '귀검사(남)':{
-        '眞 웨펀마스터':[2,82,0,4192,[''],6.66,'검신',[''],[''],3.57],
-        '眞 버서커':[2,116,1,4067,[''],5.28,'블러드이블',[''],[''],2.73],
-        '眞 소울브링어':[3,69,0,4144,[''],4.86,'다크로드',[''],[''],1.6],
-        '眞 아수라':[6,58,1,4201,[''],4.38,'인다라천',[''],[''],3.01],
-        '眞 검귀':[2,100,0,4056,[''],6.37,'악귀나찰',[''],[''],3.28]
+        '眞웨펀마스터':[2,82,0,4192,[''],6.66,'검신',[''],[''],3.57],
+        '眞버서커':[2,116,1,4067,[''],5.28,'블러드이블',[''],[''],2.73],
+        '眞소울브링어':[3,69,0,4144,[''],4.86,'다크로드',[''],[''],1.6],
+        '眞아수라':[6,58,1,4201,[''],4.38,'인다라천',[''],[''],3.01],
+        '眞검귀':[2,100,0,4056,[''],6.37,'악귀나찰',[''],[''],3.28]
         },
     '귀검사(여)':{
-        '眞 소드마스터':[2,71,0,4189,[''],5.76,'마제스티',[''],[''],3.92],
-        '眞 데몬슬레이어':[1,100,0,4013,[''],5.45,'디어사이드',[''],3.77],
-        '眞 다크템플러':[1,65,0,4071,[''],5.08,'네메시스',[''],[''],3.51],
-        '眞 베가본드':[3,25,0,4003,[''],9.09,'검제',[''],[''],6.45]  #5중첩
+        '眞소드마스터':[2,71,0,4189,[''],5.76,'마제스티',[''],[''],3.92],
+        '眞데몬슬레이어':[1,100,0,4013,[''],5.45,'디어사이드',[''],3.77],
+        '眞다크템플러':[1,65,0,4071,[''],5.08,'네메시스',[''],[''],3.51],
+        '眞베가본드':[3,25,0,4003,[''],9.09,'검제',[''],[''],6.45]  #5중첩
         },
     '격투가(남)':{
-        '眞 스트라이커':[3,104,0,4163,['화염의 각'],6.77,'패황',[''],[''],2.5],
-        '眞 스트리트파이터':[7,79,0,4002,[''],4.58,'명왕',[''],[''],3.15],
-        '眞 그래플러':[2,108,0,4186,[''],6.31,'그랜드마스터',[''],[''],3.28],
-        '眞 넨마스터':[3,43,0,4201,[''],5.15,'염황광풍제월',[''],[''],3.53] #2번 속강(86)도 있음
+        '眞스트라이커':[3,104,0,4163,['화염의 각'],6.77,'패황',[''],[''],2.5],
+        '眞스트리트파이터':[7,79,0,4002,[''],4.58,'명왕',[''],[''],3.15],
+        '眞그래플러':[2,108,0,4186,[''],6.31,'그랜드마스터',[''],[''],3.28],
+        '眞넨마스터':[3,43,0,4201,[''],5.15,'염황광풍제월',[''],[''],3.53] #2번 속강(86)도 있음
         },
     '격투가(여)':{
-        '眞 넨마스터':[3,57,0,4126,[''],5.15,'염제폐월수화',[''],[''],3.51], #4번 속강(86)도 있음
-        '眞 스트라이커':[4,113,0,4188,[''],6.44,'카이저',[''],[''],3.54],
-        '眞 스트리트 파이터':[5,850,0,4127,[''],2.36,'용독문주',[''],[''],1.6], #독 바르기 공격력 변화율 (증가율이 아님,독비중 50% 기준 평균산출 필요)
-        '眞 그래플러':[2,107,1,4095,[''],6.93,'얼티밋디바',[''],[''],3.57]
+        '眞넨마스터':[3,57,0,4126,[''],5.15,'염제폐월수화',[''],[''],3.51], #4번 속강(86)도 있음
+        '眞스트라이커':[4,113,0,4188,[''],6.44,'카이저',[''],[''],3.54],
+        '眞스트리트파이터':[5,850,0,4127,[''],2.36,'용독문주',[''],[''],1.6], #독 바르기 공격력 변화율 (증가율이 아님,독비중 50% 기준 평균산출 필요)
+        '眞그래플러':[2,107,1,4095,[''],6.93,'얼티밋디바',[''],[''],3.57]
         },
     '거너(남)':{
-        '眞 스핏파이어':[1,84,0,3926,[''],6.05,'커맨더',[''],[''],3.57],
-        '眞 메카닉':[4,85,0,4084,[''],4.58,'프라임',[''],[''],3.15],
-        '眞 런처':[3,95,0,4203,[''],7.54,'디스트로이어',[''],[''],5.14],
-        '眞 레인저':[2,125,0,4144,[''],6.93,'레이븐',[''],[''],3.57]
+        '眞스핏파이어':[1,84,0,3926,[''],6.05,'커맨더',[''],[''],3.57],
+        '眞메카닉':[4,85,0,4084,[''],4.58,'프라임',[''],[''],3.15],
+        '眞런처':[3,95,0,4203,[''],7.54,'디스트로이어',[''],[''],5.14],
+        '眞레인저':[2,125,0,4144,[''],6.93,'레이븐',[''],[''],3.57]
         },
     '거너(여)':{
-        '크림슨 로제':[2,125,0,3994,[''],6.93,'크림슨로제',[''],[''],3.57],
-        '스톰 트루퍼':[3,95,0,4078,[''],7.54,'스톰트루퍼',[''],[''],5.14],
+        '크림슨로제':[2,125,0,3994,[''],6.93,'크림슨로제',[''],[''],3.57],
+        '스톰트루퍼':[3,95,0,4078,[''],7.54,'스톰트루퍼',[''],[''],5.14],
         '프레이야':[1,84,1,3941,[''],6.05,'프레이야',[''],[''],3.57],
         '옵티머스':[4,85,0,4084,[''],4.15,'옵티머스',[''],[''],2.73]
         },
     '마법사(남)':{
         '어센션':[2,85,1,4200,[''],5.84,'어센션',[''],[''],3.42],
         '아이올로스':[1,111,0,3977,[''],4.76,'아이올로스',[''],[''],3.3],
-        '뱀파이어 로드':[2,97,0,4018,[''],7.21,'뱀파이어로드',[''],[''],3.64],
+        '뱀파이어로드':[2,97,0,4018,[''],7.21,'뱀파이어로드',[''],[''],3.64],
         '이터널':[2,80,0,4105,[''],5.73,'이터널',[''],[''],3.57],
         '오블리비언':[1,107,0,4100,[''],5.18,'오블리비언',[''],[''],3.33]
         },
     '마법사(여)':{
-        '지니위즈':[2,92,1,4056,[''],6.11,'지니위즈',[''],[''],3.57],
-        '아슈타르테':[2,79,0,4283,[''],6.77,'아슈타르테',[''],[''],3.33],
-        '오버마인드':[5,85,0,4193,[''],4.46,'오버마인드',[''],[''],3.07],
-        '이클립스':[2,79,0,4076,[''],6.23,'이클립스',[''],[''],3.42],
-        '헤카테':[0,0,1,4060,[''],0,'(버프)헤카테',[''],[''],0] # 조회 불가 직업
+        '眞마도학자':[2,92,1,4056,[''],6.11,'지니위즈',[''],[''],3.57],
+        '眞배틀메이지':[2,79,0,4283,[''],6.77,'아슈타르테',[''],[''],3.33],
+        '眞엘레멘탈마스터':[5,85,0,4193,[''],4.46,'오버마인드',[''],[''],3.07],
+        '眞소환사':[2,79,0,4076,[''],6.23,'이클립스',[''],[''],3.42],
+        '眞인챈트리스':[0,0,1,4060,[''],0,'(버프)헤카테',[''],[''],0] # 조회 불가 직업
         },
     '프리스트(남)':{
-        '태을선인':[2,76,0,4079,[''],3.43,'태을선인',[''],[''],2.35],
-        '이모탈':[1,90,0,4048,[''],6.47,'이모탈',[''],[''],4.51],
-        '저스티스':[2,66,0,4073,[''],6.14,'저스티스',[''],[''],3.24], #api의 1.5배가 실적용 수치
-        '세인트':[2,97,1,3906,[''],5.06,'세인트',[''],[''],3.42] # 배크만 조회가능, 리스트 갯수 18번까지 있음
+        '眞퇴마사':[2,76,0,4079,[''],3.43,'태을선인',[''],[''],2.35],
+        '眞어벤저':[1,90,0,4048,[''],6.47,'이모탈',[''],[''],4.51],
+        '眞인파이터':[2,66,0,4073,[''],6.14,'저스티스',[''],[''],3.24], #api의 1.5배가 실적용 수치
+        '眞크루세이더':[2,97,1,3906,[''],5.06,'세인트',[''],[''],3.42] # 배크만 조회가능, 리스트 갯수 18번까지 있음
         },
     '프리스트(여)':{
-        '세라핌':[0,0,1,4093,[''],0,'(버프)세라핌',[''],[''],0], # 조회 불가 직업
-        '인페르노':[3,93,0,4064,[''],7.76,'인페르노',[''],[''],4.14],
-        '천선낭랑':[1,108,0,4167,[''],6.61,'천선낭랑',[''],[''],3.33],
-        '리디머':[12,87.5,0,4098,[''],6.95,'리디머',[''],[''],3.57] # 시너지 (투기에 가득찬 분노)
+        '眞크루세이더':[0,0,1,4093,[''],0,'(버프)세라핌',[''],[''],0], # 조회 불가 직업
+        '眞이단심판관':[3,93,0,4064,[''],7.76,'인페르노',[''],[''],4.14],
+        '眞무녀':[1,108,0,4167,[''],6.61,'천선낭랑',[''],[''],3.33],
+        '眞미스트리스':[12,87.5,0,4098,[''],6.95,'리디머',[''],[''],3.57] # 시너지 (투기에 가득찬 분노)
         },
     '도적':{
         '그림리퍼':[3,103,0,4302,[''],6.77,'그림리퍼',[''],[''],3.77],
@@ -968,3 +999,184 @@ refine_eff={
         '8':'1.0727605'
         }
     }
+
+def add_image(bg_img,add_img,xtop,ytop,anchor):
+    xsize=len(add_img[0])
+    xsize_half=xsize/2
+    ysize=len(add_img)
+    ysize_half=ysize/2
+    bg_xsize=len(bg_img[0])
+    bg_ysize=len(bg_img)
+    ori_start_x=0;ori_end_x=xsize
+    ori_start_y=0;ori_end_y=ysize
+    if anchor=='nw':
+        start_x=xtop;end_x=xtop+xsize
+        start_y=ytop;end_y=ytop+ysize
+    elif anchor=='c':
+        start_x=int(xtop-xsize_half);end_x=int(xtop+xsize_half)
+        start_y=int(ytop-ysize_half);end_y=int(ytop+ysize_half)
+
+    if start_x<0: ori_start_x=-start_x;start_x=0
+    if start_y<0: ori_start_y=-start_y;start_y=0
+    if end_x>bg_xsize: ori_end_x=xsize-(end_x-bg_xsize);end_x=bg_xsize
+    if end_y>bg_ysize: ori_end_y=ysize-(end_y-bg_ysize);end_y=bg_ysize
+
+    
+    temp_add=add_img[ori_start_y:ori_end_y,ori_start_x:ori_end_x]
+    temp_gray=cv2.cvtColor(temp_add,cv2.COLOR_BGR2GRAY)
+    ret, mask=cv2.threshold(temp_gray,5,255,cv2.THRESH_BINARY)
+    mask_inv=cv2.bitwise_not(mask)
+    temp_bg=bg_img[start_y:end_y,start_x:end_x]
+    temp_bg=cv2.bitwise_and(temp_bg,temp_bg,mask=mask_inv)
+    temp_add=cv2.bitwise_and(temp_add,temp_add,mask=mask)
+    dst=cv2.add(temp_bg,temp_add)
+    bg_img[start_y:end_y,start_x:end_x]=dst
+    return bg_img
+
+def make_profile_image(name,server,def_result):
+    setting_str=def_result[0]
+    setting_dict=def_result[1]
+    cha_background=cv2.imread('ext_img/bg_info.png',-1)
+    cha_img=cv2.imread('my_cha.png',-1)
+    result_img=add_image(cha_background,cha_img,123,70,'c')
+
+    #####
+    image_on={}
+    for i in [11,12,13,14,15,21,22,23,31,32,33]:
+        for j in setting_dict['장비']:
+            if len(j)!=6:
+                if j[0:2] == str(i):
+                    image_on[str(i)]=cv2.imread('image/'+j+'n.png',-1)
+    for i in setting_dict['장비']:
+        if len(i)==4 and i[0]=='4':
+            image_on['41']=cv2.imread('image/415'+i[1]+'0n.png',-1)
+            image_on['42']=cv2.imread('image/425'+i[2]+'0n.png',-1)
+            image_on['43']=cv2.imread('image/435'+i[3]+'0n.png',-1)
+
+    result_img=add_image(result_img,image_on['11'],57,52,'c')
+    result_img=add_image(result_img,image_on['12'],27,82,'c')
+    result_img=add_image(result_img,image_on['13'],27,52,'c')
+    result_img=add_image(result_img,image_on['14'],57,82,'c')
+    result_img=add_image(result_img,image_on['15'],27,112,'c')
+    result_img=add_image(result_img,image_on['21'],189,52,'c')
+    result_img=add_image(result_img,image_on['22'],219,52,'c')
+    result_img=add_image(result_img,image_on['23'],219,82,'c')
+    result_img=add_image(result_img,image_on['31'],189,82,'c')
+    result_img=add_image(result_img,image_on['32'],219,112,'c')
+    result_img=add_image(result_img,image_on['33'],189,112,'c')
+    result_img=add_image(result_img,image_on['41'],27,82,'c')
+    result_img=add_image(result_img,image_on['42'],219,82,'c')
+    result_img=add_image(result_img,image_on['43'],189,82,'c')
+    
+    plt_img=[0,0]
+    for i in [0,1]:
+        if setting_dict['플티상세'][i]=='S': plt_img[i]=cv2.imread('ext_img/plt_best2.png',-1)
+        elif setting_dict['플티상세'][i]=='A': plt_img[i]=cv2.imread('ext_img/plt_good2.png',-1)
+        elif setting_dict['플티상세'][i]=='B': plt_img[i]=cv2.imread('ext_img/plt_active.png',-1)
+        elif setting_dict['플티상세'][i]=='C': plt_img[i]=cv2.imread('ext_img/plt_common.png',-1)
+        else: plt_img[i]=cv2.imread('ext_img/plt_nope.png',-1)
+    
+    result_img=add_image(result_img,plt_img[0],350,124,'c')
+    result_img=add_image(result_img,plt_img[1],390,124,'c')
+    
+    tal_img=[0,0]
+    for i in [0,1]:
+        if setting_dict['탈리상세'][i]=='S': tal_img[i]=cv2.imread('ext_img/talisman_unique.png',-1)
+        elif setting_dict['탈리상세'][i]=='A': tal_img[i]=cv2.imread('ext_img/talisman_rare.png',-1)
+        elif setting_dict['탈리상세'][i]=='B': tal_img[i]=cv2.imread('ext_img/talisman_common.png',-1)
+        else: tal_img[i]=cv2.imread('ext_img/talisman_nope.png',-1)
+    result_img=add_image(result_img,tal_img[0],350,170,'c')
+    result_img=add_image(result_img,tal_img[1],390,170,'c')
+
+    small_font=ImageFont.truetype("./malgun.ttf", 11)
+    guide_font=ImageFont.truetype("./malgunbd.ttf", 12)
+    show_font=ImageFont.truetype("./malgunbd.ttf", 20)
+    mid_font=ImageFont.truetype("./malgunbd.ttf", 22)
+
+    result_img = cv2.cvtColor(result_img, cv2.COLOR_BGRA2RGBA)
+    result_img = Image.fromarray(result_img)
+    draw = ImageDraw.Draw(result_img)
+    w, h = draw.textsize(setting_dict['무기명'],font=guide_font)
+    draw.text((int(233-w),int(17-h/2)),setting_dict['무기명'],font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['캐릭명'],font=guide_font)
+    draw.text((int(10),int(170-h/2)),setting_dict['캐릭명'],font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['직업명'],font=guide_font)
+    draw.text((int(10),int(185-h/2)),setting_dict['직업명'],font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['모험단'],font=guide_font)
+    draw.text((int(233-w),int(170-h/2)),setting_dict['모험단'],font=guide_font,fill='white')
+    w, h = draw.textsize(server,font=guide_font)
+    draw.text((int(233-w),int(185-h/2)),server,font=guide_font,fill='white')
+
+    if float(setting_dict['종합점수'][:-1]) >=110: rank_color=(238,201,0, 255)
+    elif float(setting_dict['종합점수'][:-1]) >=100: rank_color=(0,191,222, 255)
+    elif float(setting_dict['종합점수'][:-1]) >=80: rank_color='white'
+    else: rank_color=(192,192,192, 255)
+
+    w, h = draw.textsize('장비%=',font=show_font)
+    draw.text((int(18),int(215-h/2)),'장비%=',font=show_font,fill='white')
+    w, h = draw.textsize(setting_dict['장비딜'],font=show_font)
+    draw.text((int(18+73),int(215-h/2)),setting_dict['장비딜'],font=show_font,fill='white')
+    w, h = draw.textsize('쿨감기대값\n='+setting_dict['쿨감'],font=small_font)
+    draw.text((int(20+189-w/2),int(218-h/2)),'쿨감기대값\n='+setting_dict['쿨감'],font=small_font,fill='white')
+    w, h = draw.textsize('세팅%=',font=show_font)
+    draw.text((int(18),int(250-h/2)),'세팅%=',font=show_font,fill='white')
+    w, h = draw.textsize(setting_dict['종합점수'],font=show_font)
+    draw.text((int(18+73),int(250-h/2)),setting_dict['종합점수'],font=show_font,fill=rank_color)
+
+    w, h = draw.textsize('강화/스탯\n',font=guide_font)
+    draw.text((int(254),int(18-h/2)),'강화/스탯\n',font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['스탯'],font=mid_font)
+    draw.text((int(252),int(27-h/2)),setting_dict['스탯'],font=mid_font,fill='white')
+    w, h = draw.textsize('무기='+setting_dict['무기강화'],font=guide_font)
+    draw.text((int(254+83),int(13-h/2)),'무기='+setting_dict['무기강화'],font=guide_font,fill='white')
+    w, h = draw.textsize('스탯='+setting_dict['스탯상세'],font=guide_font)
+    draw.text((int(254+83),int(32-h/2)),'스탯='+setting_dict['스탯상세'],font=guide_font,fill='white')
+
+    w, h = draw.textsize('속강작\n',font=guide_font)
+    draw.text((int(254),int(68-h/2)),'속강작\n',font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['속강'],font=mid_font)
+    draw.text((int(252),int(77-h/2)),setting_dict['속강'],font=mid_font,fill='white')
+    if setting_dict['속강종류']=='화': ele_type='火'; ele_color='red'
+    elif setting_dict['속강종류']=='수': ele_type='水'; ele_color='blue'
+    elif setting_dict['속강종류']=='명': ele_type='明'; ele_color='yellow'
+    elif setting_dict['속강종류']=='암': ele_type='暗'; ele_color='purple'
+    elif setting_dict['속강종류']=='모': ele_type='某'; ele_color='white'
+    w, h = draw.textsize(ele_type,font=mid_font)
+    draw.text((int(257+75),int(70-h/2)),ele_type,font=mid_font,fill=ele_color)
+    w, h = draw.textsize('+'+setting_dict['속강상세'],font=mid_font)
+    draw.text((int(257+75+23),int(70-h/2)),'+'+setting_dict['속강상세'],font=mid_font,fill='white')
+
+    w, h = draw.textsize('딜플티\n',font=guide_font)
+    draw.text((int(254),int(118-h/2)),'딜플티\n',font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['플티'],font=mid_font)
+    draw.text((int(252),int(127-h/2)),setting_dict['플티'],font=mid_font,fill='white')
+
+    w, h = draw.textsize('룬/탈리\n',font=guide_font)
+    draw.text((int(254),int(168-h/2)),'룬/탈리\n',font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['탈리'],font=mid_font)
+    draw.text((int(252),int(177-h/2)),setting_dict['탈리'],font=mid_font,fill='white')
+    rune_img=[0,0,0,0,0,0]
+    for i in range(0,6):
+        if i>=3: shift=7
+        else: shift=0
+        if setting_dict['룬상세'][i]=='S': rune_color='purple'
+        elif setting_dict['룬상세'][i]=='A': rune_color=(0,191,222, 255)
+        elif setting_dict['룬상세'][i]=='B': rune_color=(192,192,192, 255)
+        else: rune_color='black'
+        draw.rectangle(((336+i*11+shift,184),(336+6+i*11+shift,184+7)),fill=rune_color,width=0)
+
+    w, h = draw.textsize('스위칭\n',font=guide_font)
+    draw.text((int(254),int(218-h/2)),'스위칭\n',font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['스위칭'],font=mid_font)
+    draw.text((int(252),int(227-h/2)),setting_dict['스위칭'],font=mid_font,fill='white')
+    w, h = draw.textsize(setting_dict['스위칭상세'],font=guide_font)
+    draw.text((int(254+83),int(22+190-h/2)),setting_dict['스위칭상세'],font=guide_font,fill='white')
+    w, h = draw.textsize(setting_dict['스위칭최대'],font=guide_font)
+    draw.text((int(254+83+30),int(22+209-h/2)),setting_dict['스위칭최대'],font=guide_font,fill='white')
+
+    result_img = np.array(result_img)
+    result_img = cv2.cvtColor(result_img, cv2.COLOR_RGBA2BGRA)
+    result_img=result_img[0:276,0:422]
+
+    cv2.imwrite('Screenshots/'+str(time.strftime('%y%m%d%H%M%S', time.localtime(time.time())))+'.png',result_img)
+

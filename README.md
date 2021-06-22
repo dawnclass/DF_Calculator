@@ -1,9 +1,7 @@
 # DF_Calculator
 
-리메이크를 진행중입니다!
-
-I am re-making this project!
-
+리메이크를 진행중입니다.
+I am re-making this project.
 https://github.com/dawnclass/DNF_Calculator_R.git
 
 

@@ -7,8 +7,8 @@ def making_cases(case_list,god,mode):
     ##모드
     ##1: 표준533
     ##2: 표준3332
-    ##3: 상의변형2333
-    ##4: 하의변형3233
+    ##3: 상의변형3233
+    ##4: 하의변형2333
     ##5: 신발변형3323
     ##6: 32/33
 
@@ -457,23 +457,22 @@ def meta_ful(set_num_dict,evert_list,bang_on_dict,list40_0):
         if mode==5:
             case_list=[[2,3,2,3],[3,2,2,3],[3,3,1,3],[3,3,2,2]]
         for case in case_list:
-            for i in range(124,128):
-                    
-                for j in range(128,132):
-                    for k in range(132,136):
-                        for l in range(101,116):
-                            if set_num_dict.get(str(i))==case[0]:
-                                if set_num_dict.get(str(j))==case[1]:
-                                    if set_num_dict.get(str(k))==case[2]:
-                                        if set_num_dict.get(str(l))>=case[3]:
-                                            for sin in range(0,4):
-                                                all_of_cases=all_of_cases+making_cases([(str(i),str(j),str(k),str(l))],sin,mode)
-                            if set_num_dict.get(str(i))==3:
-                                if set_num_dict.get(str(j))==3:
-                                    if set_num_dict.get(str(k))==3:
-                                        if bang_on_dict[str(l)][2]+bang_on_dict[str(l)][3]==2:
-                                            for sin in range(0,4):
-                                                all_of_cases=all_of_cases+making_cases([(str(i),str(j),str(k),str(l))],sin,mode)
+            for i in range(124,128): # 하팔법
+                for j in range(128,132): # 상목보
+                    for k in range(132,136): # 신반귀
+                        for l in range(101,116): # 방어구
+                            if set_num_dict.get(str(i))==3 and \
+                                set_num_dict.get(str(j))==3 and \
+                                set_num_dict.get(str(k))==3 and \
+                                bang_on_dict[str(l)][2]+bang_on_dict[str(l)][3]==2:
+                                for sin in range(0,4):
+                                    all_of_cases=all_of_cases+making_cases([(str(i),str(j),str(k),str(l))],sin,mode)
+                            elif set_num_dict.get(str(i))>=case[0] and \
+                                set_num_dict.get(str(j))>=case[1] and \
+                                set_num_dict.get(str(k))>=case[2] and \
+                                set_num_dict.get(str(l))>=case[3]:
+                                for sin in range(0,4):
+                                    all_of_cases=all_of_cases+making_cases([(str(i),str(j),str(k),str(l))],sin,mode)
 
 
     for case in [[4,3,3],[5,2,3],[5,3,2]]:                
